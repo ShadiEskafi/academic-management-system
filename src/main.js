@@ -1,21 +1,15 @@
 // src/main.js
 import './style.css';
-import { supabase } from './api/supabaseClient.js';
+import { renderAuthPage } from './pages/AuthPage.js';
+import { renderSemestersPage } from './pages/SemestersPage.js';
 
-document.querySelector('#app').innerHTML = `
-  <h1>Academic Management System</h1>
-  <p id="status">Checking Supabase connection...</p>
-`;
+const app = document.querySelector('#app');
+app.innerHTML = '<h1>Academic Management System</h1><div id="page-container"></div>';
 
-async function checkConnection() {
-  const { data, error } = await supabase.auth.getSession();
-  const statusEl = document.querySelector('#status');
+const pageContainer = document.querySelector('#page-container');
 
-  if (error) {
-    statusEl.textContent = `❌ Connection error: ${error.message}`;
-  } else {
-    statusEl.textContent = '✅ Supabase client connected successfully (no session yet)';
-  }
-}
-
-checkConnection();
+renderAuthPage(pageContainer, {
+  onAuthSuccess: () => {
+    renderSemestersPage(pageContainer);
+  },
+});
