@@ -13,6 +13,16 @@ export async function fetchSemesters() {
   return { semesters: data ?? [], error };
 }
 
+export async function fetchSemesterById(semesterId) {
+  const { data, error } = await supabase
+    .from('semesters')
+    .select('*')
+    .eq('id', semesterId)
+    .single();
+
+  return { semester: data ?? null, error };
+}
+
 export async function createSemester({ title, status = 'planned', startDate = null, endDate = null }) {
   const { data: userData } = await supabase.auth.getUser();
   const userId = userData?.user?.id;

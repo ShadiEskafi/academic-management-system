@@ -1,25 +1,23 @@
 // src/pages/AuthPage.js
-// الطبقة اللي بتربط: api (auth.js) ↔ state (store.js) ↔ components (AuthForm.js)
-// هون بس المكان المسموح فيه نستدعي دوال setXxx من الـ store.
+// الطبقة اللي بتربط: api (auth.js) ↔ components (AuthForm.js)
+// ملاحظة: بعد نجاح signIn/signUp، الانتقال لداخل التطبيق صار مسؤولية
+// المستمع العام onAuthStateChange بـ main.js (مش هذا الملف) — هو اللي
+// بيحدّث الـ store ويقرر الانتقال، فور ما Supabase يأكّد الجلسة فعليًا.
 
 import { signIn, signUp } from '../api/auth.js';
-import { setCurrentUser } from '../state/store.js';
 import { renderAuthForm } from '../components/AuthForm.js';
 
-export function renderAuthPage(container, { onAuthSuccess }) {
+export function renderAuthPage(container) {
   renderAuthForm(container, {
     onSubmit: async ({ mode, email, password }) => {
       const result = mode === 'signin'
         ? await signIn(email, password)
         : await signUp(email, password);
 
-      if (result.error) {
-        return { error: result.error };
-      }
-
-      setCurrentUser(result.user);
-      onAuthSuccess?.(result.user);
-      return { error: null };
+      // ما منستدعي setCurrentUser ولا أي انتقال يدوي هون —
+      // onAuthStateChange بـ main.js رح يلتقط الجلسة الجديدة تلقائيًا
+      // ويتولى الانتقال، بمجرد ما Supabase يأكدها فعليًا.
+      return { error: result.error ?? null };
     },
   });
 }

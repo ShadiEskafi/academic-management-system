@@ -23,3 +23,20 @@ export async function getCurrentUser() {
   const { data, error } = await supabase.auth.getUser();
   return { user: data?.user ?? null, error };
 }
+
+/**
+ * يشترك بمستمع Supabase الأصلي لحالة الجلسة (onAuthStateChange).
+ * هذا بديل getSession() المباشرة — هو اللي بيتأكد فعليًا من صلاحية الجلسة
+ * (تسجيل دخول/خروج، انتهاء/تجديد Token، تعطيل المستخدم) بدل قراءة عمياء
+ * من localStorage. الـ callback بيستدعى فورًا مرة أولى بالحالة الحالية،
+ * وبعدها أي مرة تتغير الجلسة فعليًا.
+ *
+ * @param {(session: import('@supabase/supabase-js').Session | null) => void} callback
+ * @returns {() => void} unsubscribe
+ */
+export function onAuthStateChange(callback) {
+  const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+    callback(session);
+  });
+  return () => subscription.unsubscribe();
+}
