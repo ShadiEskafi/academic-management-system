@@ -6,7 +6,7 @@ import { fetchSemesters, createSemester } from '../api/semesters.js';
 import { setSemesters, getState, subscribe } from '../state/store.js';
 import { renderSemesterForm } from '../components/SemesterForm.js';
 
-export async function renderSemestersPage(container) {
+export async function renderSemestersPage(container, { onSelectSemester } = {}) {
   // أول تحميل: نجيب الداتا من Supabase ونحطها بالـ store
   const { semesters, error } = await fetchSemesters();
   if (error) {
@@ -19,6 +19,7 @@ export async function renderSemestersPage(container) {
   renderSemesterForm(container, {
     semesters: getState('semesters'),
     onCreate: handleCreate,
+    onSelectSemester,
   });
 
   // أي تحديث لاحق على semesters (بعد create) بيعيد رسم القائمة تلقائيًا
@@ -26,6 +27,7 @@ export async function renderSemestersPage(container) {
     renderSemesterForm(container, {
       semesters: event.detail,
       onCreate: handleCreate,
+      onSelectSemester,
     });
   });
 

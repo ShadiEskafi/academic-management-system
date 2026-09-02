@@ -2,7 +2,7 @@
 // Component "غبي": فورم إنشاء + قائمة عرض. بيستقبل الداتا ويستدعي callback،
 // ما بيعرف شي عن Supabase ولا عن الـ store.
 
-export function renderSemesterForm(container, { semesters, onCreate }) {
+export function renderSemesterForm(container, { semesters, onCreate, onSelectSemester }) {
   container.innerHTML = `
     <div style="max-width:400px;margin:2rem auto;">
       <h2>Semesters</h2>
@@ -16,13 +16,21 @@ export function renderSemesterForm(container, { semesters, onCreate }) {
       <ul id="semester-list" style="list-style:none;padding:0;">
         ${semesters.map(s => `
           <li style="padding:0.5rem;border-bottom:1px solid #333;">
-            <strong>${s.title}</strong>
+            <a href="#" class="semester-link" data-id="${s.id}" style="color:#8ab4f8;text-decoration:underline;cursor:pointer;font-weight:bold;">${s.title}</a>
             <span style="opacity:0.7;font-size:13px;"> — ${s.status}</span>
           </li>
         `).join('') || '<li style="opacity:0.6;">No semesters yet.</li>'}
       </ul>
     </div>
   `;
+
+  container.querySelectorAll('.semester-link').forEach(link => {
+    link.addEventListener('click', (e) => {
+      e.preventDefault();
+      const semester = semesters.find(s => s.id === link.dataset.id);
+      onSelectSemester?.(semester);
+    });
+  });
 
   container.querySelector('#semester-form').addEventListener('submit', async (e) => {
     e.preventDefault();
