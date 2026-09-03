@@ -1,11 +1,13 @@
 // src/api/topics.js
 // استدعاء RPC لجلب الشجرة وتحديث حالة الـ Leaf Topics
+
 import { supabase } from './supabaseClient.js';
 
 export async function fetchTopicTree(courseId) {
   const { data, error } = await supabase.rpc('get_course_topic_tree', {
     p_course_id: courseId,
   });
+
   return { topics: data ?? [], error };
 }
 
