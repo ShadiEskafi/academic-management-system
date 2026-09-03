@@ -1,176 +1,164 @@
 // src/main.js
 
-import "./style.css";
+import './style.css';
 
-import { onAuthStateChange, signOut } from "./api/auth.js";
+import { onAuthStateChange, signOut } from './api/auth.js';
+import { fetchSemesterById } from './api/semesters.js';
+import { fetchCourseById } from './api/courses.js';
 
-import { fetchSemesterById } from "./api/semesters.js";
+import { setCurrentUser } from './state/store.js';
 
-import { setCurrentUser } from "./state/store.js";
+import {
+  navigate,
+  getCurrentRoute,
+  onRouteChange,
+} from './state/router.js';
 
-import { navigate, getCurrentRoute, onRouteChange } from "./state/router.js";
+import { renderAppShell } from './components/AppShell.js';
 
-import { renderAppShell } from "./components/AppShell.js";
+import { renderAuthPage } from './pages/AuthPage.js';
+import { renderSemestersPage } from './pages/SemestersPage.js';
+import { renderCoursesPage } from './pages/CoursesPage.js';
+import { renderCourseDetailPage } from './pages/CourseDetailPage.js';
 
-import { renderAuthPage } from "./pages/AuthPage.js";
-
-import { renderSemestersPage } from "./pages/SemestersPage.js";
-
-import { renderCoursesPage } from "./pages/CoursesPage.js";
-
-import { renderCourseDetailPage } from "./pages/CourseDetailPage.js";
-
-const root = document.querySelector("#app");
+const root = document.querySelector('#app');
 
 let contentContainer = null;
 
-// Cleanup للصفحة الحالية
+// بيتتبع الصفحة الحالية حتى نقدر ننظف أي Cleanup قبل الانتقال
 let currentPageCleanup = null;
 
-// رقم متزايد لكل عملية Render
-// يستخدم لمنع Race Condition بين طلبات async
-let renderVersion = 0;
-
-async function cleanupCurrentPage() {
-  if (typeof currentPageCleanup === "function") {
-    currentPageCleanup();
-    currentPageCleanup = null;
-  }
-}
+// رقم متزايد لكل عملية Render.
+// الهدف منع استجابة Fetch قديمة من رسم صفحة بعد ما يكون المسار تغيّر.
+let renderRequestId = 0;
 
 async function renderCurrentRoute() {
   if (!contentContainer) {
     return;
   }
 
-  // Route Guard
-  // إذا ما في مستخدم حالي، ما بنسمح بتحميل صفحات التطبيق
-  if (!currentUserId) {
-    showAuth();
-    return;
-  }
-
-  const version = ++renderVersion;
+  const requestId = ++renderRequestId;
   const route = getCurrentRoute();
 
   // تنظيف الصفحة السابقة قبل رسم الصفحة الجديدة
-  await cleanupCurrentPage();
-
-  // التأكد أن المسار لم يتغير أثناء الـ cleanup
-  if (version !== renderVersion) {
-    return;
+  if (currentPageCleanup) {
+    currentPageCleanup();
+    currentPageCleanup = null;
   }
 
-  // --------------------------------------------------
-  // Course Detail
-  // --------------------------------------------------
-  if (route.name === "course-detail") {
-    const { semester, error } = await fetchSemesterById(route.semesterId);
+  if (route.name === 'course-detail') {
+    const { course, error } = await fetchCourseById(route.courseId);
 
-    // Race Condition Guard
-    if (
-      version !== renderVersion ||
-      !currentUserId ||
-      getCurrentRoute().name !== "course-detail" ||
-      getCurrentRoute().semesterId !== route.semesterId ||
-      getCurrentRoute().courseId !== route.courseId
-    ) {
+    // المسار تغيّر أثناء الانتظار
+    if (requestId !== renderRequestId) {
       return;
     }
 
-    if (error || !semester) {
-      navigate("/semesters");
+    if (error || !course) {
+      navigate('/semesters');
+
       return;
     }
 
-    const course = semester.courses?.find((item) => item.id === route.courseId);
+    // التأكد أن الـ Course تابع للـ Semester الموجود في الرابط
+    if (course.semester_id !== route.semesterId) {
+      navigate('/semesters');
 
-    currentPageCleanup = await renderCourseDetailPage(contentContainer, {
-      courseId: route.courseId,
-      onBack: () => {
-        navigate(`/semesters/${route.semesterId}/courses`);
-      },
-    });
+      return;
+    }
+
+    currentPageCleanup = await renderCourseDetailPage(
+      contentContainer,
+      {
+        courseId: route.courseId,
+
+        onBack: () => {
+          navigate(
+            `/semesters/${route.semesterId}/courses`
+          );
+        },
+      }
+    );
 
     return;
   }
 
-  // --------------------------------------------------
-  // Courses
-  // --------------------------------------------------
-  if (route.name === "courses") {
-    const { semester, error } = await fetchSemesterById(route.semesterId);
+  if (route.name === 'courses') {
+    const { semester, error } = await fetchSemesterById(
+      route.semesterId
+    );
 
-    // Race Condition Guard
-    if (
-      version !== renderVersion ||
-      !currentUserId ||
-      getCurrentRoute().name !== "courses" ||
-      getCurrentRoute().semesterId !== route.semesterId
-    ) {
+    // المسار تغيّر أثناء الانتظار
+    if (requestId !== renderRequestId) {
       return;
     }
 
     if (error || !semester) {
       // فصل غير موجود/محذوف/مش تبع هالمستخدم
-      // نرجع لقائمة الفصول
-      navigate("/semesters");
+      navigate('/semesters');
+
       return;
     }
 
-    currentPageCleanup = await renderCoursesPage(contentContainer, {
-      semester,
-      onBack: () => navigate("/semesters"),
-      onSelectCourse: (course) => {
-        navigate(`/semesters/${semester.id}/courses/${course.id}`);
-      },
-    });
+    currentPageCleanup = await renderCoursesPage(
+      contentContainer,
+      {
+        semester,
+
+        onBack: () => {
+          navigate('/semesters');
+        },
+
+        onSelectCourse: (courseId) => {
+          navigate(
+            `/semesters/${semester.id}/courses/${courseId}`
+          );
+        },
+      }
+    );
 
     return;
   }
 
-  // --------------------------------------------------
-  // Semesters
-  // --------------------------------------------------
-  currentPageCleanup = await renderSemestersPage(contentContainer, {
-    onSelectSemester: (semester) => {
-      navigate(`/semesters/${semester.id}/courses`);
-    },
-  });
+  currentPageCleanup = await renderSemestersPage(
+    contentContainer,
+    {
+      onSelectSemester: (semester) => {
+        navigate(
+          `/semesters/${semester.id}/courses`
+        );
+      },
+    }
+  );
 }
 
 function enterApp(user) {
   contentContainer = renderAppShell(root, {
     userEmail: user.email,
-
-    onSignOut: () => {
-      signOut();
-    },
+    onSignOut: () => signOut(),
   });
 
   renderCurrentRoute();
 }
 
-async function showAuth() {
-  await cleanupCurrentPage();
+function showAuth() {
+  renderRequestId += 1;
+
+  if (currentPageCleanup) {
+    currentPageCleanup();
+    currentPageCleanup = null;
+  }
 
   contentContainer = null;
 
   renderAuthPage(root);
 }
 
-// أي تغيير بالـ URL
-// بما فيه Back / Forward / navigation
-// يعيد رسم الصفحة المناسبة
-onRouteChange(() => {
-  renderCurrentRoute();
-});
+// أي تغيير بالـ URL يعيد رسم الصفحة المناسبة.
+// Refresh و Back/Forward يظلون مدعومين عن طريق الـ Hash Router.
+onRouteChange(() => renderCurrentRoute());
 
-// --------------------------------------------------
-// Session Management
-// --------------------------------------------------
-
-// نقطة الدخول الوحيدة لحالة الجلسة بكامل التطبيق
+// نقطة الدخول الوحيدة لحالة الجلسة بكامل التطبيق.
 let currentUserId = null;
 
 onAuthStateChange((session) => {
@@ -181,16 +169,13 @@ onAuthStateChange((session) => {
   if (user) {
     if (currentUserId !== user.id) {
       currentUserId = user.id;
-
       enterApp(user);
     }
+  } else {
+    if (currentUserId !== null) {
+      currentUserId = null;
+    }
 
-    return;
+    showAuth();
   }
-
-  if (currentUserId !== null) {
-    currentUserId = null;
-  }
-
-  showAuth();
 });

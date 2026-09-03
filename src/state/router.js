@@ -10,7 +10,6 @@
 
 function parseHash() {
   const hash = window.location.hash.replace(/^#/, '') || '/semesters';
-
   const parts = hash.split('/').filter(Boolean);
 
   // Course Detail
@@ -39,7 +38,6 @@ function parseHash() {
     };
   }
 
-  // Default
   return {
     name: 'semesters',
   };
