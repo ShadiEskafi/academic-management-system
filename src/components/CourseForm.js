@@ -15,7 +15,6 @@ export function renderCourseForm(
 ) {
   container.innerHTML = `
     <div style="max-width:420px;margin:2rem auto;">
-
       <button
         id="back-btn"
         style="background:none;border:none;text-decoration:underline;cursor:pointer;margin-bottom:1rem;"
@@ -54,7 +53,6 @@ export function renderCourseForm(
             <option value="" disabled selected>
               Difficulty *
             </option>
-
             <option value="easy">Easy</option>
             <option value="medium">Medium</option>
             <option value="hard">Hard</option>
@@ -62,17 +60,9 @@ export function renderCourseForm(
         </div>
 
         <select name="priority">
-          <option value="low">
-            Priority: Low
-          </option>
-
-          <option value="medium" selected>
-            Priority: Medium
-          </option>
-
-          <option value="high">
-            Priority: High
-          </option>
+          <option value="low">Priority: Low</option>
+          <option value="medium" selected>Priority: Medium</option>
+          <option value="high">Priority: High</option>
         </select>
 
         <p style="font-size:12px;opacity:0.7;">
@@ -80,9 +70,7 @@ export function renderCourseForm(
           بيُستخدموا لحساب أولوية الجدولة تلقائيًا.
         </p>
 
-        <button type="submit">
-          Add Course
-        </button>
+        <button type="submit">Add Course</button>
       </form>
 
       <p
@@ -95,14 +83,14 @@ export function renderCourseForm(
         style="list-style:none;padding:0;"
       >
         ${
-          courses.map((course) => `
+          courses.map((c) => `
             <li
               style="padding:0.5rem;border-bottom:1px solid #333;"
             >
               <button
                 type="button"
-                class="course-link"
-                data-course-id="${course.id}"
+                class="course-title-btn"
+                data-course-id="${c.id}"
                 style="
                   background:none;
                   border:none;
@@ -112,13 +100,13 @@ export function renderCourseForm(
                   text-align:left;
                 "
               >
-                <strong>${course.title}</strong>
+                <strong>${c.title}</strong>
               </button>
 
               <span style="opacity:0.7;font-size:13px;">
-                — ${course.credit_hours} CH,
-                ${course.difficulty},
-                priority: ${course.priority}
+                — ${c.credit_hours} CH,
+                ${c.difficulty},
+                priority: ${c.priority}
               </span>
             </li>
           `).join('') ||
@@ -132,31 +120,28 @@ export function renderCourseForm(
     .querySelector('#back-btn')
     .addEventListener('click', () => onBack());
 
-  // الضغط على اسم المساق يفتح Course Detail
-  container.querySelectorAll('.course-link').forEach((button) => {
+  // الانتقال إلى Course Detail عند الضغط على اسم المساق
+  container.querySelectorAll('.course-title-btn').forEach((button) => {
     button.addEventListener('click', () => {
       const courseId = button.dataset.courseId;
 
-      const course = courses.find((item) => item.id === courseId);
-
-      if (course && onSelectCourse) {
-        onSelectCourse(course);
+      if (onSelectCourse) {
+        onSelectCourse(courseId);
       }
     });
   });
 
   container
     .querySelector('#course-form')
-    .addEventListener('submit', async (event) => {
-      event.preventDefault();
+    .addEventListener('submit', async (e) => {
+      e.preventDefault();
 
-      const formData = new FormData(event.target);
-
+      const formData = new FormData(e.target);
       const errorEl = container.querySelector('#course-error');
 
       errorEl.textContent = '';
 
-      const submitBtn = event.target.querySelector(
+      const submitBtn = e.target.querySelector(
         'button[type="submit"]'
       );
 
@@ -173,12 +158,9 @@ export function renderCourseForm(
 
       if (result?.error) {
         errorEl.textContent =
-          result.error.message ??
-          'حدث خطأ، حاول مرة ثانية';
-
-        return;
+          result.error.message ?? 'حدث خطأ، حاول مرة ثانية';
+      } else {
+        e.target.reset();
       }
-
-      event.target.reset();
     });
 }

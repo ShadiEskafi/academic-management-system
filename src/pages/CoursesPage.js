@@ -1,31 +1,15 @@
 // src/pages/CoursesPage.js
-// الطبقة اللي بتربط:
-// api (courses.js) ↔ state (store.js) ↔ components (CourseForm.js)
+// الطبقة اللي بتربط: api (courses.js) ↔ state (store.js) ↔ components (CourseForm.js)
 
-import {
-  fetchCoursesBySemester,
-  createCourse,
-} from '../api/courses.js';
-
-import {
-  setCourses,
-  getState,
-  subscribe,
-} from '../state/store.js';
-
+import { fetchCoursesBySemester, createCourse } from '../api/courses.js';
+import { setCourses, getState, subscribe } from '../state/store.js';
 import { renderCourseForm } from '../components/CourseForm.js';
 
 export async function renderCoursesPage(
   container,
-  {
-    semester,
-    onBack,
-    onSelectCourse,
-  }
+  { semester, onBack, onSelectCourse }
 ) {
-  const { courses, error } = await fetchCoursesBySemester(
-    semester.id
-  );
+  const { courses, error } = await fetchCoursesBySemester(semester.id);
 
   if (error) {
     container.innerHTML = `
@@ -33,36 +17,31 @@ export async function renderCoursesPage(
         فشل تحميل المساقات: ${error.message}
       </p>
     `;
-
-    return () => {};
+    return;
   }
 
   setCourses(courses);
 
-  function render() {
+  renderCourseForm(container, {
+    semesterTitle: semester.title,
+    courses: getState('courses'),
+    onCreate: handleCreate,
+    onBack,
+    onSelectCourse,
+  });
+
+  const unsubscribe = subscribe('courses:changed', (event) => {
     renderCourseForm(container, {
       semesterTitle: semester.title,
-      courses: getState('courses'),
+      courses: event.detail,
       onCreate: handleCreate,
-      onBack,
+      onBack: () => {
+        unsubscribe();
+        onBack();
+      },
       onSelectCourse,
     });
-  }
-
-  render();
-
-  const unsubscribe = subscribe(
-    'courses:changed',
-    (event) => {
-      renderCourseForm(container, {
-        semesterTitle: semester.title,
-        courses: event.detail,
-        onCreate: handleCreate,
-        onBack,
-        onSelectCourse,
-      });
-    }
-  );
+  });
 
   async function handleCreate({
     title,
@@ -82,18 +61,10 @@ export async function renderCoursesPage(
       return { error };
     }
 
-    setCourses([
-      course,
-      ...getState('courses'),
-    ]);
+    setCourses([course, ...getState('courses')]);
 
     return {
       error: null,
     };
   }
-
-  // Cleanup يتم استدعاؤه عند مغادرة الصفحة
-  return () => {
-    unsubscribe();
-  };
 }
