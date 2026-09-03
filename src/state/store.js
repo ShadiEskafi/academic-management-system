@@ -12,6 +12,7 @@ const state = {
   currentUser: null,
   semesters: [],
   courses: [],
+  topics: [],
   sessions: [],
   weeklyPlan: null,
 };
@@ -60,6 +61,11 @@ export function setSemesters(semesters) {
 export function setCourses(courses) {
   state.courses = courses;
   emit('courses:changed', courses);
+}
+
+export function setTopics(topics) {
+  state.topics = topics;
+  emit('topics:changed', topics);
 }
 
 export function setSessions(sessions) {

@@ -33,3 +33,13 @@ export async function createCourse({ semesterId, title, creditHours, difficulty,
 
   return { course: data ?? null, error };
 }
+
+export async function fetchCourseById(courseId) {
+  const { data, error } = await supabase
+    .from('courses')
+    .select('*, semesters(id, title)')
+    .eq('id', courseId)
+    .single();
+
+  return { course: data ?? null, error };
+}
