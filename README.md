@@ -1,3 +1,9 @@
+![JavaScript](https://img.shields.io/badge/JavaScript-Vanilla%20ES6-F7DF1E?logo=javascript&logoColor=black)
+![Vite](https://img.shields.io/badge/Bundler-Vite-646CFF?logo=vite&logoColor=white)
+![Supabase](https://img.shields.io/badge/Backend-Supabase-3ECF8E?logo=supabase&logoColor=white)
+![PostgreSQL](https://img.shields.io/badge/Database-PostgreSQL-336791?logo=postgresql&logoColor=white)
+![License](https://img.shields.io/badge/License-MIT-blue.svg)
+
 # Academic Management System 🎓
 
 A modular, production-ready Single Page Application (SPA) designed to manage university semesters, courses, and topic hierarchies with database-enforced integrity. Built with vanilla JavaScript, modern architectural patterns, and Supabase.
