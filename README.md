@@ -80,4 +80,9 @@ academic-management-system/
 ---
 
 ## 🛡️ License
-MIT
+
+This project is licensed under the **Business Source License 1.1 (BSL 1.1)**. 
+- **Free for:** Non-commercial, educational, local development, and evaluation use.
+- **Restricted:** You may **not** offer this software as a hosted service (SaaS) or commercial offering without prior written authorization.
+- See the full [LICENSE](LICENSE) file for exact terms.
+
