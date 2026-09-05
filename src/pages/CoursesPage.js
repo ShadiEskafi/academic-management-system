@@ -8,15 +8,16 @@ import {
   createTopic,
   completeTopicAndAdvance,
 } from '../api/topics.js';
+import { supabase } from '../api/supabaseClient.js';
 import { setCourses, getState, subscribe } from '../state/store.js';
 import { renderCourseForm } from '../components/CourseForm.js';
 import { renderLogAchievementModal } from '../components/LogAchievementModal.js';
 
 export async function renderCoursesPage(
   container,
-  { semester, onBack, onSelectCourse }
+  { semester, onBack, onSelectCourse, onContinueCourse }
 ) {
-  const { courses, error } = await fetchCoursesBySemester(semester.id);
+  const { courses: initialCourses, error } = await fetchCoursesBySemester(semester.id);
 
   if (error) {
     container.innerHTML = `
@@ -24,10 +25,12 @@ export async function renderCoursesPage(
         فشل تحميل المساقات: ${error.message}
       </p>
     `;
-    return () => {}; // ما في اشتراك انفتح، unsubscribe فارغة وآمنة
+    return () => {};
   }
 
-  setCourses(courses);
+  // إثراء المساقات بالعناوين وبأول موضوع متاح
+  const enrichedCourses = await enrichCoursesWithCurrentPosition(initialCourses);
+  setCourses(enrichedCourses);
 
   function render() {
     renderCourseForm(container, {
@@ -36,14 +39,13 @@ export async function renderCoursesPage(
       onCreate: handleCreate,
       onBack,
       onSelectCourse,
+      onContinueCourse,
       onLogAchievement: handleLogAchievement,
     });
   }
 
-  // أول رسم
   render();
 
-  // أي تحديث لاحق على courses (بعد create أو بعد تسجيل إنجاز) بيعيد رسم القائمة تلقائيًا
   const unsubscribe = subscribe('courses:changed', (event) => {
     renderCourseForm(container, {
       semesterTitle: semester.title,
@@ -51,9 +53,55 @@ export async function renderCoursesPage(
       onCreate: handleCreate,
       onBack,
       onSelectCourse,
+      onContinueCourse,
       onLogAchievement: handleLogAchievement,
     });
   });
+
+  async function enrichCoursesWithCurrentPosition(coursesList) {
+    return Promise.all(
+      coursesList.map(async (course) => {
+        let topicId = course.current_position_topic_id;
+        let topicTitle =
+          course.current_topic?.title ||
+          course.current_position_topic_title ||
+          course.current_topic_title ||
+          null;
+
+        // 1. إذا كان الـ ID مسجل مسبقاً ولكن العنوان غير موجود، نجلبه مباشرة من topics
+        if (topicId && !topicTitle) {
+          const { data: topicData } = await supabase
+            .from('topics')
+            .select('title')
+            .eq('id', topicId)
+            .maybeSingle();
+
+          if (topicData) {
+            topicTitle = topicData.title;
+          }
+        }
+
+        // 2. إذا لم يكن هناك Current Position أصلاً، نربطه بأول موضوع غير مكتمل في المساق
+        if (!topicId) {
+          const { topics } = await fetchIncompleteLeafTopics(course.id);
+          if (topics && topics.length > 0) {
+            const firstPending = topics[0];
+            topicId = firstPending.id;
+            topicTitle = firstPending.title;
+          }
+        }
+
+        // إرجاع الكائن بكافة التسميات الممكنة لضمان توافقه مع CourseForm
+        return {
+          ...course,
+          current_position_topic_id: topicId,
+          current_position_topic_title: topicTitle,
+          current_topic_title: topicTitle,
+          current_topic: topicTitle ? { id: topicId, title: topicTitle } : null,
+        };
+      })
+    );
+  }
 
   async function handleCreate({ title, creditHours, difficulty, priority }) {
     const { course, error } = await createCourse({
@@ -66,17 +114,21 @@ export async function renderCoursesPage(
 
     if (error) return { error };
 
-    setCourses([course, ...getState('courses')]);
+    await refreshCourses();
     return { error: null };
   }
 
   async function refreshCourses() {
     const { courses: refreshed, error } = await fetchCoursesBySemester(semester.id);
-    if (!error) setCourses(refreshed);
+    if (!error) {
+      const enriched = await enrichCoursesWithCurrentPosition(refreshed);
+      setCourses(enriched);
+    }
   }
 
   async function handleLogAchievement(courseId) {
     const { topics: existingTopics, error } = await fetchIncompleteLeafTopics(courseId);
+
     if (error) {
       alert('فشل تحميل قائمة المواضيع: ' + error.message);
       return;
@@ -88,28 +140,30 @@ export async function renderCoursesPage(
       onSubmit: async (payload) => {
         let topicId = payload.topicId;
 
-        // وضع "موضوع جديد" — ننشئ الـ Topic أول (كـ Root، بدون Parent)
         if (payload.mode === 'new') {
           const { topic, error: createError } = await createTopic({
             courseId,
             parentId: null,
             title: payload.title,
           });
+
           if (createError) return { error: createError };
           topicId = topic.id;
         }
 
-        // بالحالتين: نسجّل الإنجاز، والـ RPC بتحدّث Current Position تلقائيًا (FR-6)
-        const { error: completeError } = await completeTopicAndAdvance(courseId, topicId);
+        const { error: completeError } = await completeTopicAndAdvance(
+          courseId,
+          topicId
+        );
+
         if (completeError) return { error: completeError };
 
-        await refreshCourses(); // نجيب القائمة المحدّثة (فيها Current Position الجديد)
+        await refreshCourses();
         return { error: null };
       },
     });
   }
 
-  // Cleanup عند مغادرة الصفحة — يُستدعى مركزيًا من main.js، مش ملفوف جوا onBack
   return () => {
     unsubscribe();
   };

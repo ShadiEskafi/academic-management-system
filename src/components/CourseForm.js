@@ -11,6 +11,7 @@ export function renderCourseForm(
     onCreate,
     onBack,
     onSelectCourse,
+    onContinueCourse,
     onLogAchievement,
   }
 ) {
@@ -121,11 +122,28 @@ export function renderCourseForm(
                 priority: ${c.priority}
               </span>
               <br/>
-              <span style="opacity:0.6;font-size:12px;">
-                ${c.currentPositionTitle
-                  ? `آخر موضع: ${c.currentPositionTitle}`
-                  : 'لسا ما في موضع مسجّل'}
+              <span style="opacity:0.9;font-size:13px;">
+                ${c.current_position_topic_title
+                  ? `آخر موضع: <span style="font-weight:600; color:#3b82f6;">${c.current_position_topic_title}</span>`
+                  : '<span style="opacity:0.6;">لسا ما في موضع مسجّل</span>'}
               </span>
+
+              ${
+                c.current_position_topic_id
+                  ? `
+                    <br/>
+                    <button
+                      type="button"
+                      class="continue-course-btn"
+                      data-course-id="${c.id}"
+                      data-topic-id="${c.current_position_topic_id}"
+                      style="margin-top: 6px; font-size: 13px; padding: 4px 10px;"
+                    >
+                      أكمل من هون
+                    </button>
+                  `
+                  : ''
+              }
             </li>
           `).join('') ||
           '<li style="opacity:0.6;">No courses yet.</li>'
@@ -145,6 +163,18 @@ export function renderCourseForm(
 
       if (onSelectCourse) {
         onSelectCourse(courseId);
+      }
+    });
+  });
+
+  // الانتقال مباشرة إلى Current Position عند الضغط على "أكمل من هون"
+  container.querySelectorAll('.continue-course-btn').forEach((button) => {
+    button.addEventListener('click', () => {
+      const courseId = button.dataset.courseId;
+      const topicId = button.dataset.topicId;
+
+      if (onContinueCourse) {
+        onContinueCourse(courseId, topicId);
       }
     });
   });

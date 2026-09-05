@@ -7,10 +7,16 @@
 //   #/semesters
 //   #/semesters/:semesterId/courses
 //   #/semesters/:semesterId/courses/:courseId
+//   #/semesters/:semesterId/courses/:courseId?topicId=:topicId
 
 function parseHash() {
   const hash = window.location.hash.replace(/^#/, '') || '/semesters';
-  const parts = hash.split('/').filter(Boolean);
+
+  const [path, queryString = ''] = hash.split('?');
+
+  const parts = path.split('/').filter(Boolean);
+
+  const searchParams = new URLSearchParams(queryString);
 
   // Course Detail
   if (
@@ -23,6 +29,8 @@ function parseHash() {
       name: 'course-detail',
       semesterId: parts[1],
       courseId: parts[3],
+      currentPositionTopicId:
+        searchParams.get('topicId') || null,
     };
   }
 

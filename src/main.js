@@ -38,6 +38,7 @@ async function renderCurrentRoute() {
   }
 
   const requestId = ++renderRequestId;
+
   const route = getCurrentRoute();
 
   // تنظيف الصفحة السابقة قبل رسم الصفحة الجديدة
@@ -47,7 +48,9 @@ async function renderCurrentRoute() {
   }
 
   if (route.name === 'course-detail') {
-    const { course, error } = await fetchCourseById(route.courseId);
+    const { course, error } = await fetchCourseById(
+      route.courseId
+    );
 
     // المسار تغيّر أثناء الانتظار
     if (requestId !== renderRequestId) {
@@ -71,6 +74,8 @@ async function renderCurrentRoute() {
       contentContainer,
       {
         courseId: route.courseId,
+        currentPositionTopicId:
+          route.currentPositionTopicId,
 
         onBack: () => {
           navigate(
@@ -112,6 +117,12 @@ async function renderCurrentRoute() {
         onSelectCourse: (courseId) => {
           navigate(
             `/semesters/${semester.id}/courses/${courseId}`
+          );
+        },
+
+        onContinueCourse: (courseId, topicId) => {
+          navigate(
+            `/semesters/${semester.id}/courses/${courseId}?topicId=${encodeURIComponent(topicId)}`
           );
         },
       }
@@ -169,6 +180,7 @@ onAuthStateChange((session) => {
   if (user) {
     if (currentUserId !== user.id) {
       currentUserId = user.id;
+
       enterApp(user);
     }
   } else {

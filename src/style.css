@@ -294,3 +294,25 @@ code {
     border-right-color: var(--border);
   }
 }
+
+/* =========================================================
+   Current Position Highlighting & Pulse Effects
+   ========================================================= */
+
+.highlight-current-position,
+[data-current-position="true"] > .topic-node-row {
+  outline: 2px solid #3b82f6 !important;
+  box-shadow: 0 0 16px rgba(59, 130, 246, 0.45) !important;
+  background-color: #eff6ff !important;
+  border-color: #3b82f6 !important;
+  animation: pulse-current-position 2s infinite ease-in-out;
+}
+
+@keyframes pulse-current-position {
+  0%, 100% {
+    box-shadow: 0 0 12px rgba(59, 130, 246, 0.35);
+  }
+  50% {
+    box-shadow: 0 0 22px rgba(59, 130, 246, 0.7);
+  }
+}
