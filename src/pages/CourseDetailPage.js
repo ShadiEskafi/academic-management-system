@@ -1,10 +1,10 @@
 // src/pages/CourseDetailPage.js
-// صفحة محتوى المساق — مسؤولة عن تنسيق Topic Tree وعمليات الإنشاء والحذف.
-// يتم تحويل الـ Flat Array القادمة من الـ RPC إلى Tree Structure قبل الرسم.
+// صفحة محتوى المساق — مسؤولة عن تنسيق Topic Tree وعمليات الإنشاء والحذف وتحديث الموضع الحالي.
 
 import {
   fetchTopicTree,
   updateTopicStatus,
+  completeTopicAndAdvance,
   createTopic,
   deleteTopic,
 } from '../api/topics.js';
@@ -20,7 +20,6 @@ function buildTopicTree(topics) {
   const topicMap = new Map();
   const rootTopics = [];
 
-  // إنشاء نسخة من كل Topic وإضافة children
   topics.forEach((topic) => {
     topicMap.set(topic.id, {
       ...topic,
@@ -28,7 +27,6 @@ function buildTopicTree(topics) {
     });
   });
 
-  // ربط كل Topic مع الـ Parent الخاص به
   topics.forEach((topic) => {
     const currentTopic = topicMap.get(topic.id);
 
@@ -44,25 +42,14 @@ function buildTopicTree(topics) {
     }
   });
 
-  // ترتيب الـ Roots حسب order
-  rootTopics.sort((a, b) => {
-    return Number(a.order) - Number(b.order);
-  });
+  rootTopics.sort((a, b) => Number(a.order) - Number(b.order));
 
-  // ترتيب الأبناء recursively حسب order
   function sortChildren(topic) {
-    topic.children.sort((a, b) => {
-      return Number(a.order) - Number(b.order);
-    });
-
-    topic.children.forEach((child) => {
-      sortChildren(child);
-    });
+    topic.children.sort((a, b) => Number(a.order) - Number(b.order));
+    topic.children.forEach((child) => sortChildren(child));
   }
 
-  rootTopics.forEach((topic) => {
-    sortChildren(topic);
-  });
+  rootTopics.forEach((topic) => sortChildren(topic));
 
   return rootTopics;
 }
@@ -73,8 +60,10 @@ function buildTopicTree(topics) {
 
 export async function renderCourseDetailPage(
   container,
-  { courseId, onBack }
+  { courseId, currentPositionTopicId = null, onBack }
 ) {
+  let activePositionTopicId = currentPositionTopicId;
+
   container.innerHTML = `
     <div style="margin-bottom: 1.5rem;">
 
@@ -127,46 +116,22 @@ export async function renderCourseDetailPage(
     </div>
   `;
 
-  const backBtn = container.querySelector(
-    '#back-to-courses-btn'
-  );
-
-  const addRootBtn = container.querySelector(
-    '#add-root-topic-btn'
-  );
-
-  const formContainer = container.querySelector(
-    '#topic-form-container'
-  );
-
-  const treeContainer = container.querySelector(
-    '#tree-container'
-  );
+  const backBtn = container.querySelector('#back-to-courses-btn');
+  const addRootBtn = container.querySelector('#add-root-topic-btn');
+  const formContainer = container.querySelector('#topic-form-container');
+  const treeContainer = container.querySelector('#tree-container');
 
   let formOpen = false;
 
-  // =========================================================
-  // Back
-  // =========================================================
-
   backBtn.addEventListener('click', onBack);
-
-  // =========================================================
-  // Close Topic Form
-  // =========================================================
 
   function closeTopicForm() {
     formOpen = false;
     formContainer.innerHTML = '';
   }
 
-  // =========================================================
-  // Open Topic Form
-  // =========================================================
-
   function openTopicForm(parentTopic = null) {
     formOpen = true;
-
     formContainer.innerHTML = '';
 
     renderTopicForm(formContainer, {
@@ -189,8 +154,11 @@ export async function renderCourseDetailPage(
 
         closeTopicForm();
 
-        // إعادة جلب الشجرة من الـ Backend
-        // لأن الـ DB هي مصدر القيم المشتقة.
+        // إذا لم يكن هناك موضع نشط، نسند أول موضوع مضاف
+        if (!activePositionTopicId && topic) {
+          activePositionTopicId = topic.id;
+        }
+
         await loadAndRenderTree();
 
         return {
@@ -201,10 +169,6 @@ export async function renderCourseDetailPage(
     });
   }
 
-  // =========================================================
-  // Add Root Topic
-  // =========================================================
-
   addRootBtn.addEventListener('click', () => {
     if (formOpen) {
       closeTopicForm();
@@ -213,6 +177,45 @@ export async function renderCourseDetailPage(
 
     openTopicForm();
   });
+
+  // =========================================================
+  // Scroll & Highlight إلى Current Position
+  // =========================================================
+
+  function scrollToCurrentPosition() {
+    if (!activePositionTopicId) {
+      return;
+    }
+
+    const currentNode = treeContainer.querySelector(
+      `[data-topic-id="${CSS.escape(activePositionTopicId)}"]`
+    );
+
+    if (!currentNode) {
+      return;
+    }
+
+    // فتح كافة الحاويات الأبوية المغلقة للوصول للعنصر
+    let parentEl = currentNode.parentElement;
+    while (parentEl && parentEl !== treeContainer) {
+      if (parentEl.hidden) {
+        parentEl.hidden = false;
+      }
+      parentEl = parentEl.parentElement;
+    }
+
+    currentNode.scrollIntoView({
+      behavior: 'smooth',
+      block: 'center',
+    });
+
+    currentNode.setAttribute('aria-current', 'location');
+    currentNode.classList.add('highlight-current-position');
+
+    setTimeout(() => {
+      currentNode.classList.remove('highlight-current-position');
+    }, 3000);
+  }
 
   // =========================================================
   // Load + Build + Render Tree
@@ -233,7 +236,6 @@ export async function renderCourseDetailPage(
           فشل تحميل المواضيع: ${error.message}
         </p>
       `;
-
       return;
     }
 
@@ -243,49 +245,57 @@ export async function renderCourseDetailPage(
           لا يوجد Topics بعد لهذا المساق.
         </p>
       `;
-
       return;
     }
 
-    // =======================================================
-    // تحويل الـ Flat Array إلى Tree
-    // =======================================================
+    // تهيئة الموضع النشط تلقائياً لأول موضوع غير مكتمل إذا لم يكن محدداً
+    if (!activePositionTopicId) {
+      const firstIncomplete =
+        topics.find((t) => t.status !== 'completed' && (!t.children || t.children.length === 0)) ||
+        topics.find((t) => t.status !== 'completed') ||
+        topics[0];
+
+      if (firstIncomplete) {
+        activePositionTopicId = firstIncomplete.id;
+      }
+    }
 
     const topicTree = buildTopicTree(topics);
-
     treeContainer.innerHTML = '';
-
-    // =======================================================
-    // رسم الـ Root Topics فقط
-    // =======================================================
 
     topicTree.forEach((topic) => {
       const node = renderTopicNode(
         topic,
         topic.children,
         {
-          onStatusChange: async (
-            topicId,
-            newStatus
-          ) => {
-            const {
-              error: updateErr,
-            } = await updateTopicStatus(
-              topicId,
-              newStatus
-            );
+          currentTopicId: activePositionTopicId,
 
-            if (updateErr) {
-              alert(
-                'فشل تحديث الحالة: ' +
-                updateErr.message
+          onStatusChange: async (topicId, newStatus) => {
+            if (newStatus === 'completed') {
+              // استدعاء RPC الإنجاز حتى يتحدث مؤشر المساق بالـ DB ويتقدم للموضوع التالي
+              const { nextTopicId, error: completeErr } =
+                await completeTopicAndAdvance(courseId, topicId);
+
+              if (completeErr) {
+                alert('فشل تسجيل إنجاز الموضوع: ' + completeErr.message);
+                return;
+              }
+
+              // نقل الموضع النشط للموضوع التالي فوراً
+              activePositionTopicId = nextTopicId;
+            } else {
+              const { error: updateErr } = await updateTopicStatus(
+                topicId,
+                newStatus
               );
 
-              return;
+              if (updateErr) {
+                alert('فشل تحديث الحالة: ' + updateErr.message);
+                return;
+              }
             }
 
-            // إعادة جلب الشجرة لتعكس الحالة
-            // المشتقة من الـ DB Trigger.
+            // إعادة جلب الشجرة لتعكس الحالات المحسوبة بالـ DB Trigger
             await loadAndRenderTree();
           },
 
@@ -294,23 +304,17 @@ export async function renderCourseDetailPage(
           },
 
           onDelete: async (topicToDelete) => {
-            const {
-              error: deleteErr,
-            } = await deleteTopic(
-              topicToDelete.id
-            );
+            const { error: deleteErr } = await deleteTopic(topicToDelete.id);
 
             if (deleteErr) {
-              alert(
-                'فشل حذف الـ Topic: ' +
-                deleteErr.message
-              );
-
+              alert('فشل حذف الـ Topic: ' + deleteErr.message);
               return;
             }
 
-            // إعادة الجلب حتى يظهر تأثير
-            // ON DELETE CASCADE والحالات المشتقة.
+            if (activePositionTopicId === topicToDelete.id) {
+              activePositionTopicId = null;
+            }
+
             await loadAndRenderTree();
           },
         }
@@ -318,17 +322,13 @@ export async function renderCourseDetailPage(
 
       treeContainer.appendChild(node);
     });
+
+    if (activePositionTopicId) {
+      requestAnimationFrame(scrollToCurrentPosition);
+    }
   }
 
-  // =========================================================
-  // Initial Load
-  // =========================================================
-
   await loadAndRenderTree();
-
-  // =========================================================
-  // Cleanup
-  // =========================================================
 
   return () => {
     formOpen = false;

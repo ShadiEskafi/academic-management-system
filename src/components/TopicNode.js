@@ -1,7 +1,5 @@
 // src/components/TopicNode.js
-// رسم عناصر الشجرة — تمييز بصري بين الـ Parent والـ Leaf.
-// الـ Component لا يتعامل مباشرة مع الـ API.
-// كل Node يحتوي على حاوية فعلية لأبنائه لضمان الحفاظ على الـ Hierarchy.
+// رسم عناصر الشجرة — تمييز بصري بين الـ Parent والـ Leaf وإبراز الموضع الحالي.
 
 export function renderTopicNode(
   topic,
@@ -10,11 +8,20 @@ export function renderTopicNode(
     onStatusChange,
     onAddChild,
     onDelete,
+    currentTopicId = null,
   }
 ) {
   const isParent = children.length > 0;
+  const isCurrentTopic = topic.id === currentTopicId;
 
   const nodeWrapper = document.createElement('div');
+  nodeWrapper.dataset.topicId = topic.id;
+
+  if (isCurrentTopic) {
+    nodeWrapper.dataset.currentPosition = 'true';
+    nodeWrapper.setAttribute('aria-current', 'location');
+    nodeWrapper.setAttribute('tabindex', '-1');
+  }
 
   nodeWrapper.style.cssText = `
     width: 100%;
@@ -22,10 +29,34 @@ export function renderTopicNode(
   `;
 
   // =========================================================
+  // تحديد هل الـ Current Position موجود داخل هذا الفرع
+  // =========================================================
+
+  function containsCurrentTopic(node) {
+    if (!currentTopicId) {
+      return false;
+    }
+
+    if (node.id === currentTopicId) {
+      return true;
+    }
+
+    return (node.children ?? []).some((child) =>
+      containsCurrentTopic(child)
+    );
+  }
+
+  const containsCurrent = containsCurrentTopic({
+    ...topic,
+    children,
+  });
+
+  // =========================================================
   // Node Row
   // =========================================================
 
   const nodeEl = document.createElement('div');
+  nodeEl.className = 'topic-node-row' + (isCurrentTopic ? ' current-topic-active' : '');
 
   nodeEl.style.cssText = `
     display: flex;
@@ -34,10 +65,11 @@ export function renderTopicNode(
     gap: 1rem;
     padding: 0.6rem 0.75rem;
     margin-bottom: 0.35rem;
-    background: ${isParent ? '#f4f4f5' : '#ffffff'};
-    border: 1px solid #e4e4e7;
+    background: ${isCurrentTopic ? '#eff6ff' : isParent ? '#f4f4f5' : '#ffffff'};
+    border: ${isCurrentTopic ? '2px solid #3b82f6' : '1px solid #e4e4e7'};
     border-radius: 6px;
     box-sizing: border-box;
+    transition: all 0.3s ease;
   `;
 
   // =========================================================
@@ -62,10 +94,21 @@ export function renderTopicNode(
 
   if (isParent) {
     toggleBtn = document.createElement('button');
-
     toggleBtn.type = 'button';
-    toggleBtn.textContent = '▼';
-    toggleBtn.setAttribute('aria-label', 'Collapse topic');
+
+    const initiallyExpanded = !currentTopicId || containsCurrent;
+
+    toggleBtn.textContent = initiallyExpanded ? '▼' : '▶';
+
+    toggleBtn.setAttribute(
+      'aria-expanded',
+      String(initiallyExpanded)
+    );
+
+    toggleBtn.setAttribute(
+      'aria-label',
+      initiallyExpanded ? 'Collapse topic' : 'Expand topic'
+    );
 
     toggleBtn.style.cssText = `
       width: 24px;
@@ -80,7 +123,6 @@ export function renderTopicNode(
 
     titleContainer.appendChild(toggleBtn);
   } else {
-    // مساحة ثابتة حتى يبقى الـ Title بمحاذاة الـ Parents
     const spacer = document.createElement('span');
 
     spacer.style.cssText = `
@@ -92,14 +134,15 @@ export function renderTopicNode(
   }
 
   // =========================================================
-  // Topic Title
+  // Topic Title & Current Badge
   // =========================================================
 
   const titleEl = document.createElement('span');
-
   titleEl.textContent = topic.title;
+
   titleEl.style.cssText = `
-    font-weight: ${isParent ? '600' : '400'};
+    font-weight: ${isParent ? '600' : isCurrentTopic ? '600' : '400'};
+    color: ${isCurrentTopic ? '#1d4ed8' : 'inherit'};
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
@@ -107,13 +150,27 @@ export function renderTopicNode(
 
   titleContainer.appendChild(titleEl);
 
+  if (isCurrentTopic) {
+    const currentBadge = document.createElement('span');
+    currentBadge.textContent = 'الموضع الحالي';
+    currentBadge.style.cssText = `
+      font-size: 11px;
+      padding: 2px 7px;
+      border-radius: 9999px;
+      background: #3b82f6;
+      color: #ffffff;
+      font-weight: 600;
+      flex-shrink: 0;
+    `;
+    titleContainer.appendChild(currentBadge);
+  }
+
   // =========================================================
   // Children Count
   // =========================================================
 
   if (isParent) {
     const countBadge = document.createElement('span');
-
     countBadge.textContent = `(${children.length})`;
 
     countBadge.style.cssText = `
@@ -148,9 +205,7 @@ export function renderTopicNode(
   // =========================================================
 
   if (isParent) {
-    // Parent: الحالة مشتقة من الـ DB Trigger
     const badge = document.createElement('span');
-
     badge.textContent = topic.status;
 
     badge.style.cssText = `
@@ -163,7 +218,6 @@ export function renderTopicNode(
 
     controlContainer.appendChild(badge);
   } else {
-    // Leaf: الحالة قابلة للتعديل
     const select = document.createElement('select');
 
     select.style.cssText = `
@@ -181,7 +235,6 @@ export function renderTopicNode(
 
     statuses.forEach((st) => {
       const opt = document.createElement('option');
-
       opt.value = st;
       opt.textContent = st;
 
@@ -193,14 +246,13 @@ export function renderTopicNode(
     });
 
     select.addEventListener('change', async (e) => {
+      const selectedValue = e.target.value;
       select.disabled = true;
-
-      await onStatusChange(
-        topic.id,
-        e.target.value
-      );
-
-      select.disabled = false;
+      try {
+        await onStatusChange(topic.id, selectedValue);
+      } finally {
+        select.disabled = false;
+      }
     });
 
     controlContainer.appendChild(select);
@@ -211,7 +263,6 @@ export function renderTopicNode(
   // =========================================================
 
   const addChildBtn = document.createElement('button');
-
   addChildBtn.type = 'button';
   addChildBtn.textContent = '+ Subtopic';
 
@@ -232,7 +283,6 @@ export function renderTopicNode(
   // =========================================================
 
   const deleteBtn = document.createElement('button');
-
   deleteBtn.type = 'button';
   deleteBtn.textContent = 'Delete';
 
@@ -255,15 +305,15 @@ export function renderTopicNode(
 
     deleteBtn.disabled = true;
 
-    await onDelete(topic);
-
-    deleteBtn.disabled = false;
+    try {
+      await onDelete(topic);
+    } finally {
+      deleteBtn.disabled = false;
+    }
   });
 
   controlContainer.appendChild(deleteBtn);
-
   nodeEl.appendChild(controlContainer);
-
   nodeWrapper.appendChild(nodeEl);
 
   // =========================================================
@@ -280,7 +330,9 @@ export function renderTopicNode(
       margin-bottom: 0.35rem;
     `;
 
-    // رسم الأبناء داخل Parent فعليًا
+    const initiallyExpanded = !currentTopicId || containsCurrent;
+    childrenContainer.hidden = !initiallyExpanded;
+
     children.forEach((child) => {
       const childNode = renderTopicNode(
         child,
@@ -289,6 +341,7 @@ export function renderTopicNode(
           onStatusChange,
           onAddChild,
           onDelete,
+          currentTopicId,
         }
       );
 
@@ -297,21 +350,14 @@ export function renderTopicNode(
 
     nodeWrapper.appendChild(childrenContainer);
 
-    // =======================================================
-    // Toggle Behaviour
-    // =======================================================
-
-    let expanded = true;
+    let expanded = initiallyExpanded;
 
     toggleBtn.addEventListener('click', () => {
       expanded = !expanded;
+      childrenContainer.hidden = !expanded;
+      toggleBtn.textContent = expanded ? '▼' : '▶';
 
-      childrenContainer.style.display =
-        expanded ? 'block' : 'none';
-
-      toggleBtn.textContent =
-        expanded ? '▼' : '▶';
-
+      toggleBtn.setAttribute('aria-expanded', String(expanded));
       toggleBtn.setAttribute(
         'aria-label',
         expanded ? 'Collapse topic' : 'Expand topic'
