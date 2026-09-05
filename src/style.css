@@ -1,3 +1,4 @@
+/* STREAMING_CHUNK:Defining base css tokens */
 :root {
   --text: #6b6375;
   --text-h: #08060d;
@@ -10,11 +11,9 @@
   --social-bg: rgba(244, 243, 236, 0.5);
   --shadow:
     rgba(0, 0, 0, 0.1) 0 10px 15px -3px, rgba(0, 0, 0, 0.05) 0 4px 6px -2px;
-
-  --sans: system-ui, 'Segoe UI', Roboto, sans-serif;
-  --heading: system-ui, 'Segoe UI', Roboto, sans-serif;
+  --sans: system-ui, "Segoe UI", Roboto, sans-serif;
+  --heading: system-ui, "Segoe UI", Roboto, sans-serif;
   --mono: ui-monospace, Consolas, monospace;
-
   font: 18px/145% var(--sans);
   letter-spacing: 0.18px;
   color-scheme: light dark;
@@ -24,12 +23,10 @@
   text-rendering: optimizeLegibility;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
-
   @media (max-width: 1024px) {
     font-size: 16px;
   }
-}
-
+} /* STREAMING_CHUNK:Configuring dark mode theme */
 @media (prefers-color-scheme: dark) {
   :root {
     --text: #9ca3af;
@@ -44,23 +41,19 @@
     --shadow:
       rgba(0, 0, 0, 0.4) 0 10px 15px -3px, rgba(0, 0, 0, 0.25) 0 4px 6px -2px;
   }
-
   #social .button-icon {
     filter: invert(1) brightness(2);
   }
-}
-
+} /* STREAMING_CHUNK:Resetting core elements */
 body {
   margin: 0;
 }
-
 h1,
 h2 {
   font-family: var(--heading);
   font-weight: 500;
   color: var(--text-h);
 }
-
 h1 {
   font-size: 56px;
   letter-spacing: -1.68px;
@@ -82,7 +75,6 @@ h2 {
 p {
   margin: 0;
 }
-
 code,
 .counter {
   font-family: var(--mono);
@@ -90,72 +82,12 @@ code,
   border-radius: 4px;
   color: var(--text-h);
 }
-
 code {
   font-size: 15px;
   line-height: 135%;
   padding: 4px 8px;
   background: var(--code-bg);
-}
-
-.counter {
-  font-size: 16px;
-  padding: 5px 10px;
-  border-radius: 5px;
-  color: var(--accent);
-  background: var(--accent-bg);
-  border: 2px solid transparent;
-  transition: border-color 0.3s;
-  margin-bottom: 24px;
-
-  &:hover {
-    border-color: var(--accent-border);
-  }
-  &:focus-visible {
-    outline: 2px solid var(--accent);
-    outline-offset: 2px;
-  }
-}
-
-.hero {
-  position: relative;
-
-  .base,
-  .framework,
-  .vite {
-    inset-inline: 0;
-    margin: 0 auto;
-  }
-
-  .base {
-    width: 170px;
-    position: relative;
-    z-index: 0;
-  }
-
-  .framework,
-  .vite {
-    position: absolute;
-  }
-
-  .framework {
-    z-index: 1;
-    top: 34px;
-    height: 28px;
-    transform: perspective(2000px) rotateZ(300deg) rotateX(44deg) rotateY(39deg)
-      scale(1.4);
-  }
-
-  .vite {
-    z-index: 0;
-    top: 107px;
-    height: 26px;
-    width: auto;
-    transform: perspective(2000px) rotateZ(300deg) rotateX(40deg) rotateY(39deg)
-      scale(0.8);
-  }
-}
-
+} /* STREAMING_CHUNK:Styling main app layout container */
 #app {
   width: 1126px;
   max-width: 100%;
@@ -167,7 +99,6 @@ code {
   flex-direction: column;
   box-sizing: border-box;
 }
-
 #center {
   display: flex;
   flex-direction: column;
@@ -175,130 +106,11 @@ code {
   place-content: center;
   place-items: center;
   flex-grow: 1;
-
   @media (max-width: 1024px) {
     padding: 32px 20px 24px;
     gap: 18px;
   }
-}
-
-#next-steps {
-  display: flex;
-  border-top: 1px solid var(--border);
-  text-align: left;
-
-  & > div {
-    flex: 1 1 0;
-    padding: 32px;
-    @media (max-width: 1024px) {
-      padding: 24px 20px;
-    }
-  }
-
-  .icon {
-    margin-bottom: 16px;
-    width: 22px;
-    height: 22px;
-  }
-
-  @media (max-width: 1024px) {
-    flex-direction: column;
-    text-align: center;
-  }
-}
-
-#docs {
-  border-right: 1px solid var(--border);
-
-  @media (max-width: 1024px) {
-    border-right: none;
-    border-bottom: 1px solid var(--border);
-  }
-}
-
-#next-steps ul {
-  list-style: none;
-  padding: 0;
-  display: flex;
-  gap: 8px;
-  margin: 32px 0 0;
-
-  .logo {
-    height: 18px;
-  }
-
-  a {
-    color: var(--text-h);
-    font-size: 16px;
-    border-radius: 6px;
-    background: var(--social-bg);
-    display: flex;
-    padding: 6px 12px;
-    align-items: center;
-    gap: 8px;
-    text-decoration: none;
-    transition: box-shadow 0.3s;
-
-    &:hover {
-      box-shadow: var(--shadow);
-    }
-    .button-icon {
-      height: 18px;
-      width: 18px;
-    }
-  }
-
-  @media (max-width: 1024px) {
-    margin-top: 20px;
-    flex-wrap: wrap;
-    justify-content: center;
-
-    li {
-      flex: 1 1 calc(50% - 8px);
-    }
-
-    a {
-      width: 100%;
-      justify-content: center;
-      box-sizing: border-box;
-    }
-  }
-}
-
-#spacer {
-  height: 88px;
-  border-top: 1px solid var(--border);
-  @media (max-width: 1024px) {
-    height: 48px;
-  }
-}
-
-.ticks {
-  position: relative;
-  width: 100%;
-
-  &::before,
-  &::after {
-    content: '';
-    position: absolute;
-    top: -4.5px;
-    border: 5px solid transparent;
-  }
-
-  &::before {
-    left: 0;
-    border-left-color: var(--border);
-  }
-  &::after {
-    right: 0;
-    border-right-color: var(--border);
-  }
-}
-
-/* =========================================================
-   Current Position Highlighting & Pulse Effects
-   ========================================================= */
-
+} /* STREAMING_CHUNK:Styling current position animation */
 .highlight-current-position,
 [data-current-position="true"] > .topic-node-row {
   outline: 2px solid #3b82f6 !important;
@@ -307,20 +119,15 @@ code {
   border-color: #3b82f6 !important;
   animation: pulse-current-position 2s infinite ease-in-out;
 }
-
 @keyframes pulse-current-position {
-  0%, 100% {
+  0%,
+  100% {
     box-shadow: 0 0 12px rgba(59, 130, 246, 0.35);
   }
   50% {
     box-shadow: 0 0 22px rgba(59, 130, 246, 0.7);
   }
-}
-
-/* =========================================================
-   Modal Dialogs, Overlays & CRUD Action Buttons
-   ========================================================= */
-
+} /* STREAMING_CHUNK:Styling standard modals and overlay */
 .modal-overlay {
   position: fixed;
   inset: 0;
@@ -333,12 +140,14 @@ code {
   padding: 1rem;
   animation: modal-fade-in 0.2s ease;
 }
-
 @keyframes modal-fade-in {
-  from { opacity: 0; }
-  to { opacity: 1; }
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
 }
-
 .modal-content {
   background: var(--bg);
   color: var(--text-h);
@@ -351,26 +160,28 @@ code {
   box-sizing: border-box;
   animation: modal-scale-in 0.2s ease;
 }
-
 @keyframes modal-scale-in {
-  from { transform: scale(0.96); opacity: 0; }
-  to { transform: scale(1); opacity: 1; }
+  from {
+    transform: scale(0.96);
+    opacity: 0;
+  }
+  to {
+    transform: scale(1);
+    opacity: 1;
+  }
 }
-
 .modal-content h3 {
   margin: 0 0 1rem;
   font-size: 1.2rem;
   font-weight: 600;
   color: var(--text-h);
 }
-
 .modal-content label {
   display: block;
   font-size: 13px;
   margin-bottom: 5px;
   color: var(--text);
 }
-
 .modal-content input,
 .modal-content select {
   width: 100%;
@@ -384,20 +195,17 @@ code {
   margin-bottom: 0.85rem;
   font-family: inherit;
 }
-
 .modal-content input:focus,
 .modal-content select:focus {
   outline: 2px solid var(--accent);
   border-color: transparent;
 }
-
 .modal-actions {
   display: flex;
   justify-content: flex-end;
   gap: 0.5rem;
   margin-top: 1rem;
-}
-
+} /* STREAMING_CHUNK:Styling action buttons */
 .btn-secondary {
   padding: 0.45rem 0.9rem;
   border: 1px solid var(--border);
@@ -408,11 +216,9 @@ code {
   font-size: 13px;
   transition: background 0.2s;
 }
-
 .btn-secondary:hover {
   background: var(--code-bg);
 }
-
 .btn-primary {
   padding: 0.45rem 1rem;
   border: none;
@@ -424,11 +230,9 @@ code {
   font-weight: 500;
   transition: opacity 0.2s;
 }
-
 .btn-primary:hover {
   opacity: 0.9;
 }
-
 .btn-danger {
   padding: 0.45rem 1rem;
   border: none;
@@ -440,56 +244,123 @@ code {
   font-weight: 500;
   transition: opacity 0.2s;
 }
-
 .btn-danger:hover:not(:disabled) {
   background: #dc2626;
 }
-
 .btn-primary:disabled,
 .btn-secondary:disabled,
 .btn-danger:disabled {
   opacity: 0.5;
   cursor: not-allowed;
-}
-
-.delete-confirm-box {
-  background: rgba(239, 68, 68, 0.08);
-  border: 1px dashed rgba(239, 68, 68, 0.4);
-  padding: 0.6rem 0.8rem;
-  border-radius: 6px;
-  margin: 0.75rem 0;
-  font-size: 13px;
-}
-
-.delete-target-badge {
-  display: inline-block;
-  padding: 2px 6px;
-  border-radius: 4px;
-  background: rgba(239, 68, 68, 0.15);
-  color: #ef4444;
-  font-weight: 600;
-  user-select: all;
-  margin-top: 4px;
-}
-
-.semester-action-btn {
-  background: transparent;
+} /* STREAMING_CHUNK:Styling floating active session bar */
+.active-session-bar {
+  position: fixed;
+  bottom: 24px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: var(--bg);
   border: 1px solid var(--border);
-  border-radius: 5px;
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.25);
+  border-radius: 12px;
+  padding: 0.75rem 1.25rem;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1.5rem;
+  z-index: 999;
+  min-width: 320px;
+  max-width: 90vw;
+  box-sizing: border-box;
+  animation: slide-up-bar 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+}
+@keyframes slide-up-bar {
+  from {
+    transform: translate(-50%, 40px);
+    opacity: 0;
+  }
+  to {
+    transform: translate(-50%, 0);
+    opacity: 1;
+  }
+}
+.active-session-pulse {
+  width: 10px;
+  height: 10px;
+  background-color: #10b981;
+  border-radius: 50%;
+  display: inline-block;
+  box-shadow: 0 0 0 rgba(16, 185, 129, 0.7);
+  animation: pulse-green 1.5s infinite;
+}
+@keyframes pulse-green {
+  0% {
+    box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.7);
+  }
+  70% {
+    box-shadow: 0 0 0 8px rgba(16, 185, 129, 0);
+  }
+  100% {
+    box-shadow: 0 0 0 0 rgba(16, 185, 129, 0);
+  }
+}
+.session-timer-clock {
+  font-family: var(--mono);
+  font-size: 17px;
+  font-weight: 700;
+  color: var(--text-h);
+  background: var(--code-bg);
   padding: 3px 8px;
+  border-radius: 6px;
+  border: 1px solid var(--border);
+} /* STREAMING_CHUNK:Styling quick update status choices and notes textarea */
+.quick-status-group {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  margin-top: 6px;
+}
+.status-option {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.75rem;
+  padding: 0.6rem 0.75rem;
+  border: 1px solid var(--border);
+  border-radius: 6px;
   cursor: pointer;
+  background: var(--code-bg);
+  transition: border-color 0.2s;
+}
+.status-option:hover {
+  border-color: #10b981;
+}
+.status-option input[type="radio"] {
+  width: auto;
+  margin: 3px 0 0 0;
+  cursor: pointer;
+}
+.status-option div strong {
+  display: block;
+  font-size: 13px;
+  color: var(--text-h);
+}
+.status-option div p {
   font-size: 12px;
   color: var(--text);
-  transition: all 0.2s ease;
+  margin: 2px 0 0;
 }
-
-.semester-action-btn:hover {
-  border-color: var(--accent);
-  color: var(--accent);
+.session-notes-input {
+  width: 100%;
+  padding: 0.6rem 0.75rem;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  background: var(--code-bg);
+  color: var(--text-h);
+  font-size: 13px;
+  box-sizing: border-box;
+  font-family: inherit;
+  resize: vertical;
 }
-
-.semester-action-btn.delete:hover {
-  border-color: #ef4444;
-  color: #ef4444;
-  background: rgba(239, 68, 68, 0.08);
+.session-notes-input:focus {
+  outline: 2px solid #10b981;
+  border-color: transparent;
 }
