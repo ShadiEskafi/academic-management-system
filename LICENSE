@@ -1,0 +1,35 @@
+Business Source License 1.1
+
+Parameters:
+
+Licensor:                 Shadi Mohammed Eskafi
+Licensed Work:            Academic Management System
+Additional Use Grant:     You may use the Licensed Work for educational, research,
+                          and non-commercial testing purposes. You may run the 
+                          application locally for personal evaluation. You may NOT 
+                          use the Licensed Work to provide a hosted, managed, or 
+                          commercial service (SaaS), nor bundle it into a commercial offering.
+Change Date:              2030-01-01
+Change License:           GNU General Public License v3.0 or later
+
+Copyright (c) 2026 Shadi Mohammed Eskafi. All rights reserved.
+
+Permission is hereby granted, free of charge, to any person obtaining a copy of this
+software and associated documentation files (the "Software"), to deal in the Software
+under the terms of this License, including the Additional Use Grant above.
+
+The Licensor hereby grants you the right to copy, modify, create derivative works,
+redistribute, and make non-production use of the Licensed Work. Any use of the Licensed
+Work that exceeds the Additional Use Grant is not permitted without explicit written 
+permission from the Licensor.
+
+On the Change Date, or on such earlier date as provided by the Licensor, this License
+shall automatically convert to the Change License, and you may use the Software under
+the terms of the Change License.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED,
+INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR
+PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE
+LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT,
+TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE
+OR OTHER DEALINGS IN THE SOFTWARE.
