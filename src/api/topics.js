@@ -1,5 +1,5 @@
 // src/api/topics.js
-// إدارة Topics — جلب الشجرة، تحديث الحالة، إنشاء وحذف Topics.
+// إدارة Topics — جلب الشجرة، تحديث الحالة والاسم، إنشاء وحذف Topics.
 
 import { supabase } from "./supabaseClient.js";
 
@@ -11,15 +11,23 @@ export async function fetchTopicTree(courseId) {
   return { topics: data ?? [], error };
 }
 
-export async function updateTopicStatus(topicId, status) {
+export async function updateTopic(topicId, updates) {
+  const payload = {};
+  if (updates.title !== undefined) payload.title = updates.title.trim();
+  if (updates.status !== undefined) payload.status = updates.status;
+
   const { data, error } = await supabase
     .from("topics")
-    .update({ status })
+    .update(payload)
     .eq("id", topicId)
     .select()
     .single();
 
   return { topic: data ?? null, error };
+}
+
+export async function updateTopicStatus(topicId, status) {
+  return updateTopic(topicId, { status });
 }
 
 export async function createTopic({ courseId, parentId = null, title }) {

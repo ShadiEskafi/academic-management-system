@@ -1,8 +1,9 @@
 // src/pages/CourseDetailPage.js
-// صفحة محتوى المساق — مسؤولة عن تنسيق Topic Tree وعمليات الإنشاء والحذف وتحديث الموضع الحالي.
+// صفحة محتوى المساق — مسؤولة عن تنسيق Topic Tree وعمليات الإنشاء والتعديل والحذف وتحديث الموضع الحالي.
 
 import {
   fetchTopicTree,
+  updateTopic,
   updateTopicStatus,
   completeTopicAndAdvance,
   createTopic,
@@ -11,6 +12,10 @@ import {
 
 import { renderTopicNode } from '../components/TopicNode.js';
 import { renderTopicForm } from '../components/TopicForm.js';
+import {
+  renderEditTopicModal,
+  renderDeleteTopicModal,
+} from '../components/TopicModals.js';
 
 // =========================================================
 // بناء Tree Structure من الـ Flat Array
@@ -218,6 +223,38 @@ export async function renderCourseDetailPage(
   }
 
   // =========================================================
+  // Modals Handlers (Edit & Delete)
+  // =========================================================
+
+  function handleOpenEditTopic(topic) {
+    renderEditTopicModal(topic, {
+      onSave: async (topicId, updates) => {
+        const { error: updateErr } = await updateTopic(topicId, updates);
+        if (updateErr) return { error: updateErr };
+
+        await loadAndRenderTree();
+        return { error: null };
+      },
+    });
+  }
+
+  function handleOpenDeleteTopic(topic, isParent, childCount) {
+    renderDeleteTopicModal(topic, isParent, childCount, {
+      onDelete: async (topicId) => {
+        const { error: deleteErr } = await deleteTopic(topicId);
+        if (deleteErr) return { error: deleteErr };
+
+        if (activePositionTopicId === topicId) {
+          activePositionTopicId = null;
+        }
+
+        await loadAndRenderTree();
+        return { error: null };
+      },
+    });
+  }
+
+  // =========================================================
   // Load + Build + Render Tree
   // =========================================================
 
@@ -272,7 +309,6 @@ export async function renderCourseDetailPage(
 
           onStatusChange: async (topicId, newStatus) => {
             if (newStatus === 'completed') {
-              // استدعاء RPC الإنجاز حتى يتحدث مؤشر المساق بالـ DB ويتقدم للموضوع التالي
               const { nextTopicId, error: completeErr } =
                 await completeTopicAndAdvance(courseId, topicId);
 
@@ -281,7 +317,6 @@ export async function renderCourseDetailPage(
                 return;
               }
 
-              // نقل الموضع النشط للموضوع التالي فوراً
               activePositionTopicId = nextTopicId;
             } else {
               const { error: updateErr } = await updateTopicStatus(
@@ -295,7 +330,6 @@ export async function renderCourseDetailPage(
               }
             }
 
-            // إعادة جلب الشجرة لتعكس الحالات المحسوبة بالـ DB Trigger
             await loadAndRenderTree();
           },
 
@@ -303,19 +337,12 @@ export async function renderCourseDetailPage(
             openTopicForm(parentTopic);
           },
 
-          onDelete: async (topicToDelete) => {
-            const { error: deleteErr } = await deleteTopic(topicToDelete.id);
+          onEdit: (topicToEdit) => {
+            handleOpenEditTopic(topicToEdit);
+          },
 
-            if (deleteErr) {
-              alert('فشل حذف الـ Topic: ' + deleteErr.message);
-              return;
-            }
-
-            if (activePositionTopicId === topicToDelete.id) {
-              activePositionTopicId = null;
-            }
-
-            await loadAndRenderTree();
+          onDelete: (topicToDelete, isParent, childCount) => {
+            handleOpenDeleteTopic(topicToDelete, isParent, childCount);
           },
         }
       );

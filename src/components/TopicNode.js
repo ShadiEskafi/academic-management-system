@@ -1,5 +1,5 @@
 // src/components/TopicNode.js
-// رسم عناصر الشجرة — تمييز بصري بين الـ Parent والـ Leaf وإبراز الموضع الحالي.
+// رسم عناصر الشجرة — تمييز بصري بين الـ Parent والـ Leaf، إبراز الموضع الحالي، ودعم عمليات التعديل والحذف
 
 export function renderTopicNode(
   topic,
@@ -7,6 +7,7 @@ export function renderTopicNode(
   {
     onStatusChange,
     onAddChild,
+    onEdit,
     onDelete,
     currentTopicId = null,
   }
@@ -279,6 +280,32 @@ export function renderTopicNode(
   controlContainer.appendChild(addChildBtn);
 
   // =========================================================
+  // Edit Button (✏️)
+  // =========================================================
+
+  const editBtn = document.createElement('button');
+  editBtn.type = 'button';
+  editBtn.textContent = '✏️';
+  editBtn.title = 'تعديل اسم الموضوع';
+
+  editBtn.style.cssText = `
+    padding: 3px 6px;
+    font-size: 12px;
+    cursor: pointer;
+    background: transparent;
+    border: 1px solid #444;
+    border-radius: 4px;
+  `;
+
+  editBtn.addEventListener('click', () => {
+    if (onEdit) {
+      onEdit(topic);
+    }
+  });
+
+  controlContainer.appendChild(editBtn);
+
+  // =========================================================
   // Delete Button
   // =========================================================
 
@@ -290,25 +317,15 @@ export function renderTopicNode(
     padding: 3px 7px;
     font-size: 12px;
     cursor: pointer;
+    color: #ef4444;
+    background: transparent;
+    border: 1px solid #444;
+    border-radius: 4px;
   `;
 
-  deleteBtn.addEventListener('click', async () => {
-    const message = isParent
-      ? `هذا الـ Topic يحتوي على ${children.length} Subtopic(s).\nحذفه سيؤدي إلى حذف الشجرة التابعة له بالكامل.\n\nهل تريد المتابعة؟`
-      : `هل أنت متأكد من حذف "${topic.title}"؟`;
-
-    const confirmed = window.confirm(message);
-
-    if (!confirmed) {
-      return;
-    }
-
-    deleteBtn.disabled = true;
-
-    try {
-      await onDelete(topic);
-    } finally {
-      deleteBtn.disabled = false;
+  deleteBtn.addEventListener('click', () => {
+    if (onDelete) {
+      onDelete(topic, isParent, children.length);
     }
   });
 
@@ -340,6 +357,7 @@ export function renderTopicNode(
         {
           onStatusChange,
           onAddChild,
+          onEdit,
           onDelete,
           currentTopicId,
         }
