@@ -1,5 +1,5 @@
 // src/pages/CourseDetailPage.js
-// صفحة محتوى المساق — مسؤولة عن تنسيق Topic Tree وعمليات الإنشاء والتعديل والحذف وتحديث الموضع الحالي.
+// صفحة محتوى المساق — مسؤولة عن تنسيق Topic Tree وعمليات الجلسات والموضع الحالي.
 
 import {
   fetchTopicTree,
@@ -10,16 +10,22 @@ import {
   deleteTopic,
 } from '../api/topics.js';
 
+import {
+  startStudySession,
+  completeStudySession,
+} from '../api/studySessions.js';
+
 import { renderTopicNode } from '../components/TopicNode.js';
 import { renderTopicForm } from '../components/TopicForm.js';
 import {
   renderEditTopicModal,
   renderDeleteTopicModal,
 } from '../components/TopicModals.js';
-
-// =========================================================
-// بناء Tree Structure من الـ Flat Array
-// =========================================================
+import {
+  renderSessionSetupModal,
+  renderActiveSessionBar,
+  renderQuickUpdateModal,
+} from '../components/ActiveSessionModal.js';
 
 function buildTopicTree(topics) {
   const topicMap = new Map();
@@ -41,7 +47,6 @@ function buildTopicTree(topics) {
     }
 
     const parentTopic = topicMap.get(topic.parent_id);
-
     if (parentTopic) {
       parentTopic.children.push(currentTopic);
     }
@@ -55,44 +60,59 @@ function buildTopicTree(topics) {
   }
 
   rootTopics.forEach((topic) => sortChildren(topic));
-
   return rootTopics;
 }
-
-// =========================================================
-// Render Course Detail Page
-// =========================================================
 
 export async function renderCourseDetailPage(
   container,
   { courseId, currentPositionTopicId = null, onBack }
 ) {
   let activePositionTopicId = currentPositionTopicId;
+  let rawTopicsList = [];
+  let activeSessionCleanup = null;
 
   container.innerHTML = `
     <div style="margin-bottom: 1.5rem;">
-
       <div
         style="
           display:flex;
           align-items:center;
+          justify-content:space-between;
           gap:1rem;
           margin-bottom:1rem;
+          flex-wrap:wrap;
         "
       >
+        <div style="display:flex;align-items:center;gap:0.75rem;">
+          <button
+            id="back-to-courses-btn"
+            style="
+              padding:0.4rem 0.8rem;
+              cursor:pointer;
+            "
+          >
+            ← العودة للمساقات
+          </button>
+
+          <h2 style="margin:0;">
+            محتوى المساق (Topic Tree)
+          </h2>
+        </div>
+
         <button
-          id="back-to-courses-btn"
+          id="start-study-session-btn"
+          class="btn-primary"
           style="
-            padding:0.4rem 0.8rem;
-            cursor:pointer;
+            background:#10b981;
+            display:inline-flex;
+            align-items:center;
+            gap:6px;
+            font-weight:600;
+            padding:0.45rem 1rem;
           "
         >
-          ← العودة للمساقات
+          ⏱️ ابدأ جلسة دراسة
         </button>
-
-        <h2 style="margin:0;">
-          محتوى المساق (Topic Tree)
-        </h2>
       </div>
 
       <button
@@ -104,7 +124,6 @@ export async function renderCourseDetailPage(
       >
         + Add Topic
       </button>
-
     </div>
 
     <div id="topic-form-container"></div>
@@ -123,12 +142,16 @@ export async function renderCourseDetailPage(
 
   const backBtn = container.querySelector('#back-to-courses-btn');
   const addRootBtn = container.querySelector('#add-root-topic-btn');
+  const startSessionBtn = container.querySelector('#start-study-session-btn');
   const formContainer = container.querySelector('#topic-form-container');
   const treeContainer = container.querySelector('#tree-container');
 
   let formOpen = false;
 
-  backBtn.addEventListener('click', onBack);
+  backBtn.addEventListener('click', () => {
+    if (activeSessionCleanup) activeSessionCleanup();
+    onBack();
+  });
 
   function closeTopicForm() {
     formOpen = false;
@@ -141,11 +164,7 @@ export async function renderCourseDetailPage(
 
     renderTopicForm(formContainer, {
       parentTopic,
-
-      onCancel: () => {
-        closeTopicForm();
-      },
-
+      onCancel: () => closeTopicForm(),
       onSave: async ({ title, parentId }) => {
         const { topic, error } = await createTopic({
           courseId,
@@ -153,23 +172,16 @@ export async function renderCourseDetailPage(
           title,
         });
 
-        if (error) {
-          return { error };
-        }
+        if (error) return { error };
 
         closeTopicForm();
 
-        // إذا لم يكن هناك موضع نشط، نسند أول موضوع مضاف
         if (!activePositionTopicId && topic) {
           activePositionTopicId = topic.id;
         }
 
         await loadAndRenderTree();
-
-        return {
-          topic,
-          error: null,
-        };
+        return { topic, error: null };
       },
     });
   }
@@ -179,33 +191,85 @@ export async function renderCourseDetailPage(
       closeTopicForm();
       return;
     }
-
     openTopicForm();
   });
 
-  // =========================================================
-  // Scroll & Highlight إلى Current Position
-  // =========================================================
-
-  function scrollToCurrentPosition() {
-    if (!activePositionTopicId) {
+  startSessionBtn.addEventListener('click', () => {
+    if (activeSessionCleanup) {
       return;
     }
+
+    renderSessionSetupModal({
+      topics: rawTopicsList,
+      currentTopicId: activePositionTopicId,
+      onStart: async (selectedTopicId, selectedTopicTitle) => {
+        const { session, error: startErr } = await startStudySession({
+          courseId,
+          topicId: selectedTopicId,
+        });
+
+        if (startErr) {
+          console.error('Failed to start study session:', startErr);
+          return;
+        }
+
+        startSessionBtn.disabled = true;
+        startSessionBtn.style.opacity = '0.5';
+
+        activeSessionCleanup = renderActiveSessionBar({
+          topicTitle: selectedTopicTitle,
+          startTime: Date.now(),
+          onFinish: ({ formattedTime }) => {
+            activeSessionCleanup = null;
+            startSessionBtn.disabled = false;
+            startSessionBtn.style.opacity = '1';
+
+            renderQuickUpdateModal({
+              topicTitle: selectedTopicTitle,
+              formattedDuration: formattedTime,
+              onSave: async ({ topicStatus, notes }) => {
+                const { nextTopicId, error: completeErr } =
+                  await completeStudySession({
+                    sessionId: session.id,
+                    courseId,
+                    topicId: selectedTopicId,
+                    topicStatus,
+                    notes,
+                  });
+
+                if (completeErr) return { error: completeErr };
+
+                if (nextTopicId) {
+                  activePositionTopicId = nextTopicId;
+                }
+
+                await loadAndRenderTree();
+                return { error: null };
+              },
+            });
+          },
+          onCancel: () => {
+            activeSessionCleanup = null;
+            startSessionBtn.disabled = false;
+            startSessionBtn.style.opacity = '1';
+          },
+        });
+      },
+    });
+  });
+
+  function scrollToCurrentPosition() {
+    if (!activePositionTopicId) return;
 
     const currentNode = treeContainer.querySelector(
       `[data-topic-id="${CSS.escape(activePositionTopicId)}"]`
     );
 
-    if (!currentNode) {
-      return;
-    }
+    if (!currentNode) return;
 
-    // فتح كافة الحاويات الأبوية المغلقة للوصول للعنصر
     let parentEl = currentNode.parentElement;
     while (parentEl && parentEl !== treeContainer) {
-      if (parentEl.hidden) {
-        parentEl.hidden = false;
-      }
+      if (parentEl.hidden) parentEl.hidden = false;
       parentEl = parentEl.parentElement;
     }
 
@@ -222,16 +286,11 @@ export async function renderCourseDetailPage(
     }, 3000);
   }
 
-  // =========================================================
-  // Modals Handlers (Edit & Delete)
-  // =========================================================
-
   function handleOpenEditTopic(topic) {
     renderEditTopicModal(topic, {
       onSave: async (topicId, updates) => {
         const { error: updateErr } = await updateTopic(topicId, updates);
         if (updateErr) return { error: updateErr };
-
         await loadAndRenderTree();
         return { error: null };
       },
@@ -254,10 +313,6 @@ export async function renderCourseDetailPage(
     });
   }
 
-  // =========================================================
-  // Load + Build + Render Tree
-  // =========================================================
-
   async function loadAndRenderTree() {
     treeContainer.innerHTML = `
       <p style="color:#71717a;">
@@ -276,6 +331,8 @@ export async function renderCourseDetailPage(
       return;
     }
 
+    rawTopicsList = topics ?? [];
+
     if (!topics || topics.length === 0) {
       treeContainer.innerHTML = `
         <p style="color:#71717a;">
@@ -285,7 +342,6 @@ export async function renderCourseDetailPage(
       return;
     }
 
-    // تهيئة الموضع النشط تلقائياً لأول موضوع غير مكتمل إذا لم يكن محدداً
     if (!activePositionTopicId) {
       const firstIncomplete =
         topics.find((t) => t.status !== 'completed' && (!t.children || t.children.length === 0)) ||
@@ -306,44 +362,32 @@ export async function renderCourseDetailPage(
         topic.children,
         {
           currentTopicId: activePositionTopicId,
-
           onStatusChange: async (topicId, newStatus) => {
             if (newStatus === 'completed') {
               const { nextTopicId, error: completeErr } =
                 await completeTopicAndAdvance(courseId, topicId);
 
               if (completeErr) {
-                alert('فشل تسجيل إنجاز الموضوع: ' + completeErr.message);
+                console.error('Failed to advance topic:', completeErr);
                 return;
               }
-
               activePositionTopicId = nextTopicId;
             } else {
               const { error: updateErr } = await updateTopicStatus(
                 topicId,
                 newStatus
               );
-
               if (updateErr) {
-                alert('فشل تحديث الحالة: ' + updateErr.message);
+                console.error('Failed to update status:', updateErr);
                 return;
               }
             }
-
             await loadAndRenderTree();
           },
-
-          onAddChild: (parentTopic) => {
-            openTopicForm(parentTopic);
-          },
-
-          onEdit: (topicToEdit) => {
-            handleOpenEditTopic(topicToEdit);
-          },
-
-          onDelete: (topicToDelete, isParent, childCount) => {
-            handleOpenDeleteTopic(topicToDelete, isParent, childCount);
-          },
+          onAddChild: (parentTopic) => openTopicForm(parentTopic),
+          onEdit: (topicToEdit) => handleOpenEditTopic(topicToEdit),
+          onDelete: (topicToDelete, isParent, childCount) =>
+            handleOpenDeleteTopic(topicToDelete, isParent, childCount),
         }
       );
 
@@ -358,6 +402,7 @@ export async function renderCourseDetailPage(
   await loadAndRenderTree();
 
   return () => {
+    if (activeSessionCleanup) activeSessionCleanup();
     formOpen = false;
     formContainer.innerHTML = '';
   };
