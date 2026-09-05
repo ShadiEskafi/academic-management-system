@@ -5,13 +5,40 @@
 import { supabase } from './supabaseClient.js';
 
 export async function fetchCoursesBySemester(semesterId) {
-  const { data, error } = await supabase
+  const { data: courses, error } = await supabase
     .from('courses')
     .select('*')
     .eq('semester_id', semesterId)
     .order('created_at', { ascending: false });
 
-  return { courses: data ?? [], error };
+  if (error) return { courses: [], error };
+
+  // نجيب عناوين الـ Topics يلي current_position_topic_id بتشاور عليها،
+  // عشان نعرض "آخر موضع: X" بدل ما نعرض بس الـ id (استعلام واحد إضافي، مش N+1).
+  const positionIds = (courses ?? [])
+    .map((c) => c.current_position_topic_id)
+    .filter(Boolean);
+
+  let positionTitles = {};
+  if (positionIds.length > 0) {
+    const { data: topics } = await supabase
+      .from('topics')
+      .select('id, title')
+      .in('id', positionIds);
+
+    positionTitles = Object.fromEntries(
+      (topics ?? []).map((t) => [t.id, t.title])
+    );
+  }
+
+  const enriched = (courses ?? []).map((c) => ({
+    ...c,
+    currentPositionTitle: c.current_position_topic_id
+      ? positionTitles[c.current_position_topic_id] ?? null
+      : null,
+  }));
+
+  return { courses: enriched, error: null };
 }
 
 export async function createCourse({ semesterId, title, creditHours, difficulty, priority = 'medium' }) {

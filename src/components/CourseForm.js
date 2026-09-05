@@ -11,6 +11,7 @@ export function renderCourseForm(
     onCreate,
     onBack,
     onSelectCourse,
+    onLogAchievement,
   }
 ) {
   container.innerHTML = `
@@ -87,26 +88,43 @@ export function renderCourseForm(
             <li
               style="padding:0.5rem;border-bottom:1px solid #333;"
             >
-              <button
-                type="button"
-                class="course-title-btn"
-                data-course-id="${c.id}"
-                style="
-                  background:none;
-                  border:none;
-                  padding:0;
-                  cursor:pointer;
-                  font:inherit;
-                  text-align:left;
-                "
-              >
-                <strong>${c.title}</strong>
-              </button>
+              <div style="display:flex;justify-content:space-between;align-items:center;gap:0.5rem;">
+                <button
+                  type="button"
+                  class="course-title-btn"
+                  data-course-id="${c.id}"
+                  style="
+                    background:none;
+                    border:none;
+                    padding:0;
+                    cursor:pointer;
+                    font:inherit;
+                    text-align:left;
+                  "
+                >
+                  <strong>${c.title}</strong>
+                </button>
+
+                <button
+                  type="button"
+                  class="log-achievement-btn"
+                  data-course-id="${c.id}"
+                  style="font-size:12px;padding:3px 8px;cursor:pointer;flex-shrink:0;"
+                >
+                  سجّل إنجاز جديد
+                </button>
+              </div>
 
               <span style="opacity:0.7;font-size:13px;">
                 — ${c.credit_hours} CH,
                 ${c.difficulty},
                 priority: ${c.priority}
+              </span>
+              <br/>
+              <span style="opacity:0.6;font-size:12px;">
+                ${c.currentPositionTitle
+                  ? `آخر موضع: ${c.currentPositionTitle}`
+                  : 'لسا ما في موضع مسجّل'}
               </span>
             </li>
           `).join('') ||
@@ -127,6 +145,17 @@ export function renderCourseForm(
 
       if (onSelectCourse) {
         onSelectCourse(courseId);
+      }
+    });
+  });
+
+  // فتح Modal تسجيل الإنجاز عند الضغط على "سجّل إنجاز جديد"
+  container.querySelectorAll('.log-achievement-btn').forEach((button) => {
+    button.addEventListener('click', () => {
+      const courseId = button.dataset.courseId;
+
+      if (onLogAchievement) {
+        onLogAchievement(courseId);
       }
     });
   });
