@@ -41,3 +41,29 @@ export async function createSemester({ title, status = 'planned', startDate = nu
 
   return { semester: data ?? null, error };
 }
+
+export async function updateSemester(semesterId, updates) {
+  const payload = {};
+  if (updates.title !== undefined) payload.title = updates.title;
+  if (updates.status !== undefined) payload.status = updates.status;
+  if (updates.startDate !== undefined) payload.start_date = updates.startDate;
+  if (updates.endDate !== undefined) payload.end_date = updates.endDate;
+
+  const { data, error } = await supabase
+    .from('semesters')
+    .update(payload)
+    .eq('id', semesterId)
+    .select()
+    .single();
+
+  return { semester: data ?? null, error };
+}
+
+export async function deleteSemester(semesterId) {
+  const { error } = await supabase
+    .from('semesters')
+    .delete()
+    .eq('id', semesterId);
+
+  return { error };
+}
