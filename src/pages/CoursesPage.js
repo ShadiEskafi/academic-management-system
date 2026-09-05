@@ -1,8 +1,13 @@
 // src/pages/CoursesPage.js
 // الطبقة اللي بتربط: api (courses.js, topics.js) ↔ state (store.js) ↔ components
-// (CourseForm.js, LogAchievementModal.js)
+// (CourseForm.js, LogAchievementModal.js, CourseModals.js)
 
-import { fetchCoursesBySemester, createCourse } from '../api/courses.js';
+import {
+  fetchCoursesBySemester,
+  createCourse,
+  updateCourse,
+  deleteCourse,
+} from '../api/courses.js';
 import {
   fetchIncompleteLeafTopics,
   createTopic,
@@ -12,6 +17,10 @@ import { supabase } from '../api/supabaseClient.js';
 import { setCourses, getState, subscribe } from '../state/store.js';
 import { renderCourseForm } from '../components/CourseForm.js';
 import { renderLogAchievementModal } from '../components/LogAchievementModal.js';
+import {
+  renderEditCourseModal,
+  renderDeleteCourseModal,
+} from '../components/CourseModals.js';
 
 export async function renderCoursesPage(
   container,
@@ -28,7 +37,6 @@ export async function renderCoursesPage(
     return () => {};
   }
 
-  // إثراء المساقات بالعناوين وبأول موضوع متاح
   const enrichedCourses = await enrichCoursesWithCurrentPosition(initialCourses);
   setCourses(enrichedCourses);
 
@@ -41,6 +49,8 @@ export async function renderCoursesPage(
       onSelectCourse,
       onContinueCourse,
       onLogAchievement: handleLogAchievement,
+      onEditCourse: handleOpenEdit,
+      onDeleteCourse: handleOpenDelete,
     });
   }
 
@@ -55,6 +65,8 @@ export async function renderCoursesPage(
       onSelectCourse,
       onContinueCourse,
       onLogAchievement: handleLogAchievement,
+      onEditCourse: handleOpenEdit,
+      onDeleteCourse: handleOpenDelete,
     });
   });
 
@@ -68,7 +80,6 @@ export async function renderCoursesPage(
           course.current_topic_title ||
           null;
 
-        // 1. إذا كان الـ ID مسجل مسبقاً ولكن العنوان غير موجود، نجلبه مباشرة من topics
         if (topicId && !topicTitle) {
           const { data: topicData } = await supabase
             .from('topics')
@@ -81,7 +92,6 @@ export async function renderCoursesPage(
           }
         }
 
-        // 2. إذا لم يكن هناك Current Position أصلاً، نربطه بأول موضوع غير مكتمل في المساق
         if (!topicId) {
           const { topics } = await fetchIncompleteLeafTopics(course.id);
           if (topics && topics.length > 0) {
@@ -91,7 +101,6 @@ export async function renderCoursesPage(
           }
         }
 
-        // إرجاع الكائن بكافة التسميات الممكنة لضمان توافقه مع CourseForm
         return {
           ...course,
           current_position_topic_id: topicId,
@@ -124,6 +133,30 @@ export async function renderCoursesPage(
       const enriched = await enrichCoursesWithCurrentPosition(refreshed);
       setCourses(enriched);
     }
+  }
+
+  function handleOpenEdit(course) {
+    renderEditCourseModal(course, {
+      onSave: async (courseId, updates) => {
+        const { error: updateErr } = await updateCourse(courseId, updates);
+        if (updateErr) return { error: updateErr };
+
+        await refreshCourses();
+        return { error: null };
+      },
+    });
+  }
+
+  function handleOpenDelete(course) {
+    renderDeleteCourseModal(course, {
+      onDelete: async (courseId) => {
+        const { error: deleteErr } = await deleteCourse(courseId);
+        if (deleteErr) return { error: deleteErr };
+
+        await refreshCourses();
+        return { error: null };
+      },
+    });
   }
 
   async function handleLogAchievement(courseId) {

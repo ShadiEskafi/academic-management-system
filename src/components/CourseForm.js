@@ -1,7 +1,5 @@
 // src/components/CourseForm.js
-// Component "غبي": فورم إنشاء + قائمة عرض.
-// Credit Hours وDifficulty إجباريين
-// (Phase 06: مُدخلات مباشرة لخوارزمية Priority Score — Phase 06.5, BR-3).
+// Component "غبي": فورم إنشاء + قائمة عرض ودعم عمليات التعديل والحذف.
 
 export function renderCourseForm(
   container,
@@ -13,6 +11,8 @@ export function renderCourseForm(
     onSelectCourse,
     onContinueCourse,
     onLogAchievement,
+    onEditCourse,
+    onDeleteCourse,
   }
 ) {
   container.innerHTML = `
@@ -87,7 +87,7 @@ export function renderCourseForm(
         ${
           courses.map((c) => `
             <li
-              style="padding:0.5rem;border-bottom:1px solid #333;"
+              style="padding:0.6rem 0.5rem;border-bottom:1px solid #333;"
             >
               <div style="display:flex;justify-content:space-between;align-items:center;gap:0.5rem;">
                 <button
@@ -101,19 +101,46 @@ export function renderCourseForm(
                     cursor:pointer;
                     font:inherit;
                     text-align:left;
+                    flex:1;
+                    min-width:0;
+                    overflow:hidden;
+                    text-overflow:ellipsis;
+                    white-space:nowrap;
                   "
                 >
                   <strong>${c.title}</strong>
                 </button>
 
-                <button
-                  type="button"
-                  class="log-achievement-btn"
-                  data-course-id="${c.id}"
-                  style="font-size:12px;padding:3px 8px;cursor:pointer;flex-shrink:0;"
-                >
-                  سجّل إنجاز جديد
-                </button>
+                <div style="display:flex;gap:5px;align-items:center;flex-shrink:0;">
+                  <button
+                    type="button"
+                    class="edit-course-btn"
+                    data-course-id="${c.id}"
+                    title="تعديل المساق"
+                    style="background:none;border:1px solid #444;border-radius:4px;padding:2px 6px;cursor:pointer;font-size:12px;"
+                  >
+                    ✏️
+                  </button>
+
+                  <button
+                    type="button"
+                    class="delete-course-btn"
+                    data-course-id="${c.id}"
+                    title="حذف المساق"
+                    style="background:none;border:1px solid #444;border-radius:4px;padding:2px 6px;cursor:pointer;font-size:12px;color:#ef4444;"
+                  >
+                    🗑️
+                  </button>
+
+                  <button
+                    type="button"
+                    class="log-achievement-btn"
+                    data-course-id="${c.id}"
+                    style="font-size:12px;padding:3px 8px;cursor:pointer;"
+                  >
+                    سجّل إنجاز جديد
+                  </button>
+                </div>
               </div>
 
               <span style="opacity:0.7;font-size:13px;">
@@ -160,9 +187,30 @@ export function renderCourseForm(
   container.querySelectorAll('.course-title-btn').forEach((button) => {
     button.addEventListener('click', () => {
       const courseId = button.dataset.courseId;
-
       if (onSelectCourse) {
         onSelectCourse(courseId);
+      }
+    });
+  });
+
+  // فتح Modal تعديل المساق
+  container.querySelectorAll('.edit-course-btn').forEach((button) => {
+    button.addEventListener('click', () => {
+      const courseId = button.dataset.courseId;
+      const course = courses.find((c) => c.id === courseId);
+      if (course && onEditCourse) {
+        onEditCourse(course);
+      }
+    });
+  });
+
+  // فتح Modal حذف المساق
+  container.querySelectorAll('.delete-course-btn').forEach((button) => {
+    button.addEventListener('click', () => {
+      const courseId = button.dataset.courseId;
+      const course = courses.find((c) => c.id === courseId);
+      if (course && onDeleteCourse) {
+        onDeleteCourse(course);
       }
     });
   });
@@ -200,10 +248,7 @@ export function renderCourseForm(
 
       errorEl.textContent = '';
 
-      const submitBtn = e.target.querySelector(
-        'button[type="submit"]'
-      );
-
+      const submitBtn = e.target.querySelector('button[type="submit"]');
       submitBtn.disabled = true;
 
       const result = await onCreate({

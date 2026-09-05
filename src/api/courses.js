@@ -61,6 +61,34 @@ export async function createCourse({ semesterId, title, creditHours, difficulty,
   return { course: data ?? null, error };
 }
 
+export async function updateCourse(courseId, { title, creditHours, difficulty, priority }) {
+  const payload = {};
+  if (title !== undefined) payload.title = title;
+  if (creditHours !== undefined) payload.credit_hours = creditHours;
+  if (difficulty !== undefined) payload.difficulty = difficulty;
+  if (priority !== undefined) payload.priority = priority;
+
+  const { data, error } = await supabase
+    .from('courses')
+    .update(payload)
+    .eq('id', courseId)
+    .select()
+    .single();
+
+  return { course: data ?? null, error };
+}
+
+export async function deleteCourse(courseId) {
+  // الحذف يعتمد على ON DELETE CASCADE المطبق على مستوى PostgreSQL
+  // لحذف كافة المواضيع والشجرة التابعة تلقائياً
+  const { error } = await supabase
+    .from('courses')
+    .delete()
+    .eq('id', courseId);
+
+  return { error };
+}
+
 export async function fetchCourseById(courseId) {
   const { data, error } = await supabase
     .from('courses')
