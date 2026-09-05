@@ -316,3 +316,180 @@ code {
     box-shadow: 0 0 22px rgba(59, 130, 246, 0.7);
   }
 }
+
+/* =========================================================
+   Modal Dialogs, Overlays & CRUD Action Buttons
+   ========================================================= */
+
+.modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.7);
+  backdrop-filter: blur(4px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  padding: 1rem;
+  animation: modal-fade-in 0.2s ease;
+}
+
+@keyframes modal-fade-in {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+.modal-content {
+  background: var(--bg);
+  color: var(--text-h);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 1.5rem;
+  width: 100%;
+  max-width: 420px;
+  box-shadow: var(--shadow);
+  box-sizing: border-box;
+  animation: modal-scale-in 0.2s ease;
+}
+
+@keyframes modal-scale-in {
+  from { transform: scale(0.96); opacity: 0; }
+  to { transform: scale(1); opacity: 1; }
+}
+
+.modal-content h3 {
+  margin: 0 0 1rem;
+  font-size: 1.2rem;
+  font-weight: 600;
+  color: var(--text-h);
+}
+
+.modal-content label {
+  display: block;
+  font-size: 13px;
+  margin-bottom: 5px;
+  color: var(--text);
+}
+
+.modal-content input,
+.modal-content select {
+  width: 100%;
+  padding: 0.55rem 0.75rem;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  background: var(--code-bg);
+  color: var(--text-h);
+  font-size: 14px;
+  box-sizing: border-box;
+  margin-bottom: 0.85rem;
+  font-family: inherit;
+}
+
+.modal-content input:focus,
+.modal-content select:focus {
+  outline: 2px solid var(--accent);
+  border-color: transparent;
+}
+
+.modal-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.5rem;
+  margin-top: 1rem;
+}
+
+.btn-secondary {
+  padding: 0.45rem 0.9rem;
+  border: 1px solid var(--border);
+  background: transparent;
+  color: var(--text-h);
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 13px;
+  transition: background 0.2s;
+}
+
+.btn-secondary:hover {
+  background: var(--code-bg);
+}
+
+.btn-primary {
+  padding: 0.45rem 1rem;
+  border: none;
+  background: #3b82f6;
+  color: #ffffff;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 13px;
+  font-weight: 500;
+  transition: opacity 0.2s;
+}
+
+.btn-primary:hover {
+  opacity: 0.9;
+}
+
+.btn-danger {
+  padding: 0.45rem 1rem;
+  border: none;
+  background: #ef4444;
+  color: #ffffff;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 13px;
+  font-weight: 500;
+  transition: opacity 0.2s;
+}
+
+.btn-danger:hover:not(:disabled) {
+  background: #dc2626;
+}
+
+.btn-primary:disabled,
+.btn-secondary:disabled,
+.btn-danger:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.delete-confirm-box {
+  background: rgba(239, 68, 68, 0.08);
+  border: 1px dashed rgba(239, 68, 68, 0.4);
+  padding: 0.6rem 0.8rem;
+  border-radius: 6px;
+  margin: 0.75rem 0;
+  font-size: 13px;
+}
+
+.delete-target-badge {
+  display: inline-block;
+  padding: 2px 6px;
+  border-radius: 4px;
+  background: rgba(239, 68, 68, 0.15);
+  color: #ef4444;
+  font-weight: 600;
+  user-select: all;
+  margin-top: 4px;
+}
+
+.semester-action-btn {
+  background: transparent;
+  border: 1px solid var(--border);
+  border-radius: 5px;
+  padding: 3px 8px;
+  cursor: pointer;
+  font-size: 12px;
+  color: var(--text);
+  transition: all 0.2s ease;
+}
+
+.semester-action-btn:hover {
+  border-color: var(--accent);
+  color: var(--accent);
+}
+
+.semester-action-btn.delete:hover {
+  border-color: #ef4444;
+  color: #ef4444;
+  background: rgba(239, 68, 68, 0.08);
+}
