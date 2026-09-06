@@ -364,3 +364,24 @@ code {
   outline: 2px solid #10b981;
   border-color: transparent;
 }
+
+.filter-pill.active,
+.filter-pill-status.active {
+  background: #eff6ff;
+  border-color: #3b82f6;
+  color: #1d4ed8;
+  font-weight: 600;
+} /* STREAMING_CHUNK:Styling empty state container */
+.empty-assessments-box {
+  padding: 2.5rem 1rem;
+  text-align: center;
+  border: 1px dashed var(--border);
+  border-radius: 8px;
+  background: var(--code-bg);
+  margin-top: 0.5rem;
+}
+.assessment-table-wrapper {
+  overflow-x: auto;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+} 

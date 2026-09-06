@@ -1,5 +1,5 @@
 // src/pages/CourseDetailPage.js
-// صفحة محتوى المساق — مسؤولة عن تنسيق Topic Tree وعمليات الجلسات والموضع الحالي.
+// صفحة محتوى المساق — شجرة المواضيع، جلسات الدراسة الفورية، والجدول الموحد للتقييمات والاستحقاقات.
 
 import {
   fetchTopicTree,
@@ -14,6 +14,8 @@ import {
   startStudySession,
   completeStudySession,
 } from '../api/studySessions.js';
+
+import { renderAssessmentsView } from '../components/AssessmentsTable.js';
 
 import { renderTopicNode } from '../components/TopicNode.js';
 import { renderTopicForm } from '../components/TopicForm.js';
@@ -70,16 +72,17 @@ export async function renderCourseDetailPage(
   let activePositionTopicId = currentPositionTopicId;
   let rawTopicsList = [];
   let activeSessionCleanup = null;
+  let assessmentsMounted = false;
 
   container.innerHTML = `
-    <div style="margin-bottom: 1.5rem;">
+    <div style="margin-bottom: 1.25rem;">
       <div
         style="
           display:flex;
           align-items:center;
           justify-content:space-between;
           gap:1rem;
-          margin-bottom:1rem;
+          margin-bottom:1.25rem;
           flex-wrap:wrap;
         "
       >
@@ -95,7 +98,7 @@ export async function renderCourseDetailPage(
           </button>
 
           <h2 style="margin:0;">
-            محتوى المساق (Topic Tree)
+            إدارة المساق
           </h2>
         </div>
 
@@ -115,43 +118,91 @@ export async function renderCourseDetailPage(
         </button>
       </div>
 
-      <button
-        id="add-root-topic-btn"
+      <!-- نظام التبويبات العلوي -->
+      <div class="course-nav-tabs">
+        <button type="button" class="course-tab-btn active" id="tab-btn-tree">
+          🌳 شجرة المحتوى (Topic Tree)
+        </button>
+        <button type="button" class="course-tab-btn" id="tab-btn-assessments">
+          📅 الاستحقاقات والتقييمات (Assessments)
+        </button>
+      </div>
+    </div>
+
+    <!-- حاوية قسم شجرة المواضيع -->
+    <div id="tree-view-section">
+      <div style="margin-bottom: 1rem;">
+        <button
+          id="add-root-topic-btn"
+          style="
+            padding:0.4rem 0.8rem;
+            cursor:pointer;
+          "
+        >
+          + Add Topic
+        </button>
+      </div>
+
+      <div id="topic-form-container"></div>
+
+      <div
+        id="tree-container"
         style="
-          padding:0.4rem 0.8rem;
-          cursor:pointer;
+          display:flex;
+          flex-direction:column;
+          gap:0.25rem;
         "
       >
-        + Add Topic
-      </button>
+        جاري التحميل...
+      </div>
     </div>
 
-    <div id="topic-form-container"></div>
-
-    <div
-      id="tree-container"
-      style="
-        display:flex;
-        flex-direction:column;
-        gap:0.25rem;
-      "
-    >
-      جاري التحميل...
-    </div>
+    <!-- حاوية قسم الاستحقاقات والتقييمات -->
+    <div id="assessments-view-section" style="display:none;"></div>
   `;
 
+  // عناصر التبويب والتحكم
   const backBtn = container.querySelector('#back-to-courses-btn');
-  const addRootBtn = container.querySelector('#add-root-topic-btn');
   const startSessionBtn = container.querySelector('#start-study-session-btn');
+  const tabBtnTree = container.querySelector('#tab-btn-tree');
+  const tabBtnAssessments = container.querySelector('#tab-btn-assessments');
+  const treeViewSection = container.querySelector('#tree-view-section');
+  const assessmentsViewSection = container.querySelector('#assessments-view-section');
+
+  // عناصر قسم الشجرة
+  const addRootBtn = container.querySelector('#add-root-topic-btn');
   const formContainer = container.querySelector('#topic-form-container');
   const treeContainer = container.querySelector('#tree-container');
 
   let formOpen = false;
 
+  tabBtnTree.addEventListener('click', () => {
+    tabBtnTree.classList.add('active');
+    tabBtnAssessments.classList.remove('active');
+    treeViewSection.style.display = 'block';
+    assessmentsViewSection.style.display = 'none';
+  });
+
+  tabBtnAssessments.addEventListener('click', () => {
+    tabBtnAssessments.classList.add('active');
+    tabBtnTree.classList.remove('active');
+    treeViewSection.style.display = 'none';
+    assessmentsViewSection.style.display = 'block';
+
+    if (!assessmentsMounted) {
+      renderAssessmentsView(assessmentsViewSection, { courseId });
+      assessmentsMounted = true;
+    }
+  });
+
   backBtn.addEventListener('click', () => {
     if (activeSessionCleanup) activeSessionCleanup();
     onBack();
   });
+
+  // =========================================================
+  // منطق شجرة المواضيع (Topic Tree Logic)
+  // =========================================================
 
   function closeTopicForm() {
     formOpen = false;
@@ -194,10 +245,9 @@ export async function renderCourseDetailPage(
     openTopicForm();
   });
 
+  // بدء جلسة الدراسة
   startSessionBtn.addEventListener('click', () => {
-    if (activeSessionCleanup) {
-      return;
-    }
+    if (activeSessionCleanup) return;
 
     renderSessionSetupModal({
       topics: rawTopicsList,
@@ -399,6 +449,7 @@ export async function renderCourseDetailPage(
     }
   }
 
+  // التهيئة المبدئية للشجرة
   await loadAndRenderTree();
 
   return () => {
