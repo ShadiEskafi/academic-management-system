@@ -1,193 +1,189 @@
 // src/main.js
+// نقطة الدخول الرئيسية للتطبيق — توجيه الراوتر وإدارة دورة حياة الجلسة
 
 import './style.css';
-
-import { onAuthStateChange, signOut } from './api/auth.js';
-import { fetchSemesterById } from './api/semesters.js';
-import { fetchCourseById } from './api/courses.js';
-
-import { setCurrentUser } from './state/store.js';
-
-import {
-  navigate,
-  getCurrentRoute,
-  onRouteChange,
-} from './state/router.js';
-
-import { renderAppShell } from './components/AppShell.js';
-
+import { supabase } from './api/supabaseClient.js';
 import { renderAuthPage } from './pages/AuthPage.js';
 import { renderSemestersPage } from './pages/SemestersPage.js';
 import { renderCoursesPage } from './pages/CoursesPage.js';
 import { renderCourseDetailPage } from './pages/CourseDetailPage.js';
+import { renderAvailabilityPage } from './pages/AvailabilityPage.js';
+import { renderAppShell } from './components/AppShell.js';
 
-const root = document.querySelector('#app');
+const rootEl = document.getElementById('app');
 
+let currentUserId = null;
 let contentContainer = null;
-
-// بيتتبع الصفحة الحالية حتى نقدر ننظف أي Cleanup قبل الانتقال
 let currentPageCleanup = null;
-
-// رقم متزايد لكل عملية Render.
-// الهدف منع استجابة Fetch قديمة من رسم صفحة بعد ما يكون المسار تغيّر.
 let renderRequestId = 0;
 
-async function renderCurrentRoute() {
-  if (!contentContainer) {
-    return;
+supabase.auth.onAuthStateChange(async (event, session) => {
+  const user = session?.user ?? null;
+  const newUserId = user?.id ?? null;
+
+  if (newUserId !== currentUserId) {
+    currentUserId = newUserId;
+
+    if (!user) {
+      if (currentPageCleanup) currentPageCleanup();
+      currentPageCleanup = null;
+      contentContainer = null;
+      showAuth();
+      return;
+    }
+
+    if (currentPageCleanup) currentPageCleanup();
+    currentPageCleanup = null;
+
+    contentContainer = renderAppShell(rootEl, {
+      userEmail: user.email,
+      onSignOut: async () => {
+        await supabase.auth.signOut();
+        window.location.hash = '';
+      },
+    });
+
+    handleRoute();
   }
+});
+
+async function handleRoute() {
+  if (!contentContainer) return;
 
   const requestId = ++renderRequestId;
-
-  const route = getCurrentRoute();
-
-  // تنظيف الصفحة السابقة قبل رسم الصفحة الجديدة
   if (currentPageCleanup) {
     currentPageCleanup();
     currentPageCleanup = null;
   }
 
-  if (route.name === 'course-detail') {
-    const { course, error } = await fetchCourseById(
-      route.courseId
-    );
+  const hash = window.location.hash || '#/semesters';
 
-    // المسار تغيّر أثناء الانتظار
-    if (requestId !== renderRequestId) {
-      return;
-    }
-
-    if (error || !course) {
-      navigate('/semesters');
-
-      return;
-    }
-
-    // التأكد أن الـ Course تابع للـ Semester الموجود في الرابط
-    if (course.semester_id !== route.semesterId) {
-      navigate('/semesters');
-
-      return;
-    }
-
-    currentPageCleanup = await renderCourseDetailPage(
-      contentContainer,
-      {
-        courseId: route.courseId,
-        currentPositionTopicId:
-          route.currentPositionTopicId,
-
-        onBack: () => {
-          navigate(
-            `/semesters/${route.semesterId}/courses`
-          );
-        },
-      }
-    );
-
+  // 1. شاشة أوقات التفرغ (UC-12)
+  if (hash === '#/availability') {
+    contentContainer.innerHTML = '<p style="color:var(--text);padding:1rem;">جاري تحميل أوقات التفرغ...</p>';
+    currentPageCleanup = await renderAvailabilityPage(contentContainer);
+    updateActiveNav('nav-link-availability');
     return;
   }
 
-  if (route.name === 'courses') {
-    const { semester, error } = await fetchSemesterById(
-      route.semesterId
-    );
+  // 2. شاشة تفاصيل المساق
+  const courseDetailMatch = hash.match(/^#\/semesters\/([^/]+)\/courses\/([^/]+)$/);
+  if (courseDetailMatch) {
+    const semesterId = courseDetailMatch[1];
+    const courseId = courseDetailMatch[2];
 
-    // المسار تغيّر أثناء الانتظار
-    if (requestId !== renderRequestId) {
-      return;
-    }
+    contentContainer.innerHTML = '<p style="color:var(--text);padding:1rem;">جاري تحميل تفاصيل المساق...</p>';
 
-    if (error || !semester) {
-      // فصل غير موجود/محذوف/مش تبع هالمستخدم
-      navigate('/semesters');
-
-      return;
-    }
-
-    currentPageCleanup = await renderCoursesPage(
-      contentContainer,
-      {
-        semester,
-
+    try {
+      currentPageCleanup = await renderCourseDetailPage(contentContainer, {
+        courseId,
         onBack: () => {
-          navigate('/semesters');
+          window.location.hash = `#/semesters/${semesterId}/courses`;
         },
-
-        onSelectCourse: (courseId) => {
-          navigate(
-            `/semesters/${semester.id}/courses/${courseId}`
-          );
-        },
-
-        onContinueCourse: (courseId, topicId) => {
-          navigate(
-            `/semesters/${semester.id}/courses/${courseId}?topicId=${encodeURIComponent(topicId)}`
-          );
-        },
-      }
-    );
-
+      });
+    } catch (err) {
+      console.error('Failed to render course detail page:', err);
+      contentContainer.innerHTML = `
+        <div style="padding:1.5rem;color:#ef4444;">
+          <h3>فشل تحميل تفاصيل المساق</h3>
+          <p>${escapeHtml(err.message)}</p>
+          <button type="button" class="btn-secondary" onclick="window.location.hash='#/semesters/${semesterId}/courses'">
+            العودة لمساقات الفصل
+          </button>
+        </div>
+      `;
+    }
+    updateActiveNav('nav-link-semesters');
     return;
   }
 
-  currentPageCleanup = await renderSemestersPage(
-    contentContainer,
-    {
-      onSelectSemester: (semester) => {
-        navigate(
-          `/semesters/${semester.id}/courses`
-        );
+  // 3. شاشة مساقات الفصل (دعم المسارين مع حماية المعاملات ومعالجة الأخطاء)
+  const coursesMatch = hash.match(/^#\/semesters\/([^/]+)(?:\/courses)?$/);
+  if (coursesMatch && coursesMatch[1] !== 'courses') {
+    const rawSemesterId = coursesMatch[1];
+
+    // حماية تلقائية في حال كان الرابط الحالي تالفاً يحتوي على [object Object]
+    if (rawSemesterId.includes('[object') || rawSemesterId === '[object%20Object]') {
+      window.location.hash = '#/semesters';
+      return;
+    }
+
+    contentContainer.innerHTML = '<p style="color:var(--text);padding:1rem;">جاري تحميل المساقات...</p>';
+
+    const navigationCallbacks = {
+      onBack: () => {
+        window.location.hash = '#/semesters';
       },
+      onSelectCourse: (courseId) => {
+        window.location.hash = `#/semesters/${rawSemesterId}/courses/${courseId}`;
+      },
+    };
+
+    try {
+      // المحاولة الأولى: تمرير كائن الإعدادات { semesterId, onBack, onSelectCourse }
+      currentPageCleanup = await renderCoursesPage(contentContainer, {
+        semesterId: rawSemesterId,
+        ...navigationCallbacks,
+      });
+    } catch (err) {
+      console.warn('Initial renderCoursesPage call failed, trying direct ID parameter:', err);
+      try {
+        // المحاولة الثانية (Fallback): تمرير semesterId كنص مباشر للدوال التي تتوقع المعرف في المعامل الثاني
+        currentPageCleanup = await renderCoursesPage(contentContainer, rawSemesterId, navigationCallbacks);
+      } catch (fallbackErr) {
+        console.error('Both renderCoursesPage signatures failed:', fallbackErr);
+        contentContainer.innerHTML = `
+          <div style="padding:1.5rem;color:#ef4444;">
+            <h3>فشل تحميل صفحة المساقات</h3>
+            <p>${escapeHtml(fallbackErr.message || err.message)}</p>
+            <button type="button" class="btn-secondary" onclick="window.location.hash='#/semesters'">
+              العودة للفصول الدراسية
+            </button>
+          </div>
+        `;
+      }
     }
-  );
+
+    updateActiveNav('nav-link-semesters');
+    return;
+  }
+
+  // 4. الشاشة الافتراضية: الفصول الدراسية (استخراج الـ ID بمرونة)
+  contentContainer.innerHTML = '<p style="color:var(--text);padding:1rem;">جاري تحميل الفصول الدراسية...</p>';
+  try {
+    currentPageCleanup = await renderSemestersPage(contentContainer, {
+      onSelectSemester: (target) => {
+        const semesterId = (target && typeof target === 'object') ? (target.id || target.semesterId) : target;
+        if (semesterId) {
+          window.location.hash = `#/semesters/${semesterId}/courses`;
+        }
+      },
+    });
+  } catch (err) {
+    console.error('Failed to render semesters page:', err);
+  }
+  updateActiveNav('nav-link-semesters');
 }
 
-function enterApp(user) {
-  contentContainer = renderAppShell(root, {
-    userEmail: user.email,
-    onSignOut: () => signOut(),
-  });
+function escapeHtml(str) {
+  if (!str) return '';
+  return String(str)
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;');
+}
 
-  renderCurrentRoute();
+function updateActiveNav(activeId) {
+  const links = document.querySelectorAll('.nav-header-link');
+  links.forEach((l) => l.classList.remove('active'));
+  const target = document.getElementById(activeId);
+  if (target) target.classList.add('active');
 }
 
 function showAuth() {
-  renderRequestId += 1;
-
-  if (currentPageCleanup) {
-    currentPageCleanup();
-    currentPageCleanup = null;
-  }
-
-  contentContainer = null;
-
-  renderAuthPage(root);
+  rootEl.innerHTML = '';
+  renderAuthPage(rootEl);
 }
 
-// أي تغيير بالـ URL يعيد رسم الصفحة المناسبة.
-// Refresh و Back/Forward يظلون مدعومين عن طريق الـ Hash Router.
-onRouteChange(() => renderCurrentRoute());
-
-// نقطة الدخول الوحيدة لحالة الجلسة بكامل التطبيق.
-let currentUserId = null;
-
-onAuthStateChange((session) => {
-  const user = session?.user ?? null;
-
-  setCurrentUser(user);
-
-  if (user) {
-    if (currentUserId !== user.id) {
-      currentUserId = user.id;
-
-      enterApp(user);
-    }
-  } else {
-    if (currentUserId !== null) {
-      currentUserId = null;
-    }
-
-    showAuth();
-  }
-});
+window.addEventListener('hashchange', handleRoute);

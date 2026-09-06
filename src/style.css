@@ -30,7 +30,7 @@
 @media (prefers-color-scheme: dark) {
   :root {
     --text: #9ca3af;
-    --text-h: #f3f4f6;
+    --text-h: #16171d;
     --bg: #16171d;
     --border: #2e303a;
     --code-bg: #1f2028;
@@ -384,4 +384,203 @@ code {
   overflow-x: auto;
   border: 1px solid var(--border);
   border-radius: 8px;
-} 
+}
+
+.assessment-table-wrapper {
+  overflow-x: auto;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+} /* STREAMING_CHUNK:Styling navigation links in app shell header */
+.app-header {
+  border-bottom: 1px solid var(--border);
+  background: var(--surface, #ffffff);
+  position: sticky;
+  top: 0;
+  z-index: 40;
+}
+.app-header-inner {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 0.75rem 1.25rem;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+}
+.nav-header-link {
+  font-size: 13.5px;
+  font-weight: 500;
+  text-decoration: none;
+  color: var(--text);
+  padding: 4px 10px;
+  border-radius: 6px;
+  transition: all 0.2s ease;
+}
+.nav-header-link:hover {
+  background: var(--code-bg, #f4f4f5);
+  color: var(--text-h);
+}
+.nav-header-link.active {
+  background: #eff6ff;
+  color: #1d4ed8;
+  font-weight: 600;
+}
+.app-main-content {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 1.5rem 1.25rem;
+} /* STREAMING_CHUNK:Styling weekly availability stats banner */
+.availability-header-bar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 1rem;
+  margin-bottom: 1.25rem;
+  flex-wrap: wrap;
+}
+.availability-stats-banner {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 1rem 1.25rem;
+  background: linear-gradient(135deg, #f0fdf4 0%, #e0f2fe 100%);
+  border: 1px solid #bbf7d0;
+  border-radius: 10px;
+  margin-bottom: 1.5rem;
+  flex-wrap: wrap;
+  gap: 1rem;
+}
+.stats-icon-box {
+  width: 42px;
+  height: 42px;
+  border-radius: 8px;
+  background: #ffffff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 20px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+} /* STREAMING_CHUNK:Styling weekly seven day grid and day columns */
+.availability-week-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  gap: 0.85rem;
+  align-items: start;
+}
+@media (max-width: 900px) {
+  .availability-week-grid {
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  }
+}
+.day-column-card {
+  background: var(--surface, #ffffff);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  display: flex;
+  flex-direction: column;
+  min-height: 220px;
+  overflow: hidden;
+}
+.day-column-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0.6rem 0.75rem;
+  background: var(--code-bg, #f8fafc);
+  border-bottom: 1px solid var(--border);
+}
+.day-name-label {
+  font-weight: 600;
+  font-size: 14px;
+  color: var(--text-h);
+  display: block;
+}
+.day-hours-badge {
+  font-size: 11px;
+  color: var(--text);
+}
+.day-hours-badge.active {
+  color: #059669;
+  font-weight: 600;
+}
+.btn-quick-add-day {
+  width: 24px;
+  height: 24px;
+  border-radius: 4px;
+  border: 1px solid var(--border);
+  background: #ffffff;
+  cursor: pointer;
+  font-size: 14px;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.15s ease;
+}
+.btn-quick-add-day:hover {
+  background: #eff6ff;
+  border-color: #3b82f6;
+  color: #1d4ed8;
+} /* STREAMING_CHUNK:Styling day slot cards and actions */
+.day-slots-list {
+  padding: 0.6rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  flex: 1;
+}
+.empty-day-slot {
+  font-size: 12px;
+  color: var(--text);
+  text-align: center;
+  padding: 1.5rem 0.5rem;
+  opacity: 0.6;
+}
+.slot-item-box {
+  background: #f8fafc;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 0.45rem 0.6rem;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  transition:
+    transform 0.15s ease,
+    box-shadow 0.15s ease;
+}
+.slot-item-box:hover {
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+  border-color: #cbd5e1;
+}
+.slot-time-info {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 4px;
+}
+.slot-time-range {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text-h);
+}
+.slot-duration-pill {
+  font-size: 10.5px;
+  background: #e0f2fe;
+  color: #0369a1;
+  padding: 1px 5px;
+  border-radius: 4px;
+  font-weight: 600;
+}
+.slot-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 4px;
+}
+.slot-duration-hint {
+  font-size: 12.5px;
+  background: #f8fafc;
+  border: 1px dashed var(--border);
+  padding: 0.5rem 0.75rem;
+  border-radius: 6px;
+  color: var(--text-h);
+}
