@@ -1,6 +1,5 @@
 // src/pages/CoursesPage.js
-// الطبقة اللي بتربط: api (courses.js, topics.js) ↔ state (store.js) ↔ components
-// (CourseForm.js, LogAchievementModal.js, CourseModals.js)
+// الطبقة التي تربط: api (courses.js, topics.js) ↔ state (store.js) ↔ components
 
 import {
   fetchCoursesBySemester,
@@ -24,15 +23,64 @@ import {
 
 export async function renderCoursesPage(
   container,
-  { semester, onBack, onSelectCourse, onContinueCourse }
+  options = {},
+  fallbackCallbacks = {}
 ) {
+  let semester = options?.semester || (typeof options === 'object' && options?.id ? options : null);
+  const semesterId =
+    typeof options === 'string'
+      ? options
+      : (options?.semesterId || semester?.id || options?.id);
+
+  const onBack = options?.onBack || fallbackCallbacks?.onBack;
+  const onSelectCourse = options?.onSelectCourse || fallbackCallbacks?.onSelectCourse;
+  const onContinueCourse = options?.onContinueCourse || fallbackCallbacks?.onContinueCourse;
+
+  if (!semester || !semester.title) {
+    if (!semesterId) {
+      container.innerHTML = `
+        <div style="padding:1.5rem;color:#ef4444;">
+          <p>معرف الفصل الدراسي غير محدد.</p>
+          <button type="button" class="btn-secondary" onclick="window.location.hash='#/semesters'">
+            العودة للفصول الدراسية
+          </button>
+        </div>
+      `;
+      return () => {};
+    }
+
+    const { data: semesterData, error: semesterFetchErr } = await supabase
+      .from('semesters')
+      .select('*')
+      .eq('id', semesterId)
+      .maybeSingle();
+
+    if (semesterFetchErr || !semesterData) {
+      container.innerHTML = `
+        <div style="padding:1.5rem;color:#ef4444;">
+          <h3>فشل تحميل بيانات الفصل الدراسي</h3>
+          <p>${escapeHtml(semesterFetchErr?.message || 'لم يتم العثور على الفصل الدراسي المطلوب.')}</p>
+          <button type="button" class="btn-secondary" onclick="window.location.hash='#/semesters'">
+            العودة للفصول الدراسية
+          </button>
+        </div>
+      `;
+      return () => {};
+    }
+
+    semester = semesterData;
+  }
+
   const { courses: initialCourses, error } = await fetchCoursesBySemester(semester.id);
 
   if (error) {
     container.innerHTML = `
-      <p style="color:#e05252;">
-        فشل تحميل المساقات: ${error.message}
-      </p>
+      <div style="padding:1.5rem;color:#ef4444;">
+        <p>فشل تحميل المساقات: ${escapeHtml(error.message)}</p>
+        <button type="button" class="btn-secondary" onclick="window.location.hash='#/semesters'">
+          العودة للفصول الدراسية
+        </button>
+      </div>
     `;
     return () => {};
   }
@@ -113,7 +161,7 @@ export async function renderCoursesPage(
   }
 
   async function handleCreate({ title, creditHours, difficulty, priority }) {
-    const { course, error } = await createCourse({
+    const { error: createError } = await createCourse({
       semesterId: semester.id,
       title,
       creditHours,
@@ -121,15 +169,15 @@ export async function renderCoursesPage(
       priority,
     });
 
-    if (error) return { error };
+    if (createError) return { error: createError };
 
     await refreshCourses();
     return { error: null };
   }
 
   async function refreshCourses() {
-    const { courses: refreshed, error } = await fetchCoursesBySemester(semester.id);
-    if (!error) {
+    const { courses: refreshed, error: refreshError } = await fetchCoursesBySemester(semester.id);
+    if (!refreshError) {
       const enriched = await enrichCoursesWithCurrentPosition(refreshed);
       setCourses(enriched);
     }
@@ -160,10 +208,10 @@ export async function renderCoursesPage(
   }
 
   async function handleLogAchievement(courseId) {
-    const { topics: existingTopics, error } = await fetchIncompleteLeafTopics(courseId);
+    const { topics: existingTopics, error: topicsErr } = await fetchIncompleteLeafTopics(courseId);
 
-    if (error) {
-      alert('فشل تحميل قائمة المواضيع: ' + error.message);
+    if (topicsErr) {
+      console.error('فشل تحميل قائمة المواضيع:', topicsErr);
       return;
     }
 
@@ -200,4 +248,13 @@ export async function renderCoursesPage(
   return () => {
     unsubscribe();
   };
+}
+
+function escapeHtml(str) {
+  if (!str) return '';
+  return String(str)
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;');
 }
