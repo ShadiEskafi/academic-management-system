@@ -1,5 +1,5 @@
 // src/pages/CourseDetailPage.js
-// شاشة تفاصيل المساق وفق الـ Design System (Topic Tree & Assessments)
+import { supabase } from '../api/supabaseClient.js';
 import {
   fetchTopicTree,
   updateTopic,
@@ -8,6 +8,9 @@ import {
   createTopic,
   deleteTopic,
 } from '../api/topics.js';
+
+import { fetchCourseStudyStats } from '../api/studySessions.js';
+import { getUpcomingUrgentAssessment } from '../api/assessments.js';
 
 import {
   startNewGlobalSession,
@@ -69,6 +72,7 @@ export async function renderCourseDetailPage(
 ) {
   let activePositionTopicId = currentPositionTopicId;
   let rawTopicsList = [];
+  let currentCourseData = null;
   let assessmentsMounted = false;
 
   container.innerHTML = `
@@ -85,10 +89,13 @@ export async function renderCourseDetailPage(
         </button>
       </nav>
 
-      <header style="display:flex;align-items:center;justify-content:space-between;gap:var(--space-4);margin-bottom:var(--space-6);flex-wrap:wrap;">
+      <header style="display:flex;align-items:center;justify-content:space-between;gap:var(--space-4);margin-bottom:var(--space-5);flex-wrap:wrap;">
         <div>
-          <h1 id="course-page-title" style="margin:0 0 var(--space-1);">إدارة محتوى المساق</h1>
-          <p class="text-secondary" style="font-size:14px;">تنظيم شجرة المواضيع، متابعة الاستحقاقات، وجلسات المذاكرة المركزة.</p>
+          <div style="display:flex;align-items:center;gap:var(--space-2);margin-bottom:var(--space-1);">
+            <h1 id="course-page-title" style="margin:0;">جاري تحميل المساق...</h1>
+            <span id="course-code-badge" class="badge" style="display:none;background:var(--color-bg-subtle);color:var(--color-text-secondary);font-family:monospace;"></span>
+          </div>
+          <p class="text-secondary" style="font-size:14px;">مركز القيادة الأكاديمي: شجرة المحتوى، معدل التقدم، وجلسات المذاكرة.</p>
         </div>
 
         <button
@@ -101,6 +108,12 @@ export async function renderCourseDetailPage(
           <span>ابدأ جلسة دراسة</span>
         </button>
       </header>
+
+      <!-- شريط التنبيه الذكي للاستحقاقات العاجلة -->
+      <div id="urgent-alert-container"></div>
+
+      <!-- حاوية الإحصائيات -->
+      <section id="course-metrics-section" style="margin-bottom:var(--space-6);"></section>
 
       <div class="tabs" role="tablist">
         <button type="button" class="tab active" id="tab-btn-tree" role="tab" aria-selected="true">
@@ -143,6 +156,11 @@ export async function renderCourseDetailPage(
   const tabBtnAssessments = container.querySelector('#tab-btn-assessments');
   const treeViewSection = container.querySelector('#tree-view-section');
   const assessmentsViewSection = container.querySelector('#assessments-view-section');
+  const metricsSection = container.querySelector('#course-metrics-section');
+  const urgentAlertEl = container.querySelector('#urgent-alert-container');
+
+  const courseTitleEl = container.querySelector('#course-page-title');
+  const courseCodeEl = container.querySelector('#course-code-badge');
 
   const addRootBtn = container.querySelector('#add-root-topic-btn');
   const formContainer = container.querySelector('#topic-form-container');
@@ -160,7 +178,6 @@ export async function renderCourseDetailPage(
     }
   }
 
-  // الاستماع لتغيرات الجلسة العامة وتحديث الزر والشجرة
   const unsubscribeSession = subscribeToSession(({ event, session, nextTopicId }) => {
     updateStartButtonState();
 
@@ -192,7 +209,13 @@ export async function renderCourseDetailPage(
     assessmentsViewSection.style.display = 'block';
 
     if (!assessmentsMounted) {
-      renderAssessmentsView(assessmentsViewSection, { courseId });
+      renderAssessmentsView(assessmentsViewSection, {
+        courseId,
+        onAssessmentsChange: async () => {
+          const urgent = await getUpcomingUrgentAssessment(courseId);
+          renderUrgentAlert(urgent);
+        },
+      });
       assessmentsMounted = true;
     }
   });
@@ -255,11 +278,15 @@ export async function renderCourseDetailPage(
         startSessionBtn.disabled = true;
         startSessionBtn.classList.add('btn-loading');
 
-        const courseTitle = container.querySelector('#course-page-title')?.textContent || '';
+        const actualCourseTitle =
+          currentCourseData?.title ||
+          currentCourseData?.name ||
+          currentCourseData?.course_name ||
+          'مساق دراسي';
 
         const { error } = await startNewGlobalSession({
           courseId,
-          courseTitle,
+          courseTitle: actualCourseTitle,
           topicId: selectedTopicId,
           topicTitle: selectedTopicTitle,
           durationMinutes,
@@ -330,10 +357,134 @@ export async function renderCourseDetailPage(
     });
   }
 
+  function renderMetrics(topics, studyStats) {
+    const totalTopics = topics.length;
+    const completedTopics = topics.filter((t) => t.status === 'completed').length;
+    const inProgressTopics = topics.filter((t) => t.status === 'in_progress').length;
+    const needsReviewTopics = topics.filter((t) => t.status === 'needs_review').length;
+
+    const progressPercent = totalTopics > 0 ? Math.round((completedTopics / totalTopics) * 100) : 0;
+
+    function formatStudyDuration(seconds, count) {
+      if (count === 0 && seconds === 0) return 'لم تبدأ بعد';
+
+      const hrs = Math.floor(seconds / 3600);
+      const mins = Math.floor((seconds % 3600) / 60);
+      const secs = seconds % 60;
+      const paddedSecs = String(secs).padStart(2, '0');
+
+      if (hrs > 0) {
+        const paddedMins = String(mins).padStart(2, '0');
+        return `${hrs}:${paddedMins}:${paddedSecs} ساعة`;
+      }
+
+      return `${mins}:${paddedSecs} دقيقة`;
+    }
+
+    const formattedStudyTime = formatStudyDuration(
+      studyStats.totalSeconds,
+      studyStats.completedSessionsCount
+    );
+
+    metricsSection.innerHTML = `
+      <div class="card" style="padding:var(--space-4);background:var(--color-surface);border:1px solid var(--color-border);border-radius:var(--radius-lg);">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:var(--space-2);flex-wrap:wrap;gap:var(--space-2);">
+          <div style="display:flex;align-items:center;gap:var(--space-2);">
+            <span style="font-weight:700;font-size:15px;color:var(--color-text);">نسبة إنجاز المنهج الدراسي</span>
+            <span class="badge" style="background:rgba(56, 189, 248, 0.15);color:var(--color-accent);font-weight:700;">
+              ${progressPercent}%
+            </span>
+          </div>
+          <span style="font-size:13px;color:var(--color-text-secondary);">
+            تم إنجاز <strong>${completedTopics}</strong> من أصل <strong>${totalTopics}</strong> موضوع
+          </span>
+        </div>
+
+        <div style="width:100%;height:10px;background:var(--color-bg-subtle);border-radius:999px;overflow:hidden;margin-bottom:var(--space-4);">
+          <div style="width:${progressPercent}%;height:100%;background:linear-gradient(90deg, var(--color-primary), var(--color-accent));transition:width 0.4s ease;border-radius:999px;"></div>
+        </div>
+
+        <div style="display:grid;grid-template-columns:repeat(auto-fit, minmax(140px, 1fr));gap:var(--space-3);padding-top:var(--space-2);border-top:1px solid var(--color-border);">
+          <div style="display:flex;flex-direction:column;">
+            <span style="font-size:12px;color:var(--color-text-tertiary);">وقت المذاكرة الفعلي</span>
+            <span style="font-size:15px;font-weight:700;color:var(--color-text);margin-top:2px;">
+              ${formattedStudyTime}
+            </span>
+          </div>
+
+          <div style="display:flex;flex-direction:column;">
+            <span style="font-size:12px;color:var(--color-text-tertiary);">الجلسات المكتملة</span>
+            <span style="font-size:15px;font-weight:700;color:var(--color-text);margin-top:2px;">
+              ${studyStats.completedSessionsCount} جلسات
+            </span>
+          </div>
+
+          <div style="display:flex;flex-direction:column;">
+            <span style="font-size:12px;color:var(--color-text-tertiary);">قيد المتابعة</span>
+            <span style="font-size:15px;font-weight:700;color:#38bdf8;margin-top:2px;">
+              ${inProgressTopics} موضوع
+            </span>
+          </div>
+
+          <div style="display:flex;flex-direction:column;">
+            <span style="font-size:12px;color:var(--color-text-tertiary);">بحاجة لمراجعة</span>
+            <span style="font-size:15px;font-weight:700;color:#f59e0b;margin-top:2px;">
+              ${needsReviewTopics} موضوع
+            </span>
+          </div>
+        </div>
+      </div>
+    `;
+  }
+
+  function renderUrgentAlert(urgentItem) {
+    if (!urgentItem) {
+      urgentAlertEl.innerHTML = '';
+      return;
+    }
+
+    const isOverdue = urgentItem.diffDays < 0;
+    const isExam = urgentItem.category === 'exam';
+
+    let countdownText = '';
+    if (isOverdue) {
+      countdownText = `متأخر بـ ${Math.abs(urgentItem.diffDays)} يوم!`;
+    } else if (urgentItem.diffDays === 0) {
+      countdownText = 'اليوم!';
+    } else if (urgentItem.diffDays === 1) {
+      countdownText = 'غداً';
+    } else {
+      countdownText = `متبقي ${urgentItem.diffDays} أيام`;
+    }
+
+    urgentAlertEl.innerHTML = `
+      <div style="display:flex;align-items:center;justify-content:space-between;background:${isOverdue ? 'rgba(239, 68, 68, 0.12)' : 'rgba(245, 158, 11, 0.12)'};border:1px solid ${isOverdue ? '#ef4444' : '#f59e0b'};border-radius:var(--radius-md);padding:var(--space-3) var(--space-4);margin-bottom:var(--space-4);flex-wrap:wrap;gap:var(--space-2);">
+        <div style="display:flex;align-items:center;gap:var(--space-2);color:${isOverdue ? '#ef4444' : '#f59e0b'};">
+          ${icons.alertTriangle(18)}
+          <span style="font-size:13px;font-weight:600;">
+            ${isOverdue ? 'استحقاق متأخر:' : 'استحقاق قادم قريباً:'} <strong>${escapeHtml(urgentItem.title)}</strong>
+            ${isExam && urgentItem.weight ? `(امتحان • الوزن: ${urgentItem.weight}%)` : isExam ? '(امتحان)' : '(واجب أكاديمي)'}
+          </span>
+        </div>
+        <div style="display:flex;align-items:center;gap:var(--space-3);">
+          <span style="font-size:12px;color:var(--color-text-secondary);">${urgentItem.date || ''}</span>
+          <span class="badge" style="background:${isOverdue ? 'var(--color-danger)' : '#f59e0b'};color:#fff;font-weight:700;font-size:11px;">
+            ${countdownText}
+          </span>
+        </div>
+      </div>
+    `;
+  }
+
   async function loadAndRenderTree() {
     treeContainer.innerHTML = skeletons.tree(4);
 
-    const { topics, error } = await fetchTopicTree(courseId);
+    const [{ topics, error }, studyStats, courseRes, urgentItem] = await Promise.all([
+      fetchTopicTree(courseId),
+      fetchCourseStudyStats(courseId),
+      supabase.from('courses').select('*').eq('id', courseId).maybeSingle(),
+      getUpcomingUrgentAssessment(courseId),
+    ]);
 
     if (error) {
       treeContainer.innerHTML = `
@@ -346,7 +497,31 @@ export async function renderCourseDetailPage(
       return;
     }
 
+    if (courseRes?.data) {
+      currentCourseData = courseRes.data;
+      const detectedTitle =
+        currentCourseData.title ||
+        currentCourseData.name ||
+        currentCourseData.course_name ||
+        'مساق دراسي';
+
+      const detectedCode =
+        currentCourseData.code || currentCourseData.course_code || '';
+
+      courseTitleEl.textContent = detectedTitle;
+
+      if (detectedCode) {
+        courseCodeEl.textContent = detectedCode;
+        courseCodeEl.style.display = 'inline-block';
+      } else {
+        courseCodeEl.style.display = 'none';
+      }
+    }
+
+    renderUrgentAlert(urgentItem);
+
     rawTopicsList = topics ?? [];
+    renderMetrics(rawTopicsList, studyStats);
 
     if (!topics || topics.length === 0) {
       treeContainer.innerHTML = `
@@ -361,7 +536,11 @@ export async function renderCourseDetailPage(
 
     if (!activePositionTopicId) {
       const firstIncomplete =
-        topics.find((t) => t.status !== 'completed' && (!t.children || t.children.length === 0)) ||
+        topics.find(
+          (t) =>
+            t.status !== 'completed' &&
+            (!t.children || t.children.length === 0)
+        ) ||
         topics.find((t) => t.status !== 'completed') ||
         topics[0];
 
@@ -374,39 +553,35 @@ export async function renderCourseDetailPage(
     treeContainer.innerHTML = '';
 
     topicTree.forEach((topic) => {
-      const node = renderTopicNode(
-        topic,
-        topic.children,
-        {
-          currentTopicId: activePositionTopicId,
-          onStatusChange: async (topicId, newStatus) => {
-            if (newStatus === 'completed') {
-              const { nextTopicId, error: completeErr } =
-                await completeTopicAndAdvance(courseId, topicId);
+      const node = renderTopicNode(topic, topic.children, {
+        currentTopicId: activePositionTopicId,
+        onStatusChange: async (topicId, newStatus) => {
+          if (newStatus === 'completed') {
+            const { nextTopicId, error: completeErr } =
+              await completeTopicAndAdvance(courseId, topicId);
 
-              if (completeErr) {
-                console.error('Failed to advance topic:', completeErr);
-                return;
-              }
-              activePositionTopicId = nextTopicId;
-            } else {
-              const { error: updateErr } = await updateTopicStatus(
-                topicId,
-                newStatus
-              );
-              if (updateErr) {
-                console.error('Failed to update status:', updateErr);
-                return;
-              }
+            if (completeErr) {
+              console.error('Failed to advance topic:', completeErr);
+              return;
             }
-            await loadAndRenderTree();
-          },
-          onAddChild: (parentTopic) => openTopicForm(parentTopic),
-          onEdit: (topicToEdit) => handleOpenEditTopic(topicToEdit),
-          onDelete: (topicToDelete, isParent, childCount) =>
-            handleOpenDeleteTopic(topicToDelete, isParent, childCount),
-        }
-      );
+            activePositionTopicId = nextTopicId;
+          } else {
+            const { error: updateErr } = await updateTopicStatus(
+              topicId,
+              newStatus
+            );
+            if (updateErr) {
+              console.error('Failed to update status:', updateErr);
+              return;
+            }
+          }
+          await loadAndRenderTree();
+        },
+        onAddChild: (parentTopic) => openTopicForm(parentTopic),
+        onEdit: (topicToEdit) => handleOpenEditTopic(topicToEdit),
+        onDelete: (topicToDelete, isParent, childCount) =>
+          handleOpenDeleteTopic(topicToDelete, isParent, childCount),
+      });
 
       treeContainer.appendChild(node);
     });

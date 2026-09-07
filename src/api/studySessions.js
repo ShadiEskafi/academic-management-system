@@ -1,9 +1,6 @@
 // src/api/studySessions.js
 import { supabase } from './supabaseClient.js';
 
-/**
- * دالة مساعدة لترجمة حالة الموضوع إلى Outcome صالح ومقبول في قاعدة البيانات
- */
 function mapTopicStatusToOutcome(topicStatus) {
   switch (topicStatus) {
     case 'completed':
@@ -16,9 +13,6 @@ function mapTopicStatusToOutcome(topicStatus) {
   }
 }
 
-/**
- * استرجاع الجلسة النشطة للمستخدم مع منع Race Conditions
- */
 export async function getActiveStudySession(explicitUserId = null) {
   let userId = explicitUserId;
 
@@ -66,9 +60,7 @@ export async function getActiveStudySession(explicitUserId = null) {
       courseTitle = parsed.courseTitle || '';
       durationMinutes = parsed.durationMinutes || 0;
     }
-  } catch {
-    // في حال كانت الملاحظات نصاً عادياً قديماً
-  }
+  } catch {}
 
   return {
     session: {
@@ -82,9 +74,6 @@ export async function getActiveStudySession(explicitUserId = null) {
   };
 }
 
-/**
- * بدء جلسة جديدة
- */
 export async function startStudySession({
   courseId,
   courseTitle,
@@ -147,9 +136,6 @@ export async function startStudySession({
   };
 }
 
-/**
- * إنهاء الجلسة وحفظ النتيجة وفق القيود المعتمدة في chk_session_outcome
- */
 export async function completeStudySession({
   sessionId,
   courseId,
@@ -158,15 +144,13 @@ export async function completeStudySession({
   outcome = null,
   notes,
 }) {
-  // استخدام الـ outcome الصريح إن وُجد، أو تحويل topicStatus إلى قيمة مقبولة بقيد الجدول
   const sessionOutcome = outcome || mapTopicStatusToOutcome(topicStatus);
 
-  // 1. تحديث جدول study_sessions
   const { error: sessionError } = await supabase
     .from('study_sessions')
     .update({
       status: 'completed',
-      outcome: sessionOutcome, // دائماً واحدة من: 'completed' أو 'partially_completed' أو 'studied_something_else'
+      outcome: sessionOutcome,
       scheduled_end: new Date().toISOString(),
       notes: notes || null,
       updated_at: new Date().toISOString(),
@@ -175,7 +159,6 @@ export async function completeStudySession({
 
   if (sessionError) return { error: sessionError };
 
-  // 2. تحديث جدول topics بحالة الموضوع الأصلية (مثل needs_review أو completed)
   if (topicId) {
     const { error: topicError } = await supabase
       .from('topics')
@@ -187,7 +170,6 @@ export async function completeStudySession({
     }
   }
 
-  // 3. التقدم التلقائي للموضوع التالي عند اكتمال الموضوع
   let nextTopicId = null;
   if (topicStatus === 'completed' && topicId && courseId) {
     try {
@@ -207,9 +189,6 @@ export async function completeStudySession({
   return { nextTopicId, error: null };
 }
 
-/**
- * إلغاء الجلسة وحذفها من قاعدة البيانات
- */
 export async function cancelStudySession(sessionId) {
   const { error } = await supabase
     .from('study_sessions')
@@ -217,4 +196,43 @@ export async function cancelStudySession(sessionId) {
     .eq('id', sessionId);
 
   return { error };
+}
+
+/**
+ * حساب إحصائيات المذاكرة التراكمية للمساق من الجلسات المكتملة
+ */
+export async function fetchCourseStudyStats(courseId) {
+  const { data, error } = await supabase
+    .from('study_sessions')
+    .select('scheduled_start, scheduled_end, updated_at, created_at, outcome')
+    .eq('course_id', courseId)
+    .eq('status', 'completed');
+
+  if (error) {
+    console.error('Failed to fetch course study stats:', error);
+    return { totalSeconds: 0, totalMinutes: 0, completedSessionsCount: 0, error };
+  }
+
+  let totalSeconds = 0;
+
+  (data || []).forEach((session) => {
+    const startMs = new Date(session.scheduled_start || session.created_at).getTime();
+    
+    // Fallback: إذا كانت الجلسة قديمة بدون scheduled_end نعتمد على updated_at
+    const endMs = session.scheduled_end
+      ? new Date(session.scheduled_end).getTime()
+      : session.updated_at
+      ? new Date(session.updated_at).getTime()
+      : startMs;
+
+    const diff = Math.max(0, Math.floor((endMs - startMs) / 1000));
+    totalSeconds += diff;
+  });
+
+  return {
+    totalSeconds,
+    totalMinutes: Math.floor(totalSeconds / 60),
+    completedSessionsCount: data?.length || 0,
+    error: null,
+  };
 }

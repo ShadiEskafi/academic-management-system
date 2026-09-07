@@ -102,3 +102,21 @@ export async function fetchCourseAssessments(courseId) {
 
   return { assessments: combined, error: null };
 }
+
+/**
+ * جلب أقرب استحقاق عاجل (متأخر أو متبقي له 3 أيام فأقل)
+ */
+export async function getUpcomingUrgentAssessment(courseId) {
+  const { assessments, error } = await fetchCourseAssessments(courseId);
+  if (error || !assessments.length) return null;
+
+  const pendingItems = assessments.filter(
+    (item) => item.status !== 'completed' && item.diffDays !== null
+  );
+
+  if (!pendingItems.length) return null;
+
+  // إيجاد أي استحقاق متأخر أو متبقي له 3 أيام أو أقل
+  const urgent = pendingItems.find((item) => item.diffDays <= 3);
+  return urgent || null;
+}

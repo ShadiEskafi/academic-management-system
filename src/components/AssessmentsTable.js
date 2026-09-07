@@ -15,7 +15,7 @@ import { renderExamFormModal } from './ExamForm.js';
 import { icons } from '../utils/icons.js';
 import { skeletons } from '../utils/skeletons.js';
 
-export function renderAssessmentsView(container, { courseId }) {
+export function renderAssessmentsView(container, { courseId, onAssessmentsChange = () => {} }) {
   let filterCategory = 'all'; // all | exams | assignments
   let filterStatus = 'all';   // all | pending | completed
   let rawAssessmentsList = [];
@@ -56,10 +56,14 @@ export function renderAssessmentsView(container, { courseId }) {
       </div>
     </div>
 
+    <!-- شريط احتساب أوزان الامتحانات من 100% -->
+    <div id="exam-weights-bar-container" style="margin-bottom:var(--space-4);"></div>
+
     <div id="assessments-content-area"></div>
   `;
 
   const contentArea = container.querySelector('#assessments-content-area');
+  const weightsContainer = container.querySelector('#exam-weights-bar-container');
   const addAssignmentBtn = container.querySelector('#btn-add-homework');
   const addExamBtn = container.querySelector('#btn-add-exam');
 
@@ -111,6 +115,26 @@ export function renderAssessmentsView(container, { courseId }) {
     });
   });
 
+  function renderWeightsSummary() {
+    const exams = rawAssessmentsList.filter((item) => item.category === 'exam');
+    const totalWeight = exams.reduce((sum, e) => sum + (Number(e.weight) || 0), 0);
+    const isExceeded = totalWeight > 100;
+
+    weightsContainer.innerHTML = `
+      <div class="card" style="padding:var(--space-3);background:var(--color-surface);border:1px solid var(--color-border);border-radius:var(--radius-md);">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;font-size:13px;">
+          <span><strong>مجموع أوزان الاختبارات:</strong> ${totalWeight}% من 100%</span>
+          <span style="font-weight:600;color:${isExceeded ? 'var(--color-danger)' : totalWeight === 100 ? '#10b981' : 'var(--color-accent)'};">
+            ${totalWeight === 100 ? '✓ التوزيع مكتمل تماماً' : isExceeded ? '⚠️ تجاوزت نسبة 100%!' : `متبقي ${100 - totalWeight}% غير موزعة`}
+          </span>
+        </div>
+        <div style="width:100%;height:8px;background:var(--color-bg-subtle);border-radius:999px;overflow:hidden;">
+          <div style="width:${Math.min(100, totalWeight)}%;height:100%;background:${isExceeded ? 'var(--color-danger)' : 'linear-gradient(90deg, var(--color-primary), var(--color-accent))'};border-radius:999px;transition:width 0.3s ease;"></div>
+        </div>
+      </div>
+    `;
+  }
+
   async function reloadData() {
     contentArea.innerHTML = skeletons.tableRows(4);
 
@@ -128,7 +152,9 @@ export function renderAssessmentsView(container, { courseId }) {
     }
 
     rawAssessmentsList = assessments || [];
+    renderWeightsSummary();
     renderTableRows();
+    onAssessmentsChange();
   }
 
   function renderTableRows() {
@@ -205,7 +231,7 @@ export function renderAssessmentsView(container, { courseId }) {
     let countdownBadge = '';
     if (item.diffDays !== null) {
       if (item.diffDays < 0) {
-        countdownBadge = `<span class="badge">منتهي</span>`;
+        countdownBadge = `<span class="badge badge-danger">متأخر</span>`;
       } else if (item.diffDays === 0) {
         countdownBadge = `<span class="badge badge-danger">اليوم</span>`;
       } else if (item.diffDays === 1) {
@@ -297,7 +323,7 @@ export function renderAssessmentsView(container, { courseId }) {
 
         if (targetItem.category === 'assignment') {
           renderAssignmentFormModal({
-            initialData: targetItem,
+            initialData: targetItem.raw,
             onSave: async (payload) => {
               const { error } = await updateAssignment(targetItem.id, payload);
               if (error) return { error };
@@ -307,7 +333,7 @@ export function renderAssessmentsView(container, { courseId }) {
           });
         } else {
           renderExamFormModal({
-            initialData: targetItem,
+            initialData: targetItem.raw,
             onSave: async (payload) => {
               const { error } = await updateExam(targetItem.id, payload);
               if (error) return { error };
