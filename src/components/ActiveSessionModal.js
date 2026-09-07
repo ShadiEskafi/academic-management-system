@@ -1,9 +1,8 @@
 // src/components/ActiveSessionModal.js
-// إعداد الجلسة الدراسية، المؤقت الحي العائم، ومودال التحديث السريع وفق الـ Design System
 import { icons } from '../utils/icons.js';
 
 /**
- * 1. مودال اختيار الموضوع قبل بدء الجلسة — يدعم القوائم المتتالية (Cascading Dropdowns)
+ * 1. مودال إعداد وبدء الجلسة
  */
 export function renderSessionSetupModal({
   topics = [],
@@ -49,16 +48,16 @@ export function renderSessionSetupModal({
   }
 
   const rootOptionsHtml = rootTopics
-    .map((t) => {
-      const isSelected = t.id === initialRootId;
-      return `<option value="${t.id}" ${isSelected ? 'selected' : ''}>${escapeHtml(t.title)}</option>`;
-    })
+    .map(
+      (t) =>
+        `<option value="${t.id}" ${t.id === initialRootId ? 'selected' : ''}>${escapeHtml(t.title)}</option>`
+    )
     .join('');
 
   overlay.innerHTML = `
     <div class="modal-content">
       <h3 id="session-setup-title">بدء جلسة دراسة مركزة</h3>
-      <p class="modal-description">حدد الموضوع الأكاديمي الذي تريد التركيز عليه في هذه الجلسة.</p>
+      <p class="modal-description">حدد الموضوع الأكاديمي والمدة الزمنية المخصصة للتركيز.</p>
 
       <form id="session-setup-form">
         <div class="field">
@@ -69,6 +68,17 @@ export function renderSessionSetupModal({
         </div>
 
         <div id="subtopic-container"></div>
+
+        <div class="field">
+          <label class="field-label" for="session-duration-select">المدة الزمنية المستهدفة</label>
+          <select class="input" name="durationMinutes" id="session-duration-select">
+            <option value="25">25 دقيقة (Pomodoro Focus)</option>
+            <option value="45" selected>45 دقيقة (جلسة دراسة قياسية)</option>
+            <option value="60">60 دقيقة (ساعة كاملة)</option>
+            <option value="90">90 دقيقة (تركيز معمّق)</option>
+            <option value="0">جلسة مفتوحة (بدون حد زمني)</option>
+          </select>
+        </div>
 
         <div class="modal-actions">
           <button type="button" class="btn-secondary" id="cancel-setup-btn">إلغاء</button>
@@ -90,17 +100,16 @@ export function renderSessionSetupModal({
 
   function updateSubtopicDropdown(selectedRootId, preselectedSubId = null) {
     const subtopics = getSubtopics(selectedRootId);
-
     if (subtopics.length === 0) {
       subtopicContainer.innerHTML = '';
       return;
     }
 
     const subOptionsHtml = subtopics
-      .map((st) => {
-        const isSelected = st.id === preselectedSubId;
-        return `<option value="${st.id}" ${isSelected ? 'selected' : ''}>↳ ${escapeHtml(st.title)}</option>`;
-      })
+      .map(
+        (st) =>
+          `<option value="${st.id}" ${st.id === preselectedSubId ? 'selected' : ''}>↳ ${escapeHtml(st.title)}</option>`
+      )
       .join('');
 
     subtopicContainer.innerHTML = `
@@ -114,9 +123,7 @@ export function renderSessionSetupModal({
     `;
   }
 
-  if (initialRootId) {
-    updateSubtopicDropdown(initialRootId, initialSubtopicId);
-  }
+  if (initialRootId) updateSubtopicDropdown(initialRootId, initialSubtopicId);
 
   rootSelect.addEventListener('change', (e) => {
     updateSubtopicDropdown(e.target.value, null);
@@ -124,9 +131,7 @@ export function renderSessionSetupModal({
 
   function cleanup() {
     window.removeEventListener('keydown', handleKeyDown);
-    if (overlay.parentElement) {
-      document.body.removeChild(overlay);
-    }
+    if (overlay.parentElement) document.body.removeChild(overlay);
     onClose();
   }
 
@@ -137,30 +142,28 @@ export function renderSessionSetupModal({
   window.addEventListener('keydown', handleKeyDown);
   cancelBtn.addEventListener('click', cleanup);
 
-  overlay.addEventListener('click', (e) => {
-    if (e.target === overlay) cleanup();
-  });
-
   form.addEventListener('submit', (e) => {
     e.preventDefault();
     const selectedRootId = rootSelect.value;
     const subSelect = overlay.querySelector('#session-subtopic-select');
     const selectedSubId = subSelect ? subSelect.value : null;
+    const durationMinutes = Number(form.querySelector('#session-duration-select').value) || 0;
 
     const finalTopicId = selectedSubId || selectedRootId;
     const finalTopic = topics.find((t) => t.id === finalTopicId);
 
     cleanup();
-    onStart(finalTopicId, finalTopic?.title || 'موضوع عام');
+    onStart(finalTopicId, finalTopic?.title || 'موضوع عام', durationMinutes);
   });
 }
 
 /**
- * 2. شريط المؤقت الحي العائم أثناء المذاكرة مع دعم منع الاهتزاز والتجاوب
+ * 2. شريط المؤقت الحي العائم
  */
 export function renderActiveSessionBar({
   topicTitle,
   startTime = Date.now(),
+  endTime = null,
   onFinish,
   onCancel,
 }) {
@@ -170,10 +173,13 @@ export function renderActiveSessionBar({
   bar.setAttribute('role', 'region');
   bar.setAttribute('aria-label', 'جلسة مذاكرة نشطة');
 
+  const hasTarget = !!endTime;
+
   function formatTime(seconds) {
-    const hrs = Math.floor(seconds / 3600);
-    const mins = Math.floor((seconds % 3600) / 60);
-    const secs = seconds % 60;
+    const s = Math.max(0, seconds);
+    const hrs = Math.floor(s / 3600);
+    const mins = Math.floor((s % 3600) / 60);
+    const secs = s % 60;
     if (hrs > 0) {
       return `${String(hrs).padStart(2, '0')}:${String(mins).padStart(2, '0')}:${String(secs).padStart(2, '0')}`;
     }
@@ -184,7 +190,9 @@ export function renderActiveSessionBar({
     <div style="display:flex;align-items:center;gap:var(--space-3);min-width:0;">
       <span class="active-session-pulse" aria-hidden="true"></span>
       <div style="display:flex;flex-direction:column;min-width:0;">
-        <span class="text-tertiary" style="font-size:11px;font-weight:600;text-transform:uppercase;">جلسة مذاكرة نشطة</span>
+        <span class="text-tertiary" style="font-size:11px;font-weight:600;text-transform:uppercase;">
+          ${hasTarget ? 'مؤقت تنازلي للهدف' : 'جلسة مذاكرة نشطة'}
+        </span>
         <span style="font-weight:600;font-size:14px;color:var(--color-text);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:220px;">
           ${escapeHtml(topicTitle)}
         </span>
@@ -209,22 +217,45 @@ export function renderActiveSessionBar({
   const finishBtn = bar.querySelector('#finish-session-btn');
   const abortBtn = bar.querySelector('#abort-session-btn');
 
-  let elapsedSeconds = 0;
-  const intervalId = setInterval(() => {
-    elapsedSeconds = Math.floor((Date.now() - startTime) / 1000);
-    timerDisplay.textContent = formatTime(elapsedSeconds);
-  }, 1000);
+  let intervalId = null;
+
+  function updateClock() {
+    const now = Date.now();
+
+    if (hasTarget) {
+      const remainingSeconds = Math.floor((endTime - now) / 1000);
+
+      if (remainingSeconds <= 0) {
+        timerDisplay.textContent = '00:00';
+        removeBar();
+        const totalElapsed = Math.floor((endTime - startTime) / 1000);
+        onFinish({
+          elapsedSeconds: totalElapsed,
+          formattedTime: formatTime(totalElapsed),
+          isTimeUp: true,
+        });
+        return;
+      }
+
+      timerDisplay.textContent = formatTime(remainingSeconds);
+    } else {
+      const elapsedSeconds = Math.floor((now - startTime) / 1000);
+      timerDisplay.textContent = formatTime(elapsedSeconds);
+    }
+  }
+
+  updateClock();
+  intervalId = setInterval(updateClock, 1000);
 
   function removeBar() {
-    clearInterval(intervalId);
-    if (bar.parentElement) {
-      document.body.removeChild(bar);
-    }
+    if (intervalId) clearInterval(intervalId);
+    if (bar.parentElement) document.body.removeChild(bar);
   }
 
   finishBtn.addEventListener('click', () => {
     removeBar();
-    onFinish({ elapsedSeconds, formattedTime: formatTime(elapsedSeconds) });
+    const elapsed = Math.floor((Date.now() - startTime) / 1000);
+    onFinish({ elapsedSeconds: elapsed, formattedTime: formatTime(elapsed), isTimeUp: false });
   });
 
   abortBtn.addEventListener('click', () => {
@@ -236,11 +267,12 @@ export function renderActiveSessionBar({
 }
 
 /**
- * 3. مودال التحديث السريع بعد انتهاء الجلسة لتقييم الإنجاز وتدوين الملاحظات
+ * 3. مودال التحديث السريع لتوثيق الإنجاز
  */
 export function renderQuickUpdateModal({
   topicTitle,
   formattedDuration,
+  isTimeUp = false,
   onSave,
   onClose = () => {},
 }) {
@@ -252,9 +284,11 @@ export function renderQuickUpdateModal({
 
   overlay.innerHTML = `
     <div class="modal-content">
-      <h3 id="quick-update-title">تسجيل إنجاز الجلسة</h3>
+      <h3 id="quick-update-title">
+        ${isTimeUp ? '⏰ انتهى وقت الجلسة المحدد!' : 'تسجيل إنجاز الجلسة'}
+      </h3>
       <p class="modal-description" style="margin-bottom:var(--space-3);">
-        الموضوع: <strong>${escapeHtml(topicTitle)}</strong> — المدة: <span class="font-en" style="font-weight:600;color:var(--color-accent);">${formattedDuration}</span>
+        الموضوع: <strong>${escapeHtml(topicTitle)}</strong> — مدة المذاكرة: <span class="font-en" style="font-weight:600;color:var(--color-accent);">${formattedDuration}</span>
       </p>
 
       <form id="quick-update-form">
@@ -265,7 +299,7 @@ export function renderQuickUpdateModal({
               <input type="radio" name="topicStatus" value="completed" checked />
               <div>
                 <strong>مكتمل (Completed)</strong>
-                <p>أنجزت الموضوع بالكامل ويمكن الانتقال للموضوع التالي.</p>
+                <p>أنجزت المطلوب بالكامل ويمكن الانتقال لما بعده.</p>
               </div>
             </label>
 
@@ -273,7 +307,7 @@ export function renderQuickUpdateModal({
               <input type="radio" name="topicStatus" value="in_progress" />
               <div>
                 <strong>قيد المتابعة (In Progress)</strong>
-                <p>أحرزت تقدماً جيداً ولكنه يحتاج جلسة إضافية لاستكماله.</p>
+                <p>أحرزت تقدماً جيداً ولكنه يتطلب جلسة عمل أخرى.</p>
               </div>
             </label>
 
@@ -281,7 +315,7 @@ export function renderQuickUpdateModal({
               <input type="radio" name="topicStatus" value="needs_review" />
               <div>
                 <strong>يحتاج مراجعة (Needs Review)</strong>
-                <p>تمت دراسته لكنه يتطلب مراجعة أو حل تدريبات وامتحانات سابقة.</p>
+                <p>تمت دراسته لكنه بحاجة إلى حل تمارين ومراجعة سريعة.</p>
               </div>
             </label>
           </div>
@@ -293,7 +327,7 @@ export function renderQuickUpdateModal({
             id="session-notes"
             name="notes"
             class="input"
-            placeholder="دوّن أين توقفت، أسئلة للدكتور، أو نقاط تحتاج تركيزاً..."
+            placeholder="أين توقفت؟ ما هي النقاط الغامضة؟"
             rows="3"
           ></textarea>
         </div>
@@ -301,10 +335,10 @@ export function renderQuickUpdateModal({
         <p id="quick-update-error" class="field-error"></p>
 
         <div class="modal-actions">
-          <button type="button" class="btn-secondary" id="cancel-update-btn">تخطي دون حفظ</button>
+          <button type="button" class="btn-secondary" id="cancel-update-btn">إلغاء</button>
           <button type="submit" class="btn-primary" id="save-update-btn">
             ${icons.check(15)}
-            <span>حفظ وتحديث المساق</span>
+            <span>حفظ وتحديث الإنجاز</span>
           </button>
         </div>
       </form>
@@ -320,9 +354,7 @@ export function renderQuickUpdateModal({
 
   function cleanup() {
     window.removeEventListener('keydown', handleKeyDown);
-    if (overlay.parentElement) {
-      document.body.removeChild(overlay);
-    }
+    if (overlay.parentElement) document.body.removeChild(overlay);
     onClose();
   }
 
@@ -332,10 +364,6 @@ export function renderQuickUpdateModal({
 
   window.addEventListener('keydown', handleKeyDown);
   cancelBtn.addEventListener('click', cleanup);
-
-  overlay.addEventListener('click', (e) => {
-    if (e.target === overlay) cleanup();
-  });
 
   form.addEventListener('submit', async (e) => {
     e.preventDefault();
@@ -350,12 +378,78 @@ export function renderQuickUpdateModal({
     const result = await onSave({ topicStatus, notes });
 
     if (result?.error) {
-      errorEl.textContent = result.error.message || 'فشل حفظ الجلسة، حاول مرة ثانية.';
+      errorEl.textContent = result.error.message || 'فشل حفظ الجلسة.';
       saveBtn.disabled = false;
       saveBtn.classList.remove('btn-loading');
     } else {
       cleanup();
     }
+  });
+}
+
+/**
+ * 4. مودال استعادة الجلسات العالقة غير المكتملة
+ */
+export function renderStaleSessionModal({
+  session,
+  onResolve,
+  onDiscard,
+}) {
+  const overlay = document.createElement('div');
+  overlay.className = 'modal-overlay';
+  overlay.setAttribute('role', 'dialog');
+  overlay.setAttribute('aria-modal', 'true');
+  overlay.setAttribute('aria-labelledby', 'stale-session-title');
+
+  const startDate = new Date(session.scheduled_start);
+  const timeFormatted = startDate.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+
+  overlay.innerHTML = `
+    <div class="modal-content">
+      <div style="display:flex;align-items:center;gap:var(--space-2);color:var(--color-warning);margin-bottom:var(--space-2);">
+        ${icons.alertTriangle(24)}
+        <h3 id="stale-session-title" style="margin:0;">جلسة مذاكرة سابقة غير مكتملة</h3>
+      </div>
+      <p class="modal-description">
+        عثر النظام على جلسة سابقة بدأت في <strong>${timeFormatted}</strong> للموضوع: <strong>${escapeHtml(session.topic_title)}</strong> ولم يتم إغلاقها.
+      </p>
+
+      <div style="background:var(--color-bg-subtle);border-radius:var(--radius-md);padding:var(--space-3);margin-bottom:var(--space-4);font-size:13px;line-height:1.6;">
+        اختر كيف تود تسوية هذه الجلسة لمتابعة استخدام النظام:
+      </div>
+
+      <div class="modal-actions" style="flex-direction:column;gap:var(--space-2);">
+        <button type="button" class="btn-primary" id="resolve-stale-btn" style="width:100%;justify-content:center;">
+          ${icons.check(15)}
+          <span>توثيق الإنجاز وحفظ الملاحظات</span>
+        </button>
+        <button type="button" class="btn-secondary" id="discard-stale-btn" style="width:100%;justify-content:center;color:var(--color-danger);">
+          ${icons.trash(15)}
+          <span>إلغاء الجلسة وتجاهلها</span>
+        </button>
+      </div>
+    </div>
+  `;
+
+  document.body.appendChild(overlay);
+
+  const resolveBtn = overlay.querySelector('#resolve-stale-btn');
+  const discardBtn = overlay.querySelector('#discard-stale-btn');
+
+  function cleanup() {
+    if (overlay.parentElement) document.body.removeChild(overlay);
+  }
+
+  resolveBtn.addEventListener('click', () => {
+    cleanup();
+    onResolve();
+  });
+
+  discardBtn.addEventListener('click', async () => {
+    discardBtn.disabled = true;
+    discardBtn.classList.add('btn-loading');
+    cleanup();
+    await onDiscard();
   });
 }
 

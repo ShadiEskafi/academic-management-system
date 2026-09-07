@@ -1,46 +1,57 @@
 // src/components/SemesterModals.js
-// مودالات تعديل وحذف الفصول الدراسية وفق الـ Design System (Phase D)
+// مودالات تعديل وحذف الفصل الدراسي متوافقة مع قيود قاعدة البيانات chk_semester_status
+import { icons } from '../utils/icons.js';
 
-export function renderEditSemesterModal(
-  semester,
-  { onSave, onClose = () => {} },
-) {
-  const overlay = document.createElement("div");
-  overlay.className = "modal-overlay";
+/**
+ * مودال تعديل الفصل الدراسي
+ */
+export function renderEditSemesterModal(semester, { onSave, onClose = () => {} }) {
+  const overlay = document.createElement('div');
+  overlay.className = 'modal-overlay';
+  overlay.setAttribute('role', 'dialog');
+  overlay.setAttribute('aria-modal', 'true');
+  overlay.setAttribute('aria-labelledby', 'edit-semester-title');
+
+  // مطابقة الحالة الحالية مع قيم قاعدة البيانات الصحيحة
+  const isCurrentActive = semester.status === 'active' || semester.status === 'in_progress';
+  const isCurrentPlanned = semester.status === 'planned';
+  const isCurrentCompleted = semester.status === 'completed';
 
   overlay.innerHTML = `
-    <div class="modal-content" role="dialog" aria-modal="true" aria-labelledby="edit-modal-title">
-      <h3 id="edit-modal-title">تعديل الفصل الدراسي</h3>
+    <div class="modal-content">
+      <h3 id="edit-semester-title">تعديل الفصل الدراسي</h3>
       <p class="modal-description">قم بتحديث بيانات الفصل الدراسي وحالته الأكاديمية.</p>
 
       <form id="edit-semester-form">
         <div class="field">
-          <label class="field-label" for="edit-semester-title">اسم الفصل الدراسي</label>
+          <label class="field-label" for="edit-semester-name">اسم الفصل الدراسي *</label>
           <input
-            id="edit-semester-title"
+            id="edit-semester-name"
+            name="title"
             class="input"
             type="text"
-            name="title"
-            value="${escapeHtml(semester.title)}"
             required
-            autocomplete="off"
+            value="${escapeHtml(semester.title || '')}"
+            placeholder="مثال: الفصل الدراسي الأول 2026/2027"
           />
         </div>
 
         <div class="field">
           <label class="field-label" for="edit-semester-status">الحالة الأكاديمية</label>
-          <select id="edit-semester-status" class="input" name="status">
-            <option value="planned" ${semester.status === "planned" ? "selected" : ""}>مخطط له (Planned)</option>
-            <option value="in_progress" ${semester.status === "in_progress" ? "selected" : ""}>قيد الدراسة (In Progress)</option>
-            <option value="completed" ${semester.status === "completed" ? "selected" : ""}>مكتمل (Completed)</option>
+          <select id="edit-semester-status" name="status" class="input">
+            <option value="active" ${isCurrentActive ? 'selected' : ''}>قيد الدراسة (Active)</option>
+            <option value="planned" ${isCurrentPlanned ? 'selected' : ''}>مخطط له / قادم (Planned)</option>
+            <option value="completed" ${isCurrentCompleted ? 'selected' : ''}>مكتمل (Completed)</option>
           </select>
         </div>
 
         <p id="edit-semester-error" class="field-error"></p>
 
         <div class="modal-actions">
-          <button type="button" class="btn-secondary" id="cancel-edit-btn">إلغاء</button>
-          <button type="submit" class="btn-primary" id="save-edit-btn">حفظ التعديلات</button>
+          <button type="button" class="btn-secondary" id="cancel-edit-semester-btn">إلغاء</button>
+          <button type="submit" class="btn-primary" id="save-edit-semester-btn">
+            <span>حفظ التعديلات</span>
+          </button>
         </div>
       </form>
     </div>
@@ -48,16 +59,13 @@ export function renderEditSemesterModal(
 
   document.body.appendChild(overlay);
 
-  const form = overlay.querySelector("#edit-semester-form");
-  const cancelBtn = overlay.querySelector("#cancel-edit-btn");
-  const submitBtn = overlay.querySelector("#save-edit-btn");
-  const errorEl = overlay.querySelector("#edit-semester-error");
-  const titleInput = overlay.querySelector("#edit-semester-title");
-
-  titleInput.focus();
+  const form = overlay.querySelector('#edit-semester-form');
+  const cancelBtn = overlay.querySelector('#cancel-edit-semester-btn');
+  const saveBtn = overlay.querySelector('#save-edit-semester-btn');
+  const errorEl = overlay.querySelector('#edit-semester-error');
 
   function cleanup() {
-    window.removeEventListener("keydown", handleKeyDown);
+    window.removeEventListener('keydown', handleKeyDown);
     if (overlay.parentElement) {
       document.body.removeChild(overlay);
     }
@@ -65,25 +73,32 @@ export function renderEditSemesterModal(
   }
 
   function handleKeyDown(e) {
-    if (e.key === "Escape") cleanup();
+    if (e.key === 'Escape') cleanup();
   }
 
-  window.addEventListener("keydown", handleKeyDown);
-  cancelBtn.addEventListener("click", cleanup);
+  window.addEventListener('keydown', handleKeyDown);
+  cancelBtn.addEventListener('click', cleanup);
 
-  overlay.addEventListener("click", (e) => {
+  overlay.addEventListener('click', (e) => {
     if (e.target === overlay) cleanup();
   });
 
-  form.addEventListener("submit", async (e) => {
+  form.addEventListener('submit', async (e) => {
     e.preventDefault();
-    errorEl.textContent = "";
-    submitBtn.disabled = true;
-    submitBtn.classList.add("btn-loading");
+    errorEl.textContent = '';
+    saveBtn.disabled = true;
+    saveBtn.classList.add('btn-loading');
 
     const formData = new FormData(form);
-    const newTitle = formData.get("title").trim();
-    const newStatus = formData.get("status");
+    const newTitle = formData.get('title').trim();
+    const newStatus = formData.get('status');
+
+    if (!newTitle) {
+      errorEl.textContent = 'اسم الفصل الدراسي مطلوب.';
+      saveBtn.disabled = false;
+      saveBtn.classList.remove('btn-loading');
+      return;
+    }
 
     const result = await onSave(semester.id, {
       title: newTitle,
@@ -91,67 +106,54 @@ export function renderEditSemesterModal(
     });
 
     if (result?.error) {
-      errorEl.textContent = result.error.message || "فشل حفظ التعديلات";
-      submitBtn.disabled = false;
-      submitBtn.classList.remove("btn-loading");
+      errorEl.textContent = result.error.message || 'فشل حفظ التعديلات، يرجى المحاولة لاحقاً.';
+      saveBtn.disabled = false;
+      saveBtn.classList.remove('btn-loading');
     } else {
       cleanup();
     }
   });
 }
 
-export function renderDeleteSemesterModal(
-  semester,
-  { onDelete, onClose = () => {} },
-) {
-  const overlay = document.createElement("div");
-  overlay.className = "modal-overlay";
+/**
+ * مودال حذف الفصل الدراسي
+ */
+export function renderDeleteSemesterModal(semester, { onDelete, onClose = () => {} }) {
+  const overlay = document.createElement('div');
+  overlay.className = 'modal-overlay';
+  overlay.setAttribute('role', 'dialog');
+  overlay.setAttribute('aria-modal', 'true');
+  overlay.setAttribute('aria-labelledby', 'delete-semester-title');
 
   overlay.innerHTML = `
-    <div class="modal-content" role="dialog" aria-modal="true" aria-labelledby="delete-modal-title">
-      <h3 id="delete-modal-title" style="color:var(--color-danger);">حذف الفصل الدراسي</h3>
+    <div class="modal-content">
+      <h3 id="delete-semester-title" style="color:var(--color-danger);">تأكيد حذف الفصل الدراسي</h3>
       <p class="modal-description">
-        أنت على وشك حذف <strong>"${escapeHtml(semester.title)}"</strong>. سيؤدي هذا الإجراء إلى حذف كافة المساقات والمواضيع والبيانات التابعة له فوراً.
+        هل أنت متأكد من رغبتك في حذف <strong>${escapeHtml(semester.title)}</strong>؟
+        <br />
+        <span style="color:var(--color-danger);font-size:13px;">تنبيه: سيتم حذف جميع المساقات والمواضيع المرتبطة بهذا الفصل نهائياً.</span>
       </p>
-
-      <div class="field" style="margin-block:var(--space-4);">
-        <label class="field-label" for="delete-confirm-input">لتأكيد الحذف، اكتب اسم الفصل كما هو تماماً:</label>
-        <div style="padding:var(--space-2) var(--space-3);background:var(--color-surface-muted);border:1px solid var(--color-border);border-radius:var(--radius-sm);font-weight:600;font-size:13px;margin-bottom:var(--space-2);color:var(--color-text);">
-          ${escapeHtml(semester.title)}
-        </div>
-        <input
-          type="text"
-          id="delete-confirm-input"
-          class="input"
-          placeholder="اكتب اسم الفصل هنا للتأكيد..."
-          autocomplete="off"
-        />
-      </div>
 
       <p id="delete-semester-error" class="field-error"></p>
 
       <div class="modal-actions">
-        <button type="button" class="btn-secondary" id="cancel-delete-btn">إلغاء</button>
-        <button type="button" class="btn-danger" id="confirm-delete-btn" disabled>حذف الفصل</button>
+        <button type="button" class="btn-secondary" id="cancel-delete-semester-btn">إلغاء</button>
+        <button type="button" class="btn-danger" id="confirm-delete-semester-btn">
+          ${icons.trash(15)}
+          <span>حذف الفصل نهائياً</span>
+        </button>
       </div>
     </div>
   `;
 
   document.body.appendChild(overlay);
 
-  const confirmInput = overlay.querySelector("#delete-confirm-input");
-  const confirmBtn = overlay.querySelector("#confirm-delete-btn");
-  const cancelBtn = overlay.querySelector("#cancel-delete-btn");
-  const errorEl = overlay.querySelector("#delete-semester-error");
-
-  confirmInput.focus();
-
-  confirmInput.addEventListener("input", (e) => {
-    confirmBtn.disabled = e.target.value.trim() !== semester.title.trim();
-  });
+  const cancelBtn = overlay.querySelector('#cancel-delete-semester-btn');
+  const confirmBtn = overlay.querySelector('#confirm-delete-semester-btn');
+  const errorEl = overlay.querySelector('#delete-semester-error');
 
   function cleanup() {
-    window.removeEventListener("keydown", handleKeyDown);
+    window.removeEventListener('keydown', handleKeyDown);
     if (overlay.parentElement) {
       document.body.removeChild(overlay);
     }
@@ -159,13 +161,13 @@ export function renderDeleteSemesterModal(
   }
 
   function handleKeyDown(e) {
-    if (e.key === "Escape") cleanup();
+    if (e.key === 'Escape') cleanup();
   }
 
-  window.addEventListener("keydown", handleKeyDown);
-  cancelBtn.addEventListener("click", cleanup);
+  window.addEventListener('keydown', handleKeyDown);
+  cancelBtn.addEventListener('click', cleanup);
 
-  overlay.addEventListener("click", (e) => {
+  overlay.addEventListener('click', (e) => {
     if (e.target === overlay) cleanup();
   });
 
@@ -177,7 +179,7 @@ export function renderDeleteSemesterModal(
     const result = await onDelete(semester.id);
 
     if (result?.error) {
-      errorEl.textContent = result.error.message || 'فشل حذف الفصل، تأكد من إعدادات قاعدة البيانات';
+      errorEl.textContent = result.error.message || 'فشل حذف الفصل، تأكد من الصلاحيات.';
       confirmBtn.disabled = false;
       confirmBtn.classList.remove('btn-loading');
     } else {
@@ -187,10 +189,10 @@ export function renderDeleteSemesterModal(
 }
 
 function escapeHtml(str) {
-  if (!str) return "";
+  if (!str) return '';
   return String(str)
-    .replace(/&/g, "&amp;")
-    .replace(/</g, "&lt;")
-    .replace(/>/g, "&gt;")
-    .replace(/"/g, "&quot;");
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;');
 }

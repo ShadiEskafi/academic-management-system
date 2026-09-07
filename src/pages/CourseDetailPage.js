@@ -10,10 +10,12 @@ import {
 } from '../api/topics.js';
 
 import {
-  startStudySession,
-  completeStudySession,
-} from '../api/studySessions.js';
+  startNewGlobalSession,
+  isSessionActive,
+  subscribeToSession,
+} from '../utils/sessionManager.js';
 
+import { showToast } from '../utils/toast.js';
 import { renderAssessmentsView } from '../components/AssessmentsTable.js';
 import { renderTopicNode } from '../components/TopicNode.js';
 import { renderTopicForm } from '../components/TopicForm.js';
@@ -21,11 +23,7 @@ import {
   renderEditTopicModal,
   renderDeleteTopicModal,
 } from '../components/TopicModals.js';
-import {
-  renderSessionSetupModal,
-  renderActiveSessionBar,
-  renderQuickUpdateModal,
-} from '../components/ActiveSessionModal.js';
+import { renderSessionSetupModal } from '../components/ActiveSessionModal.js';
 import { icons } from '../utils/icons.js';
 import { skeletons } from '../utils/skeletons.js';
 
@@ -71,7 +69,6 @@ export async function renderCourseDetailPage(
 ) {
   let activePositionTopicId = currentPositionTopicId;
   let rawTopicsList = [];
-  let activeSessionCleanup = null;
   let assessmentsMounted = false;
 
   container.innerHTML = `
@@ -90,7 +87,7 @@ export async function renderCourseDetailPage(
 
       <header style="display:flex;align-items:center;justify-content:space-between;gap:var(--space-4);margin-bottom:var(--space-6);flex-wrap:wrap;">
         <div>
-          <h1 style="margin:0 0 var(--space-1);">إدارة محتوى المساق</h1>
+          <h1 id="course-page-title" style="margin:0 0 var(--space-1);">إدارة محتوى المساق</h1>
           <p class="text-secondary" style="font-size:14px;">تنظيم شجرة المواضيع، متابعة الاستحقاقات، وجلسات المذاكرة المركزة.</p>
         </div>
 
@@ -153,6 +150,30 @@ export async function renderCourseDetailPage(
 
   let formOpen = false;
 
+  function updateStartButtonState() {
+    if (isSessionActive()) {
+      startSessionBtn.disabled = true;
+      startSessionBtn.title = 'لديك جلسة مذاكرة نشطة حالياً';
+    } else {
+      startSessionBtn.disabled = false;
+      startSessionBtn.removeAttribute('title');
+    }
+  }
+
+  // الاستماع لتغيرات الجلسة العامة وتحديث الزر والشجرة
+  const unsubscribeSession = subscribeToSession(({ event, session, nextTopicId }) => {
+    updateStartButtonState();
+
+    if (event === 'completed' && session?.course_id === courseId) {
+      if (nextTopicId) {
+        activePositionTopicId = nextTopicId;
+      }
+      loadAndRenderTree();
+    }
+  });
+
+  updateStartButtonState();
+
   tabBtnTree.addEventListener('click', () => {
     tabBtnTree.classList.add('active');
     tabBtnTree.setAttribute('aria-selected', 'true');
@@ -177,7 +198,6 @@ export async function renderCourseDetailPage(
   });
 
   backBtn.addEventListener('click', () => {
-    if (activeSessionCleanup) activeSessionCleanup();
     onBack();
   });
 
@@ -223,60 +243,34 @@ export async function renderCourseDetailPage(
   });
 
   startSessionBtn.addEventListener('click', () => {
-    if (activeSessionCleanup) return;
+    if (isSessionActive()) {
+      showToast('لديك جلسة نشطة بالفعل، يرجى إتمامها أو إلغاؤها أولاً', 'warning');
+      return;
+    }
 
     renderSessionSetupModal({
       topics: rawTopicsList,
       currentTopicId: activePositionTopicId,
-      onStart: async (selectedTopicId, selectedTopicTitle) => {
-        const { session, error: startErr } = await startStudySession({
-          courseId,
-          topicId: selectedTopicId,
-        });
-
-        if (startErr) {
-          console.error('Failed to start study session:', startErr);
-          return;
-        }
-
+      onStart: async (selectedTopicId, selectedTopicTitle, durationMinutes) => {
         startSessionBtn.disabled = true;
+        startSessionBtn.classList.add('btn-loading');
 
-        activeSessionCleanup = renderActiveSessionBar({
+        const courseTitle = container.querySelector('#course-page-title')?.textContent || '';
+
+        const { error } = await startNewGlobalSession({
+          courseId,
+          courseTitle,
+          topicId: selectedTopicId,
           topicTitle: selectedTopicTitle,
-          startTime: Date.now(),
-          onFinish: ({ formattedTime }) => {
-            activeSessionCleanup = null;
-            startSessionBtn.disabled = false;
-
-            renderQuickUpdateModal({
-              topicTitle: selectedTopicTitle,
-              formattedDuration: formattedTime,
-              onSave: async ({ topicStatus, notes }) => {
-                const { nextTopicId, error: completeErr } =
-                  await completeStudySession({
-                    sessionId: session.id,
-                    courseId,
-                    topicId: selectedTopicId,
-                    topicStatus,
-                    notes,
-                  });
-
-                if (completeErr) return { error: completeErr };
-
-                if (nextTopicId) {
-                  activePositionTopicId = nextTopicId;
-                }
-
-                await loadAndRenderTree();
-                return { error: null };
-              },
-            });
-          },
-          onCancel: () => {
-            activeSessionCleanup = null;
-            startSessionBtn.disabled = false;
-          },
+          durationMinutes,
         });
+
+        startSessionBtn.classList.remove('btn-loading');
+
+        if (error) {
+          showToast(error.message || 'تعذر بدء الجلسة', 'error');
+          updateStartButtonState();
+        }
       },
     });
   });
@@ -422,10 +416,10 @@ export async function renderCourseDetailPage(
     }
   }
 
-  await loadAndRenderTree();
+  loadAndRenderTree();
 
   return () => {
-    if (activeSessionCleanup) activeSessionCleanup();
+    unsubscribeSession();
     formOpen = false;
     formContainer.innerHTML = '';
   };
