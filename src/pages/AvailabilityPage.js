@@ -1,6 +1,5 @@
 // src/pages/AvailabilityPage.js
-// شاشة إدارة أوقات التفرغ الأسبوعية وشبكة الأيام السبعة (UC-12)
-
+// شاشة أوقات التفرغ وفق الـ Design System (مع هياكل التحميل Skeletons)
 import {
   DAYS_OF_WEEK,
   fetchAvailability,
@@ -11,21 +10,20 @@ import {
   calculateSlotDurationMinutes,
   calculateTotalWeeklyHours,
 } from '../api/availability.js';
-
 import { renderAvailabilityModal } from '../components/AvailabilityModal.js';
+import { icons } from '../utils/icons.js';
+import { skeletons } from '../utils/skeletons.js';
 
 export async function renderAvailabilityPage(container) {
   let rawSlots = [];
 
   container.innerHTML = `
-    <div class="availability-page-container">
-      <div class="availability-header-bar">
+    <div class="page-container">
+      <header style="display:flex;align-items:center;justify-content:space-between;gap:var(--space-4);margin-bottom:var(--space-6);flex-wrap:wrap;">
         <div>
-          <h2 style="margin:0 0 0.25rem;display:flex;align-items:center;gap:8px;">
-            ⏰ أوقات التفرغ الأسبوعية
-          </h2>
-          <p style="margin:0;font-size:14px;color:var(--text);">
-            حدد الساعات المتاحة لمذاكرتك خلال الأسبوع ليتمكن النظام من توليد خطتك الأسبوعية بذكاء.
+          <h1 style="margin:0 0 var(--space-1);">أوقات التفرغ الأسبوعية</h1>
+          <p class="text-secondary" style="font-size:14px;">
+            حدد فترات الساعات المتاحة لمذاكرتك خلال الأسبوع ليتمكن النظام من توليد خطتك الذكية.
           </p>
         </div>
 
@@ -33,19 +31,14 @@ export async function renderAvailabilityPage(container) {
           type="button"
           id="btn-add-global-slot"
           class="btn-primary"
-          style="padding:0.5rem 1rem;font-weight:600;display:inline-flex;align-items:center;gap:6px;"
         >
-          + إضافة فترة تفرغ ⏰
+          ${icons.plus(15)}
+          <span>إضافة فترة تفرغ</span>
         </button>
-      </div>
+      </header>
 
-      <!-- بطاقة إحصائيات الساعات الأسبوعية -->
-      <div id="availability-stats-area"></div>
-
-      <!-- شبكة الأيام السبعة -->
-      <div id="availability-grid-area" class="availability-grid-container">
-        <p style="color:var(--text);font-size:14px;">جاري تحميل أوقات التفرغ...</p>
-      </div>
+      <div id="availability-stats-area" style="margin-bottom:var(--space-6);"></div>
+      <div id="availability-grid-area"></div>
     </div>
   `;
 
@@ -66,11 +59,17 @@ export async function renderAvailabilityPage(container) {
   });
 
   async function reloadData() {
-    gridArea.innerHTML = `<p style="color:var(--text);font-size:14px;">جاري تحديث البيانات...</p>`;
+    gridArea.innerHTML = skeletons.availabilityGrid();
     const { slots, error } = await fetchAvailability();
 
     if (error) {
-      gridArea.innerHTML = `<p style="color:#ef4444;font-size:14px;">فشل تحميل أوقات التفرغ: ${escapeHtml(error.message)}</p>`;
+      gridArea.innerHTML = `
+        <div class="card error-state">
+          <div class="error-state-icon" aria-hidden="true">${icons.alertTriangle(28)}</div>
+          <h3>تعذر تحميل أوقات التفرغ</h3>
+          <p>${escapeHtml(error.message)}</p>
+        </div>
+      `;
       return;
     }
 
@@ -84,22 +83,24 @@ export async function renderAvailabilityPage(container) {
     const slotsCount = rawSlots.length;
 
     statsArea.innerHTML = `
-      <div class="availability-stats-banner">
-        <div style="display:flex;align-items:center;gap:1rem;">
-          <div class="stats-icon-box">⚡</div>
+      <div class="card" style="display:flex;align-items:center;justify-content:space-between;gap:var(--space-4);flex-wrap:wrap;background:var(--color-surface-soft);">
+        <div style="display:flex;align-items:center;gap:var(--space-3);">
+          <div style="width:42px;height:42px;border-radius:var(--radius-sm);background:var(--color-accent-soft);color:var(--color-accent);display:flex;align-items:center;justify-content:center;flex-shrink:0;">
+            ${icons.clock(22)}
+          </div>
           <div>
-            <span style="font-size:12px;color:var(--text);display:block;font-weight:500;">
+            <span class="text-tertiary" style="font-size:12px;display:block;font-weight:600;text-transform:uppercase;">
               إجمالي الطاقة الاستيعابية الأسبوعية (Study Capacity)
             </span>
             <div style="display:flex;align-items:baseline;gap:8px;margin-top:2px;">
-              <span style="font-size:22px;font-weight:700;color:var(--text-h);">${formattedText}</span>
-              <span style="font-size:13px;color:var(--text);">(${totalHoursDecimal} ساعة / أسبوعياً)</span>
+              <span style="font-size:24px;font-weight:700;color:var(--color-text);">${formattedText}</span>
+              <span class="text-secondary font-en" style="font-size:13px;">(${totalHoursDecimal} hrs / week)</span>
             </div>
           </div>
         </div>
 
-        <div style="font-size:13px;color:var(--text);text-align:left;">
-          فترات التفرغ المسجلة: <strong style="color:var(--text-h);">${slotsCount}</strong> فترة
+        <div class="text-secondary" style="font-size:13px;">
+          الفترات المسجلة: <strong style="color:var(--color-text);">${slotsCount}</strong> فترة
         </div>
       </div>
     `;
@@ -107,7 +108,7 @@ export async function renderAvailabilityPage(container) {
 
   function renderGrid() {
     gridArea.innerHTML = `
-      <div class="availability-week-grid">
+      <div style="display:grid;grid-template-columns:repeat(auto-fit, minmax(140px, 1fr));gap:var(--space-3);">
         ${DAYS_OF_WEEK.map((day) => renderDayColumn(day)).join('')}
       </div>
     `;
@@ -121,29 +122,33 @@ export async function renderAvailabilityPage(container) {
     daySlots.forEach((s) => {
       dayTotalMins += calculateSlotDurationMinutes(s.start_time, s.end_time);
     });
-    const dayHoursText = dayTotalMins > 0 ? `${(dayTotalMins / 60).toFixed(1)} ساعة` : 'فارغ';
+    const dayHoursText = dayTotalMins > 0 ? `${(dayTotalMins / 60).toFixed(1)} س` : 'فارغ';
 
     return `
-      <div class="day-column-card" data-day="${day.key}">
-        <div class="day-column-header">
+      <div class="card" style="display:flex;flex-direction:column;gap:var(--space-3);padding:var(--space-3);" data-day="${day.key}">
+        <div style="display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid var(--color-border);padding-bottom:var(--space-2);">
           <div>
-            <span class="day-name-label">${day.label}</span>
-            <span class="day-hours-badge ${dayTotalMins > 0 ? 'active' : ''}">${dayHoursText}</span>
+            <strong style="font-size:14px;display:block;color:var(--color-text);">${day.label}</strong>
+            <span class="badge ${dayTotalMins > 0 ? 'badge-accent' : ''}" style="margin-top:4px;font-size:11px;">
+              ${dayHoursText}
+            </span>
           </div>
           <button
             type="button"
-            class="btn-quick-add-day"
+            class="btn-icon btn-quick-add-day"
             data-day="${day.key}"
-            title="إضافة وقت ليوم ${day.label}"
+            title="إضافة فترة ليوم ${day.label}"
+            aria-label="إضافة فترة ليوم ${day.label}"
+            style="width:28px;height:28px;"
           >
-            +
+            ${icons.plus(13)}
           </button>
         </div>
 
-        <div class="day-slots-list">
+        <div style="display:flex;flex-direction:column;gap:var(--space-2);min-height:80px;">
           ${
             daySlots.length === 0
-              ? `<div class="empty-day-slot">لا توجد فترات</div>`
+              ? `<div class="text-tertiary" style="font-size:12px;text-align:center;margin-top:var(--space-4);">لا توجد فترات</div>`
               : daySlots.map((slot) => renderSlotItem(slot)).join('')
           }
         </div>
@@ -158,23 +163,26 @@ export async function renderAvailabilityPage(container) {
     const durationHrs = (durationMins / 60).toFixed(1);
 
     return `
-      <div class="slot-item-box" data-slot-id="${slot.id}">
-        <div class="slot-time-info">
-          <span class="slot-time-range">🕒 ${startStr} - ${endStr}</span>
-          <span class="slot-duration-pill">${durationHrs} س</span>
+      <div class="card" style="padding:var(--space-2);background:var(--color-surface-soft);border:1px solid var(--color-border);display:flex;flex-direction:column;gap:6px;" data-slot-id="${slot.id}">
+        <div style="display:flex;align-items:center;justify-content:space-between;gap:4px;">
+          <span class="font-en" style="font-size:12px;font-weight:600;color:var(--color-text);">${startStr} - ${endStr}</span>
+          <span class="badge badge-info font-en" style="font-size:10px;padding:1px 6px;">${durationHrs}h</span>
         </div>
-        <div class="slot-actions">
-          <button type="button" class="action-btn edit-slot-btn" data-slot-id="${slot.id}" title="تعديل">✏️</button>
-          <button type="button" class="action-btn delete-slot-btn" data-slot-id="${slot.id}" title="حذف" style="color:#ef4444;">🗑️</button>
+
+        <div style="display:flex;justify-content:flex-end;gap:4px;border-top:1px solid var(--color-border);padding-top:4px;">
+          <button type="button" class="btn-icon edit-slot-btn" data-slot-id="${slot.id}" title="تعديل" aria-label="تعديل" style="width:24px;height:24px;">
+            ${icons.edit(12)}
+          </button>
+          <button type="button" class="btn-icon delete-slot-btn" data-slot-id="${slot.id}" title="حذف" aria-label="حذف" style="width:24px;height:24px;color:var(--color-danger);">
+            ${icons.trash(12)}
+          </button>
         </div>
       </div>
     `;
   }
 
   function attachGridEvents() {
-    // أزرار الإضافة السريعة لكل يوم
-    const quickAddBtns = gridArea.querySelectorAll('.btn-quick-add-day');
-    quickAddBtns.forEach((btn) => {
+    gridArea.querySelectorAll('.btn-quick-add-day').forEach((btn) => {
       btn.addEventListener('click', () => {
         const dayKey = btn.dataset.day;
         renderAvailabilityModal({
@@ -189,9 +197,7 @@ export async function renderAvailabilityPage(container) {
       });
     });
 
-    // أزرار التعديل
-    const editBtns = gridArea.querySelectorAll('.edit-slot-btn');
-    editBtns.forEach((btn) => {
+    gridArea.querySelectorAll('.edit-slot-btn').forEach((btn) => {
       btn.addEventListener('click', () => {
         const slotId = btn.dataset.slotId;
         const targetSlot = rawSlots.find((s) => s.id === slotId);
@@ -209,9 +215,7 @@ export async function renderAvailabilityPage(container) {
       });
     });
 
-    // أزرار الحذف
-    const deleteBtns = gridArea.querySelectorAll('.delete-slot-btn');
-    deleteBtns.forEach((btn) => {
+    gridArea.querySelectorAll('.delete-slot-btn').forEach((btn) => {
       btn.addEventListener('click', () => {
         const slotId = btn.dataset.slotId;
         const targetSlot = rawSlots.find((s) => s.id === slotId);
@@ -230,19 +234,22 @@ export async function renderAvailabilityPage(container) {
   function renderDeleteSlotConfirmModal(slot, onConfirm) {
     const overlay = document.createElement('div');
     overlay.className = 'modal-overlay';
+    overlay.setAttribute('role', 'dialog');
+    overlay.setAttribute('aria-modal', 'true');
+
     const dayObj = DAYS_OF_WEEK.find((d) => d.key === slot.day_of_week);
     const dayLabel = dayObj ? dayObj.label : slot.day_of_week;
     const startStr = formatTimeDisplay(slot.start_time);
     const endStr = formatTimeDisplay(slot.end_time);
 
     overlay.innerHTML = `
-      <div class="modal-content" style="border-top: 4px solid #ef4444;max-width:420px;">
-        <h3 style="color:#ef4444;margin-bottom:0.5rem;">تأكيد حذف فترة التفرغ</h3>
-        <p style="font-size:14px;line-height:1.5;margin-bottom:1rem;">
-          هل أنت متأكد من حذف فترة <strong>${dayLabel} (${startStr} - ${endStr})</strong>؟
+      <div class="modal-content">
+        <h3 style="color:var(--color-danger);">تأكيد حذف فترة التفرغ</h3>
+        <p class="modal-description">
+          هل أنت متأكد من رغبتك في حذف فترة يوم <strong>${dayLabel} (${startStr} - ${endStr})</strong>؟
         </p>
 
-        <p id="del-slot-error" style="color:#ef4444;font-size:13px;margin:0 0 0.5rem;"></p>
+        <p id="del-slot-error" class="field-error"></p>
 
         <div class="modal-actions">
           <button type="button" class="btn-secondary" id="cancel-del-slot-btn">إلغاء</button>

@@ -1,5 +1,6 @@
 // src/components/ExamForm.js
-// مودال مخصص لإضافة وتعديل الامتحانات والكويزات والاختبارات العملية
+// مودال إضافة وتعديل الاختبارات والكويزات وفق الـ Design System (Phase E)
+import { icons } from '../utils/icons.js';
 
 export function renderExamFormModal({
   initialData = null,
@@ -9,51 +10,58 @@ export function renderExamFormModal({
   const isEditing = Boolean(initialData);
   const overlay = document.createElement('div');
   overlay.className = 'modal-overlay';
+  overlay.setAttribute('role', 'dialog');
+  overlay.setAttribute('aria-modal', 'true');
+  overlay.setAttribute('aria-labelledby', 'exam-modal-title');
 
   overlay.innerHTML = `
-    <div class="modal-content" style="max-width: 460px;">
-      <h3>${isEditing ? 'تعديل اختبار / كويز' : 'إضافة امتحان أو كويز جديد'}</h3>
+    <div class="modal-content">
+      <h3 id="exam-modal-title">${isEditing ? 'تعديل اختبار / كويز' : 'إضافة امتحان أو كويز جديد'}</h3>
+      <p class="modal-description">تحديد نوع الاختبار ووزنه الأكاديمي لحساب ضغط الدراسة وتوزيع الساعات.</p>
 
       <form id="exam-modal-form">
-        <div style="margin-bottom:0.85rem;">
-          <label style="font-weight:600;display:block;margin-bottom:4px;">عنوان الاختبار *</label>
+        <div class="field">
+          <label class="field-label" for="exam-title">عنوان الاختبار *</label>
           <input
+            id="exam-title"
+            class="input"
             type="text"
             name="title"
             value="${initialData?.title ? escapeHtml(initialData.title) : ''}"
-            placeholder="مثال: كويز المصفوفات، امتحان نصفي..."
+            placeholder="مثال: الاختبار النصفي، كويز المصفوفات"
             required
             autocomplete="off"
           />
         </div>
 
-        <div style="margin-bottom:0.85rem;">
-          <label style="font-weight:600;display:block;margin-bottom:4px;">نوع الاختبار</label>
-          <select name="examType">
-            <option value="quiz" ${initialData?.type === 'quiz' ? 'selected' : ''}>⚡ كويز قصير (Quiz)</option>
-            <option value="midterm" ${!initialData || initialData?.type === 'midterm' ? 'selected' : ''}>🏛️ امتحان نصفي (Midterm)</option>
-            <option value="final" ${initialData?.type === 'final' ? 'selected' : ''}>🎓 امتحان نهائي (Final)</option>
-            <option value="practical" ${initialData?.type === 'practical' ? 'selected' : ''}>🔬 امتحان عملي / شفوي (Practical)</option>
+        <div class="field">
+          <label class="field-label" for="exam-type">نوع الاختبار</label>
+          <select id="exam-type" class="input" name="examType">
+            <option value="quiz" ${initialData?.type === 'quiz' ? 'selected' : ''}>كويز قصير (Quiz)</option>
+            <option value="midterm" ${!initialData || initialData?.type === 'midterm' ? 'selected' : ''}>امتحان نصفي (Midterm)</option>
+            <option value="final" ${initialData?.type === 'final' ? 'selected' : ''}>امتحان نهائي (Final)</option>
+            <option value="practical" ${initialData?.type === 'practical' ? 'selected' : ''}>امتحان عملي / شفوي (Practical)</option>
           </select>
         </div>
 
-        <div style="display:flex;gap:0.75rem;margin-bottom:0.85rem;">
-          <div style="flex:1;">
-            <label style="font-weight:600;display:block;margin-bottom:4px;">تاريخ الاختبار</label>
-            <input type="date" name="examDate" value="${initialData?.date || ''}" />
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:var(--space-3);">
+          <div class="field">
+            <label class="field-label" for="exam-date">تاريخ الاختبار</label>
+            <input id="exam-date" class="input font-en" type="date" name="examDate" value="${initialData?.date || ''}" />
           </div>
-          <div style="flex:1;">
-            <label style="font-weight:600;display:block;margin-bottom:4px;">الوزن من العلامة (%)</label>
-            <input type="number" name="weight" min="0" max="100" step="0.5" placeholder="مثال: 20" value="${initialData?.weight || ''}" />
+          <div class="field">
+            <label class="field-label" for="exam-weight">الوزن من العلامة (%)</label>
+            <input id="exam-weight" class="input font-en" type="number" name="weight" min="0" max="100" step="0.5" placeholder="مثال: 20" value="${initialData?.weight || ''}" />
           </div>
         </div>
 
-        <p id="exam-modal-error" style="color:#ef4444;font-size:13px;margin:0 0 0.5rem;"></p>
+        <p id="exam-modal-error" class="field-error"></p>
 
         <div class="modal-actions">
           <button type="button" class="btn-secondary" id="cancel-exam-form-btn">إلغاء</button>
           <button type="submit" class="btn-primary" id="save-exam-form-btn">
-            ${isEditing ? 'حفظ التعديلات' : 'إضافة الاختبار'}
+            ${isEditing ? icons.check(15) : icons.plus(15)}
+            <span>${isEditing ? 'حفظ التعديلات' : 'إضافة الاختبار'}</span>
           </button>
         </div>
       </form>
@@ -66,6 +74,9 @@ export function renderExamFormModal({
   const cancelBtn = overlay.querySelector('#cancel-exam-form-btn');
   const saveBtn = overlay.querySelector('#save-exam-form-btn');
   const errorEl = overlay.querySelector('#exam-modal-error');
+  const titleInput = overlay.querySelector('#exam-title');
+
+  titleInput.focus();
 
   function cleanup() {
     window.removeEventListener('keydown', handleKeyDown);
@@ -82,6 +93,10 @@ export function renderExamFormModal({
   window.addEventListener('keydown', handleKeyDown);
   cancelBtn.addEventListener('click', cleanup);
 
+  overlay.addEventListener('click', (e) => {
+    if (e.target === overlay) cleanup();
+  });
+
   form.addEventListener('submit', async (e) => {
     e.preventDefault();
     errorEl.textContent = '';
@@ -94,7 +109,7 @@ export function renderExamFormModal({
     if (!title) {
       errorEl.textContent = 'عنوان الاختبار مطلوب.';
       saveBtn.disabled = false;
-      saveBtn.textContent = isEditing ? 'حفظ التعديلات' : 'إضافة الاختبار';
+      saveBtn.innerHTML = `<span>${isEditing ? 'حفظ التعديلات' : 'إضافة الاختبار'}</span>`;
       return;
     }
 
@@ -102,7 +117,7 @@ export function renderExamFormModal({
       title,
       examType: formData.get('examType') || 'midterm',
       examDate: formData.get('examDate') || null,
-      weight: formData.get('weight') || null,
+      weight: formData.get('weight') ? Number(formData.get('weight')) : null,
     };
 
     const result = await onSave(payload);
@@ -110,7 +125,7 @@ export function renderExamFormModal({
     if (result?.error) {
       errorEl.textContent = result.error.message || 'فشل حفظ الاختبار.';
       saveBtn.disabled = false;
-      saveBtn.textContent = isEditing ? 'حفظ التعديلات' : 'إضافة الاختبار';
+      saveBtn.innerHTML = `<span>${isEditing ? 'حفظ التعديلات' : 'إضافة الاختبار'}</span>`;
     } else {
       cleanup();
     }

@@ -1,6 +1,5 @@
 // src/pages/CourseDetailPage.js
-// صفحة محتوى المساق — شجرة المواضيع، جلسات الدراسة الفورية، والجدول الموحد للتقييمات والاستحقاقات.
-
+// شاشة تفاصيل المساق وفق الـ Design System (Topic Tree & Assessments)
 import {
   fetchTopicTree,
   updateTopic,
@@ -16,7 +15,6 @@ import {
 } from '../api/studySessions.js';
 
 import { renderAssessmentsView } from '../components/AssessmentsTable.js';
-
 import { renderTopicNode } from '../components/TopicNode.js';
 import { renderTopicForm } from '../components/TopicForm.js';
 import {
@@ -28,6 +26,8 @@ import {
   renderActiveSessionBar,
   renderQuickUpdateModal,
 } from '../components/ActiveSessionModal.js';
+import { icons } from '../utils/icons.js';
+import { skeletons } from '../utils/skeletons.js';
 
 function buildTopicTree(topics) {
   const topicMap = new Map();
@@ -75,93 +75,71 @@ export async function renderCourseDetailPage(
   let assessmentsMounted = false;
 
   container.innerHTML = `
-    <div style="margin-bottom: 1.25rem;">
-      <div
-        style="
-          display:flex;
-          align-items:center;
-          justify-content:space-between;
-          gap:1rem;
-          margin-bottom:1.25rem;
-          flex-wrap:wrap;
-        "
-      >
-        <div style="display:flex;align-items:center;gap:0.75rem;">
-          <button
-            id="back-to-courses-btn"
-            style="
-              padding:0.4rem 0.8rem;
-              cursor:pointer;
-            "
-          >
-            ← العودة للمساقات
-          </button>
+    <div class="page-container">
+      <nav style="margin-bottom:var(--space-4);">
+        <button
+          type="button"
+          id="back-to-courses-btn"
+          class="btn-tertiary"
+          style="display:inline-flex;align-items:center;gap:6px;padding:0;font-size:14px;color:var(--color-text-secondary);"
+        >
+          ${icons.arrowRight(16)}
+          <span>العودة للمساقات</span>
+        </button>
+      </nav>
 
-          <h2 style="margin:0;">
-            إدارة المساق
-          </h2>
+      <header style="display:flex;align-items:center;justify-content:space-between;gap:var(--space-4);margin-bottom:var(--space-6);flex-wrap:wrap;">
+        <div>
+          <h1 style="margin:0 0 var(--space-1);">إدارة محتوى المساق</h1>
+          <p class="text-secondary" style="font-size:14px;">تنظيم شجرة المواضيع، متابعة الاستحقاقات، وجلسات المذاكرة المركزة.</p>
         </div>
 
         <button
+          type="button"
           id="start-study-session-btn"
           class="btn-primary"
-          style="
-            background:#10b981;
-            display:inline-flex;
-            align-items:center;
-            gap:6px;
-            font-weight:600;
-            padding:0.45rem 1rem;
-          "
+          style="min-height:42px;"
         >
-          ⏱️ ابدأ جلسة دراسة
+          ${icons.play(16)}
+          <span>ابدأ جلسة دراسة</span>
+        </button>
+      </header>
+
+      <div class="tabs" role="tablist">
+        <button type="button" class="tab active" id="tab-btn-tree" role="tab" aria-selected="true">
+          <span style="display:inline-flex;align-items:center;gap:8px;">
+            ${icons.folderTree(16)}
+            <span>شجرة المحتوى (Topic Tree)</span>
+          </span>
+        </button>
+        <button type="button" class="tab" id="tab-btn-assessments" role="tab" aria-selected="false">
+          <span style="display:inline-flex;align-items:center;gap:8px;">
+            ${icons.calendar(16)}
+            <span>الاستحقاقات والتقييمات (Assessments)</span>
+          </span>
         </button>
       </div>
 
-      <!-- نظام التبويبات العلوي -->
-      <div class="course-nav-tabs">
-        <button type="button" class="course-tab-btn active" id="tab-btn-tree">
-          🌳 شجرة المحتوى (Topic Tree)
-        </button>
-        <button type="button" class="course-tab-btn" id="tab-btn-assessments">
-          📅 الاستحقاقات والتقييمات (Assessments)
-        </button>
-      </div>
+      <section id="tree-view-section">
+        <div style="display:flex;justify-content:flex-end;margin-bottom:var(--space-4);">
+          <button
+            type="button"
+            id="add-root-topic-btn"
+            class="btn-secondary"
+          >
+            ${icons.plus(16)}
+            <span>إضافة موضوع رئيسي</span>
+          </button>
+        </div>
+
+        <div id="topic-form-container"></div>
+        <div id="tree-container" style="display:flex;flex-direction:column;gap:var(--space-2);"></div>
+      </section>
+
+      <section id="assessments-view-section" style="display:none;"></section>
     </div>
-
-    <!-- حاوية قسم شجرة المواضيع -->
-    <div id="tree-view-section">
-      <div style="margin-bottom: 1rem;">
-        <button
-          id="add-root-topic-btn"
-          style="
-            padding:0.4rem 0.8rem;
-            cursor:pointer;
-          "
-        >
-          + Add Topic
-        </button>
-      </div>
-
-      <div id="topic-form-container"></div>
-
-      <div
-        id="tree-container"
-        style="
-          display:flex;
-          flex-direction:column;
-          gap:0.25rem;
-        "
-      >
-        جاري التحميل...
-      </div>
-    </div>
-
-    <!-- حاوية قسم الاستحقاقات والتقييمات -->
-    <div id="assessments-view-section" style="display:none;"></div>
   `;
 
-  // عناصر التبويب والتحكم
   const backBtn = container.querySelector('#back-to-courses-btn');
   const startSessionBtn = container.querySelector('#start-study-session-btn');
   const tabBtnTree = container.querySelector('#tab-btn-tree');
@@ -169,7 +147,6 @@ export async function renderCourseDetailPage(
   const treeViewSection = container.querySelector('#tree-view-section');
   const assessmentsViewSection = container.querySelector('#assessments-view-section');
 
-  // عناصر قسم الشجرة
   const addRootBtn = container.querySelector('#add-root-topic-btn');
   const formContainer = container.querySelector('#topic-form-container');
   const treeContainer = container.querySelector('#tree-container');
@@ -178,14 +155,18 @@ export async function renderCourseDetailPage(
 
   tabBtnTree.addEventListener('click', () => {
     tabBtnTree.classList.add('active');
+    tabBtnTree.setAttribute('aria-selected', 'true');
     tabBtnAssessments.classList.remove('active');
+    tabBtnAssessments.setAttribute('aria-selected', 'false');
     treeViewSection.style.display = 'block';
     assessmentsViewSection.style.display = 'none';
   });
 
   tabBtnAssessments.addEventListener('click', () => {
     tabBtnAssessments.classList.add('active');
+    tabBtnAssessments.setAttribute('aria-selected', 'true');
     tabBtnTree.classList.remove('active');
+    tabBtnTree.setAttribute('aria-selected', 'false');
     treeViewSection.style.display = 'none';
     assessmentsViewSection.style.display = 'block';
 
@@ -199,10 +180,6 @@ export async function renderCourseDetailPage(
     if (activeSessionCleanup) activeSessionCleanup();
     onBack();
   });
-
-  // =========================================================
-  // منطق شجرة المواضيع (Topic Tree Logic)
-  // =========================================================
 
   function closeTopicForm() {
     formOpen = false;
@@ -245,7 +222,6 @@ export async function renderCourseDetailPage(
     openTopicForm();
   });
 
-  // بدء جلسة الدراسة
   startSessionBtn.addEventListener('click', () => {
     if (activeSessionCleanup) return;
 
@@ -264,7 +240,6 @@ export async function renderCourseDetailPage(
         }
 
         startSessionBtn.disabled = true;
-        startSessionBtn.style.opacity = '0.5';
 
         activeSessionCleanup = renderActiveSessionBar({
           topicTitle: selectedTopicTitle,
@@ -272,7 +247,6 @@ export async function renderCourseDetailPage(
           onFinish: ({ formattedTime }) => {
             activeSessionCleanup = null;
             startSessionBtn.disabled = false;
-            startSessionBtn.style.opacity = '1';
 
             renderQuickUpdateModal({
               topicTitle: selectedTopicTitle,
@@ -301,7 +275,6 @@ export async function renderCourseDetailPage(
           onCancel: () => {
             activeSessionCleanup = null;
             startSessionBtn.disabled = false;
-            startSessionBtn.style.opacity = '1';
           },
         });
       },
@@ -333,7 +306,7 @@ export async function renderCourseDetailPage(
 
     setTimeout(() => {
       currentNode.classList.remove('highlight-current-position');
-    }, 3000);
+    }, 2500);
   }
 
   function handleOpenEditTopic(topic) {
@@ -364,19 +337,17 @@ export async function renderCourseDetailPage(
   }
 
   async function loadAndRenderTree() {
-    treeContainer.innerHTML = `
-      <p style="color:#71717a;">
-        جاري تحميل المواضيع...
-      </p>
-    `;
+    treeContainer.innerHTML = skeletons.tree(4);
 
     const { topics, error } = await fetchTopicTree(courseId);
 
     if (error) {
       treeContainer.innerHTML = `
-        <p style="color:#e05252;">
-          فشل تحميل المواضيع: ${error.message}
-        </p>
+        <div class="card error-state">
+          <div class="error-state-icon" aria-hidden="true">${icons.alertTriangle(28)}</div>
+          <h3>تعذر تحميل المواضيع</h3>
+          <p>${escapeHtml(error.message)}</p>
+        </div>
       `;
       return;
     }
@@ -385,9 +356,11 @@ export async function renderCourseDetailPage(
 
     if (!topics || topics.length === 0) {
       treeContainer.innerHTML = `
-        <p style="color:#71717a;">
-          لا يوجد Topics بعد لهذا المساق.
-        </p>
+        <div class="card empty-state">
+          <div class="empty-state-icon" aria-hidden="true">${icons.folderTree(32)}</div>
+          <h3>لا توجد مواضيع دراسية بعد</h3>
+          <p>أضف أول موضوع رئيسي لهذا المساق لتقسيم محتواه الأكاديمي.</p>
+        </div>
       `;
       return;
     }
@@ -449,7 +422,6 @@ export async function renderCourseDetailPage(
     }
   }
 
-  // التهيئة المبدئية للشجرة
   await loadAndRenderTree();
 
   return () => {
@@ -457,4 +429,13 @@ export async function renderCourseDetailPage(
     formOpen = false;
     formContainer.innerHTML = '';
   };
+}
+
+function escapeHtml(str) {
+  if (!str) return '';
+  return String(str)
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;');
 }

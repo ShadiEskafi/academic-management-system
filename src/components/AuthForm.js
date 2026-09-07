@@ -1,27 +1,70 @@
 // src/components/AuthForm.js
-// UC-01 (Sign Up) + UC-02 (Sign In) بشاشة واحدة، مع تبديل Mode.
-// Component "غبي" قصدًا: بيرسم الفورم وبيستدعي callbacks تمريرية —
-// ما بيعرف شي عن Supabase ولا عن الـ store، فقط عن الـ DOM.
+// شاشة تسجيل الدخول والتسجيل وفق نظام التصميم المعتمد
+import { icons } from '../utils/icons.js';
 
 export function renderAuthForm(container, { onSubmit }) {
-  let mode = 'signin'; // 'signin' | 'signup'
+  let mode = 'signin';
 
   function render() {
     container.innerHTML = `
-      <form id="auth-form" style="max-width:320px;margin:2rem auto;display:flex;flex-direction:column;gap:0.75rem;">
-        <h2>${mode === 'signin' ? 'Sign In' : 'Sign Up'}</h2>
+      <div class="auth-page-wrapper">
+        <div class="auth-card">
+          <div class="auth-header">
+            <div class="auth-logo-icon">
+              ${icons.academicCap(26)}
+            </div>
+            <h2 class="auth-title">
+              ${mode === 'signin' ? 'تسجيل الدخول' : 'إنشاء حساب جديد'}
+            </h2>
+            <p class="auth-subtitle">
+              نظام إدارة الدراسة الأكاديمية وجدولة المساقات
+            </p>
+          </div>
 
-        <input type="email" name="email" placeholder="Email" required />
-        <input type="password" name="password" placeholder="Password" minlength="6" required />
+          <form id="auth-form" class="auth-form">
+            <div class="field">
+              <label class="field-label" for="auth-email">البريد الإلكتروني</label>
+              <input
+                id="auth-email"
+                class="input font-en"
+                type="email"
+                name="email"
+                placeholder="name@university.edu"
+                dir="ltr"
+                required
+                autocomplete="email"
+              />
+            </div>
 
-        <button type="submit">${mode === 'signin' ? 'Sign In' : 'Sign Up'}</button>
+            <div class="field">
+              <label class="field-label" for="auth-password">كلمة المرور</label>
+              <input
+                id="auth-password"
+                class="input font-en"
+                type="password"
+                name="password"
+                placeholder="••••••••"
+                minlength="6"
+                dir="ltr"
+                required
+                autocomplete="current-password"
+              />
+            </div>
 
-        <p id="auth-error" style="color:#e05252;font-size:14px;"></p>
+            <p id="auth-error" class="field-error" style="min-height:1.2em;"></p>
 
-        <button type="button" id="toggle-mode" style="background:none;border:none;text-decoration:underline;cursor:pointer;">
-          ${mode === 'signin' ? 'ليش عندك حساب؟ سجّل جديد' : 'عندك حساب؟ سجّل دخول'}
-        </button>
-      </form>
+            <button type="submit" class="btn-primary auth-submit-btn">
+              ${mode === 'signin' ? 'دخول للنظام' : 'تأكيد التسجيل'}
+            </button>
+          </form>
+
+          <div class="auth-footer">
+            <button type="button" id="toggle-mode" class="auth-toggle-btn">
+              ${mode === 'signin' ? 'ليس لديك حساب؟ سجل حساباً جديداً' : 'لديك حساب مسجل بالفعل؟ تسجيل الدخول'}
+            </button>
+          </div>
+        </div>
+      </div>
     `;
 
     container.querySelector('#toggle-mode').addEventListener('click', () => {
@@ -39,12 +82,15 @@ export function renderAuthForm(container, { onSubmit }) {
 
       const submitBtn = e.target.querySelector('button[type="submit"]');
       submitBtn.disabled = true;
+      submitBtn.classList.add('btn-loading');
 
       const result = await onSubmit({ mode, email, password });
 
       submitBtn.disabled = false;
+      submitBtn.classList.remove('btn-loading');
+
       if (result?.error) {
-        errorEl.textContent = result.error.message ?? 'حدث خطأ، حاول مرة ثانية';
+        errorEl.textContent = result.error.message || 'حدث خطأ، حاول مرة ثانية';
       }
     });
   }

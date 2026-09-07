@@ -1,50 +1,52 @@
 // src/components/TopicForm.js
-// Component "غبي": فورم إنشاء Topic — بدون أي Business Logic.
+// نموذج إضافة موضوع رئيسي أو فرعي وفق الـ Design System (Phase D)
+import { icons } from '../utils/icons.js';
 
 export function renderTopicForm(container, { parentTopic = null, onSave, onCancel }) {
   const isChild = Boolean(parentTopic);
 
   const formWrapper = document.createElement('div');
-
-  formWrapper.style.cssText = `
-    margin-bottom: 1rem;
-    padding: 1rem;
-    border: 1px solid #e4e4e7;
-    border-radius: 6px;
-    background: #fafafa;
-  `;
+  formWrapper.className = 'card';
+  formWrapper.style.marginBottom = 'var(--space-4)';
+  formWrapper.style.background = 'var(--color-surface-soft)';
 
   formWrapper.innerHTML = `
-    <form id="topic-form" style="display:flex;flex-direction:column;gap:0.6rem;">
+    <form id="topic-form" style="display:flex;flex-direction:column;gap:var(--space-3);">
       <div>
-        <strong>${isChild ? 'Add Subtopic' : 'Add Topic'}</strong>
-        ${
-          isChild
-            ? `<p style="font-size:12px;opacity:0.7;margin:0.35rem 0 0;">
-                سيتم إضافة Topic جديد تحت: ${parentTopic.title}
-              </p>`
-            : `<p style="font-size:12px;opacity:0.7;margin:0.35rem 0 0;">
-                سيتم إنشاء Topic رئيسي لهذا المساق.
-              </p>`
-        }
+        <h4 style="margin:0 0 4px;font-size:15px;font-weight:600;color:var(--color-text);">
+          ${isChild ? 'إضافة موضوع فرعي (Subtopic)' : 'إضافة موضوع رئيسي (Root Topic)'}
+        </h4>
+        <p class="text-secondary" style="font-size:13px;margin:0;">
+          ${
+            isChild
+              ? `سيتم تفريع هذا الموضوع داخل: <strong style="color:var(--color-text);">${escapeHtml(parentTopic.title)}</strong>`
+              : 'سيتم إنشاء موضوع في المستوى الرئيسي للمساق.'
+          }
+        </p>
       </div>
 
-      <input
-        type="text"
-        name="title"
-        placeholder="Topic title"
-        maxlength="200"
-        required
-      />
+      <div class="field" style="margin-bottom:0;">
+        <label class="field-label" for="topic-title-input">عنوان الموضوع *</label>
+        <input
+          id="topic-title-input"
+          class="input"
+          type="text"
+          name="title"
+          placeholder="مثال: الخوارزميات التكرارية وحساب التعقيد"
+          maxlength="200"
+          required
+          autocomplete="off"
+        />
+      </div>
 
-      <p
-        id="topic-error"
-        style="color:#e05252;font-size:14px;margin:0;"
-      ></p>
+      <p id="topic-error" class="field-error"></p>
 
-      <div style="display:flex;gap:0.5rem;">
-        <button type="submit">Save</button>
-        <button type="button" id="cancel-topic-btn">Cancel</button>
+      <div style="display:flex;gap:var(--space-2);justify-content:flex-end;">
+        <button type="button" class="btn-secondary" id="cancel-topic-btn">إلغاء</button>
+        <button type="submit" class="btn-primary" id="save-topic-btn">
+          ${icons.plus(15)}
+          <span>حفظ الموضوع</span>
+        </button>
       </div>
     </form>
   `;
@@ -54,7 +56,10 @@ export function renderTopicForm(container, { parentTopic = null, onSave, onCance
   const form = formWrapper.querySelector('#topic-form');
   const cancelBtn = formWrapper.querySelector('#cancel-topic-btn');
   const errorEl = formWrapper.querySelector('#topic-error');
-  const submitBtn = form.querySelector('button[type="submit"]');
+  const submitBtn = form.querySelector('#save-topic-btn');
+  const titleInput = formWrapper.querySelector('#topic-title-input');
+
+  titleInput.focus();
 
   cancelBtn.addEventListener('click', () => {
     onCancel();
@@ -62,18 +67,16 @@ export function renderTopicForm(container, { parentTopic = null, onSave, onCance
 
   form.addEventListener('submit', async (e) => {
     e.preventDefault();
-
-    const formData = new FormData(form);
-    const title = String(formData.get('title') ?? '').trim();
-
+    const title = titleInput.value.trim();
     errorEl.textContent = '';
 
     if (!title) {
-      errorEl.textContent = 'يرجى إدخال اسم الـ Topic.';
+      errorEl.textContent = 'يرجى إدخال عنوان الموضوع.';
       return;
     }
 
     submitBtn.disabled = true;
+    submitBtn.textContent = 'جاري الحفظ...';
     cancelBtn.disabled = true;
 
     const result = await onSave({
@@ -82,14 +85,23 @@ export function renderTopicForm(container, { parentTopic = null, onSave, onCance
     });
 
     submitBtn.disabled = false;
+    submitBtn.innerHTML = `${icons.plus(15)} <span>حفظ الموضوع</span>`;
     cancelBtn.disabled = false;
 
     if (result?.error) {
-      errorEl.textContent =
-        result.error.message ?? 'حدث خطأ، حاول مرة ثانية';
+      errorEl.textContent = result.error.message || 'حدث خطأ أثناء حفظ الموضوع';
       return;
     }
 
     form.reset();
   });
+}
+
+function escapeHtml(str) {
+  if (!str) return '';
+  return String(str)
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;');
 }
