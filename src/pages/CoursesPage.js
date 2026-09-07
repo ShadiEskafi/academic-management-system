@@ -1,6 +1,5 @@
 // src/pages/CoursesPage.js
-// الطبقة التي تربط: api (courses.js, topics.js) ↔ state (store.js) ↔ components
-
+// شاشة المساقات وفق الـ Design System مع دعم الـ Skeletons الفوري
 import {
   fetchCoursesBySemester,
   createCourse,
@@ -20,6 +19,8 @@ import {
   renderEditCourseModal,
   renderDeleteCourseModal,
 } from '../components/CourseModals.js';
+import { skeletons } from '../utils/skeletons.js';
+import { icons } from '../utils/icons.js';
 
 export async function renderCoursesPage(
   container,
@@ -36,14 +37,34 @@ export async function renderCoursesPage(
   const onSelectCourse = options?.onSelectCourse || fallbackCallbacks?.onSelectCourse;
   const onContinueCourse = options?.onContinueCourse || fallbackCallbacks?.onContinueCourse;
 
+  // 1. عرض الـ Skeleton فوراً دون انتظار أي طلب شبكة
+  container.innerHTML = `
+    <div class="page-container">
+      <nav style="margin-bottom:var(--space-4);">
+        <div class="skeleton" style="width:140px;height:24px;"></div>
+      </nav>
+      <header style="margin-bottom:var(--space-6);">
+        <div class="skeleton skeleton-title" style="width:260px;height:32px;margin-bottom:var(--space-1);"></div>
+        <div class="skeleton skeleton-text" style="width:380px;"></div>
+      </header>
+      <section class="card" style="margin-bottom:var(--space-6);min-height:86px;"></section>
+      <section>
+        ${skeletons.cards(3)}
+      </section>
+    </div>
+  `;
+
   if (!semester || !semester.title) {
     if (!semesterId) {
       container.innerHTML = `
-        <div style="padding:1.5rem;color:#ef4444;">
-          <p>معرف الفصل الدراسي غير محدد.</p>
-          <button type="button" class="btn-secondary" onclick="window.location.hash='#/semesters'">
-            العودة للفصول الدراسية
-          </button>
+        <div class="page-container">
+          <div class="card error-state">
+            <div class="error-state-icon">${icons.alertTriangle(28)}</div>
+            <h3>معرف الفصل الدراسي غير محدد</h3>
+            <button type="button" class="btn-secondary" onclick="window.location.hash='#/semesters'">
+              العودة للفصول الدراسية
+            </button>
+          </div>
         </div>
       `;
       return () => {};
@@ -57,12 +78,15 @@ export async function renderCoursesPage(
 
     if (semesterFetchErr || !semesterData) {
       container.innerHTML = `
-        <div style="padding:1.5rem;color:#ef4444;">
-          <h3>فشل تحميل بيانات الفصل الدراسي</h3>
-          <p>${escapeHtml(semesterFetchErr?.message || 'لم يتم العثور على الفصل الدراسي المطلوب.')}</p>
-          <button type="button" class="btn-secondary" onclick="window.location.hash='#/semesters'">
-            العودة للفصول الدراسية
-          </button>
+        <div class="page-container">
+          <div class="card error-state">
+            <div class="error-state-icon">${icons.alertTriangle(28)}</div>
+            <h3>فشل تحميل بيانات الفصل الدراسي</h3>
+            <p>${escapeHtml(semesterFetchErr?.message || 'لم يتم العثور على الفصل الدراسي المطلوب.')}</p>
+            <button type="button" class="btn-secondary" onclick="window.location.hash='#/semesters'">
+              العودة للفصول الدراسية
+            </button>
+          </div>
         </div>
       `;
       return () => {};
@@ -75,11 +99,15 @@ export async function renderCoursesPage(
 
   if (error) {
     container.innerHTML = `
-      <div style="padding:1.5rem;color:#ef4444;">
-        <p>فشل تحميل المساقات: ${escapeHtml(error.message)}</p>
-        <button type="button" class="btn-secondary" onclick="window.location.hash='#/semesters'">
-          العودة للفصول الدراسية
-        </button>
+      <div class="page-container">
+        <div class="card error-state">
+          <div class="error-state-icon">${icons.alertTriangle(28)}</div>
+          <h3>فشل تحميل المساقات</h3>
+          <p>${escapeHtml(error.message)}</p>
+          <button type="button" class="btn-secondary" onclick="window.location.hash='#/semesters'">
+            العودة للفصول الدراسية
+          </button>
+        </div>
       </div>
     `;
     return () => {};

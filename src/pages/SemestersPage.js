@@ -1,151 +1,85 @@
 // src/pages/SemestersPage.js
-// الطبقة اللي بتربط:
-// api (semesters.js) ↔ state (store.js) ↔ components (SemesterForm.js, SemesterModals.js)
-
 import {
   fetchSemesters,
   createSemester,
   updateSemester,
   deleteSemester,
-} from '../api/semesters.js';
-
-import {
-  setSemesters,
-  getState,
-  subscribe,
-} from '../state/store.js';
-
-import { renderSemesterForm } from '../components/SemesterForm.js';
+} from "../api/semesters.js";
+import { setSemesters, getState, subscribe } from "../state/store.js";
+import { renderSemesterForm } from "../components/SemesterForm.js";
 import {
   renderEditSemesterModal,
   renderDeleteSemesterModal,
-} from '../components/SemesterModals.js';
+} from "../components/SemesterModals.js";
+import { skeletons } from "../utils/skeletons.js";
+import { icons } from "../utils/icons.js";
+import { showToast } from "../utils/toast.js";
 
 export async function renderSemestersPage(
   container,
-  { onSelectSemester } = {}
+  { onSelectSemester } = {},
 ) {
+  // عرض Skeleton فوري للشاشة قبل وصول البيانات من Supabase
+  container.innerHTML = `
+    <div class="page-container">
+      <header style="margin-bottom:var(--space-6);">
+        <h1 style="margin-bottom:var(--space-1);">الفصول الدراسية</h1>
+        <p class="text-secondary" style="font-size:14px;">إدارة ومتابعة فصولك الدراسية والمساقات التابعة لها.</p>
+      </header>
+
+      <section class="card" style="margin-bottom:var(--space-6);min-height:72px;"></section>
+
+      <section>
+        ${skeletons.cards(3)}
+      </section>
+    </div>
+  `;
+
   const { semesters, error } = await fetchSemesters();
 
   if (error) {
     container.innerHTML = `
-      <p style="color:#e05252;">
-        فشل تحميل الفصول: ${error.message}
-      </p>
+      <div class="page-container">
+        <div class="card error-state">
+          <div class="error-state-icon" aria-hidden="true">${icons.alertTriangle(28)}</div>
+          <h3>تعذر تحميل الفصول الدراسية</h3>
+          <p>${escapeHtml(error.message)}</p>
+        </div>
+      </div>
     `;
-
     return () => {};
   }
 
-  setSemesters(semesters);
-
-  // دمج أزرار التعديل والحذف برمجياً بجانب كل فصل لضمان عدم الحاجة لتعديل SemesterForm
-  function attachSemesterActionButtons() {
-    const semesterList = container.querySelector('#semester-list, ul');
-    if (!semesterList) return;
-
-    const listItems = semesterList.querySelectorAll('li');
-    const currentSemesters = getState('semesters') || [];
-
-    listItems.forEach((li, index) => {
-      if (li.querySelector('.semester-actions-group')) return;
-
-      if (
-        li.textContent.includes('No semesters') ||
-        li.textContent.includes('لا يوجد')
-      ) {
-        return;
-      }
-
-      const btnWithId = li.querySelector('[data-semester-id], [data-id]');
-      const id = btnWithId?.dataset?.semesterId || btnWithId?.dataset?.id;
-      const semester = id
-        ? currentSemesters.find((s) => s.id === id)
-        : currentSemesters[index];
-
-      if (!semester) return;
-
-      li.style.display = 'flex';
-      li.style.justifyContent = 'space-between';
-      li.style.alignItems = 'center';
-      li.style.gap = '0.5rem';
-
-      const actionsGroup = document.createElement('div');
-      actionsGroup.className = 'semester-actions-group';
-      actionsGroup.style.cssText = 'display:flex;gap:6px;align-items:center;flex-shrink:0;';
-
-      const editBtn = document.createElement('button');
-      editBtn.type = 'button';
-      editBtn.className = 'semester-action-btn edit';
-      editBtn.title = 'تعديل الفصل';
-      editBtn.textContent = '✏️ تعديل';
-      editBtn.addEventListener('click', (e) => {
-        e.stopPropagation();
-        handleOpenEdit(semester);
-      });
-
-      const deleteBtn = document.createElement('button');
-      deleteBtn.type = 'button';
-      deleteBtn.className = 'semester-action-btn delete';
-      deleteBtn.title = 'حذف الفصل';
-      deleteBtn.textContent = '🗑️ حذف';
-      deleteBtn.addEventListener('click', (e) => {
-        e.stopPropagation();
-        handleOpenDelete(semester);
-      });
-
-      actionsGroup.appendChild(editBtn);
-      actionsGroup.appendChild(deleteBtn);
-      li.appendChild(actionsGroup);
-    });
-  }
+  setSemesters(semesters || []);
 
   function render() {
     renderSemesterForm(container, {
-      semesters: getState('semesters'),
+      semesters: getState("semesters") || [],
       onCreate: handleCreate,
       onSelectSemester,
       onEditSemester: handleOpenEdit,
       onDeleteSemester: handleOpenDelete,
     });
-
-    attachSemesterActionButtons();
   }
 
   render();
 
-  const unsubscribe = subscribe(
-    'semesters:changed',
-    (event) => {
-      renderSemesterForm(container, {
-        semesters: event.detail,
-        onCreate: handleCreate,
-        onSelectSemester,
-        onEditSemester: handleOpenEdit,
-        onDeleteSemester: handleOpenDelete,
-      });
-
-      attachSemesterActionButtons();
-    }
-  );
+  const unsubscribe = subscribe("semesters:changed", (event) => {
+    renderSemesterForm(container, {
+      semesters: event.detail || [],
+      onCreate: handleCreate,
+      onSelectSemester,
+      onEditSemester: handleOpenEdit,
+      onDeleteSemester: handleOpenDelete,
+    });
+  });
 
   async function handleCreate({ title }) {
-    const { semester, error } = await createSemester({
-      title,
-    });
-
-    if (error) {
-      return { error };
-    }
-
-    setSemesters([
-      semester,
-      ...getState('semesters'),
-    ]);
-
-    return {
-      error: null,
-    };
+    const { semester, error } = await createSemester({ title });
+    if (error) return { error };
+    setSemesters([semester, ...getState("semesters")]);
+    showToast("تمت إضافة الفصل الدراسي بنجاح", "success");
+    return { error: null };
   }
 
   function handleOpenEdit(semester) {
@@ -153,16 +87,14 @@ export async function renderSemestersPage(
       onSave: async (semesterId, updates) => {
         const { semester: updated, error: updateErr } = await updateSemester(
           semesterId,
-          updates
+          updates,
         );
-
         if (updateErr) return { error: updateErr };
-
-        const current = getState('semesters') || [];
+        const current = getState("semesters") || [];
         setSemesters(
-          current.map((s) => (s.id === semesterId ? { ...s, ...updated } : s))
+          current.map((s) => (s.id === semesterId ? { ...s, ...updated } : s)),
         );
-
+        showToast("تم تعديل بيانات الفصل بنجاح", "success");
         return { error: null };
       },
     });
@@ -172,12 +104,10 @@ export async function renderSemestersPage(
     renderDeleteSemesterModal(semester, {
       onDelete: async (semesterId) => {
         const { error: deleteErr } = await deleteSemester(semesterId);
-
         if (deleteErr) return { error: deleteErr };
-
-        const current = getState('semesters') || [];
+        const current = getState("semesters") || [];
         setSemesters(current.filter((s) => s.id !== semesterId));
-
+        showToast("تم حذف الفصل الدراسي نهائياً", "info");
         return { error: null };
       },
     });
@@ -186,4 +116,13 @@ export async function renderSemestersPage(
   return () => {
     unsubscribe();
   };
+}
+
+function escapeHtml(str) {
+  if (!str) return "";
+  return String(str)
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;");
 }

@@ -1,26 +1,34 @@
 // src/components/TopicModals.js
-// مكونات المودال المخصصة لتعديل اسم الموضوع وتأكيد الحذف التتابعي للشجرة
+// مودالات تعديل وحذف مواضيع المساق وفق الـ Design System (Phase D)
+import { icons } from '../utils/icons.js';
 
 export function renderEditTopicModal(topic, { onSave, onClose = () => {} }) {
   const overlay = document.createElement('div');
   overlay.className = 'modal-overlay';
+  overlay.setAttribute('role', 'dialog');
+  overlay.setAttribute('aria-modal', 'true');
+  overlay.setAttribute('aria-labelledby', 'edit-topic-title');
 
   overlay.innerHTML = `
     <div class="modal-content">
-      <h3>تعديل اسم الموضوع (Topic)</h3>
+      <h3 id="edit-topic-title">تعديل اسم الموضوع</h3>
+      <p class="modal-description">تحديث عنوان الموضوع في شجرة محتوى المساق.</p>
+
       <form id="edit-topic-form">
-        <div>
-          <label>عنوان الموضوع *</label>
+        <div class="field">
+          <label class="field-label" for="edit-topic-title-input">عنوان الموضوع *</label>
           <input
+            id="edit-topic-title-input"
+            class="input"
             type="text"
             name="title"
-            value="${topic.title}"
+            value="${escapeHtml(topic.title)}"
             required
             autocomplete="off"
           />
         </div>
 
-        <p id="edit-topic-error" style="color:#ef4444;font-size:13px;margin:0 0 0.5rem;"></p>
+        <p id="edit-topic-error" class="field-error"></p>
 
         <div class="modal-actions">
           <button type="button" class="btn-secondary" id="cancel-edit-topic-btn">إلغاء</button>
@@ -36,7 +44,7 @@ export function renderEditTopicModal(topic, { onSave, onClose = () => {} }) {
   const cancelBtn = overlay.querySelector('#cancel-edit-topic-btn');
   const submitBtn = overlay.querySelector('#save-edit-topic-btn');
   const errorEl = overlay.querySelector('#edit-topic-error');
-  const titleInput = overlay.querySelector('input[name="title"]');
+  const titleInput = overlay.querySelector('#edit-topic-title-input');
 
   titleInput.focus();
 
@@ -65,8 +73,7 @@ export function renderEditTopicModal(topic, { onSave, onClose = () => {} }) {
     submitBtn.disabled = true;
     submitBtn.textContent = 'جاري الحفظ...';
 
-    const formData = new FormData(form);
-    const newTitle = formData.get('title').trim();
+    const newTitle = titleInput.value.trim();
 
     if (!newTitle) {
       errorEl.textContent = 'عنوان الموضوع مطلوب.';
@@ -90,27 +97,33 @@ export function renderEditTopicModal(topic, { onSave, onClose = () => {} }) {
 export function renderDeleteTopicModal(topic, isParent, childCount, { onDelete, onClose = () => {} }) {
   const overlay = document.createElement('div');
   overlay.className = 'modal-overlay';
+  overlay.setAttribute('role', 'dialog');
+  overlay.setAttribute('aria-modal', 'true');
+  overlay.setAttribute('aria-labelledby', 'delete-topic-title');
 
   const warningContent = isParent
     ? `
-      <p style="font-size:14px;line-height:1.5;margin-bottom:0.75rem;color:#f87171;">
-        ⚠️ هذا الموضوع هو أب ويحتوي على <strong>${childCount}</strong> موضوع/مواضيع فرعية.<br/>
-        حذفه سيؤدي إلى حذف كامل الشجرة المتفرعة عنه ولا يمكن التراجع عن هذه الخطوة.
-      </p>
+      <div style="display:flex;gap:var(--space-3);padding:var(--space-3);background:var(--color-danger-soft);border:1px solid var(--color-danger);border-radius:var(--radius-sm);margin-bottom:var(--space-4);color:var(--color-danger);">
+        <div style="flex-shrink:0;margin-top:2px;">${icons.alertTriangle(18)}</div>
+        <div style="font-size:13px;line-height:1.5;">
+          هذا الموضوع يمثل فرعاً رئيسياً ويحتوي على <strong>${childCount}</strong> موضوع/مواضيع فرعية.<br/>
+          حذفه سيؤدي إلى حذف كامل الشجرة المتفرعة عنه بشكل نهائي.
+        </div>
+      </div>
     `
     : `
-      <p style="font-size:14px;line-height:1.5;margin-bottom:0.75rem;">
-        هل أنت متأكد من حذف الموضوع <strong>"${topic.title}"</strong>؟
+      <p class="modal-description">
+        هل أنت متأكد من رغبتك في حذف الموضوع: <strong>"${escapeHtml(topic.title)}"</strong>؟
       </p>
     `;
 
   overlay.innerHTML = `
-    <div class="modal-content" style="border-top: 4px solid #ef4444;">
-      <h3 style="color:#ef4444;margin-bottom:0.5rem;">تأكيد حذف الموضوع</h3>
+    <div class="modal-content">
+      <h3 id="delete-topic-title" style="color:var(--color-danger);">تأكيد حذف الموضوع</h3>
       
       ${warningContent}
 
-      <p id="delete-topic-error" style="color:#ef4444;font-size:13px;margin:0 0 0.5rem;"></p>
+      <p id="delete-topic-error" class="field-error"></p>
 
       <div class="modal-actions">
         <button type="button" class="btn-secondary" id="cancel-delete-topic-btn">إلغاء</button>
@@ -159,4 +172,13 @@ export function renderDeleteTopicModal(topic, isParent, childCount, { onDelete, 
       cleanup();
     }
   });
+}
+
+function escapeHtml(str) {
+  if (!str) return '';
+  return String(str)
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;');
 }

@@ -1,11 +1,11 @@
 // src/components/AvailabilityModal.js
-// مودال إضافة وتعديل فترات التفرغ الأسبوعية مع فحص المدخلات
-
+// مودال إضافة وتعديل فترات التفرغ الأسبوعية وفق الـ Design System
 import {
   DAYS_OF_WEEK,
   formatTimeDisplay,
   calculateSlotDurationMinutes,
 } from '../api/availability.js';
+import { icons } from '../utils/icons.js';
 
 export function renderAvailabilityModal({
   initialData = null,
@@ -16,22 +16,23 @@ export function renderAvailabilityModal({
   const isEditing = Boolean(initialData);
   const overlay = document.createElement('div');
   overlay.className = 'modal-overlay';
+  overlay.setAttribute('role', 'dialog');
+  overlay.setAttribute('aria-modal', 'true');
+  overlay.setAttribute('aria-labelledby', 'avail-modal-title');
 
   const defaultDay = initialData?.day_of_week || preselectedDay || 'sunday';
   const defaultStart = initialData ? formatTimeDisplay(initialData.start_time) : '18:00';
   const defaultEnd = initialData ? formatTimeDisplay(initialData.end_time) : '20:00';
 
   overlay.innerHTML = `
-    <div class="modal-content" style="max-width: 440px;">
-      <h3 style="margin-bottom:0.4rem;">${isEditing ? 'تعديل فترة التفرغ' : 'إضافة فترة تفرغ جديدة ⏰'}</h3>
-      <p style="font-size:13px;color:var(--text);margin-bottom:1.25rem;">
-        حدد اليوم ووقت البدء والانتهاء المتاحين لديك للمذاكرة.
-      </p>
+    <div class="modal-content">
+      <h3 id="avail-modal-title">${isEditing ? 'تعديل فترة التفرغ' : 'إضافة فترة تفرغ جديدة'}</h3>
+      <p class="modal-description">حدد اليوم ووقت البدء والانتهاء المتاحين لديك للمذاكرة الأسبوعية.</p>
 
       <form id="availability-modal-form">
-        <div style="margin-bottom:1rem;">
-          <label style="font-weight:600;display:block;margin-bottom:6px;">يوم الأسبوع *</label>
-          <select name="dayOfWeek" id="avail-day-select" required>
+        <div class="field">
+          <label class="field-label" for="avail-day-select">يوم الأسبوع *</label>
+          <select class="input" name="dayOfWeek" id="avail-day-select" required>
             ${DAYS_OF_WEEK.map(
               (d) => `
               <option value="${d.key}" ${d.key === defaultDay ? 'selected' : ''}>
@@ -42,10 +43,11 @@ export function renderAvailabilityModal({
           </select>
         </div>
 
-        <div style="display:flex;gap:0.75rem;margin-bottom:1rem;">
-          <div style="flex:1;">
-            <label style="font-weight:600;display:block;margin-bottom:6px;">من الساعة *</label>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:var(--space-3);">
+          <div class="field">
+            <label class="field-label" for="avail-start-time">من الساعة *</label>
             <input
+              class="input font-en"
               type="time"
               name="startTime"
               id="avail-start-time"
@@ -53,9 +55,10 @@ export function renderAvailabilityModal({
               required
             />
           </div>
-          <div style="flex:1;">
-            <label style="font-weight:600;display:block;margin-bottom:6px;">إلى الساعة *</label>
+          <div class="field">
+            <label class="field-label" for="avail-end-time">إلى الساعة *</label>
             <input
+              class="input font-en"
               type="time"
               name="endTime"
               id="avail-end-time"
@@ -65,17 +68,17 @@ export function renderAvailabilityModal({
           </div>
         </div>
 
-        <!-- معاينة المدة التقديرية للفترة -->
-        <div id="slot-duration-preview" class="slot-duration-hint">
+        <div id="slot-duration-preview" class="card" style="background:var(--color-surface-soft);padding:var(--space-2) var(--space-3);margin-block:var(--space-3);font-size:13px;">
           المدة المحتسبة: <strong>2 ساعة</strong>
         </div>
 
-        <p id="avail-modal-error" style="color:#ef4444;font-size:13px;margin:0.5rem 0 0;"></p>
+        <p id="avail-modal-error" class="field-error"></p>
 
-        <div class="modal-actions" style="margin-top:1.25rem;">
+        <div class="modal-actions">
           <button type="button" class="btn-secondary" id="cancel-avail-btn">إلغاء</button>
           <button type="submit" class="btn-primary" id="save-avail-btn">
-            ${isEditing ? 'حفظ التعديلات' : 'إضافة الفترة'}
+            ${isEditing ? icons.check(15) : icons.plus(15)}
+            <span>${isEditing ? 'حفظ التعديلات' : 'إضافة الفترة'}</span>
           </button>
         </div>
       </form>
@@ -95,7 +98,12 @@ export function renderAvailabilityModal({
   function updateDurationDisplay() {
     const mins = calculateSlotDurationMinutes(startInput.value, endInput.value);
     if (mins <= 0) {
-      durationPreview.innerHTML = `<span style="color:#ef4444;">⚠️ وقت النهاية يجب أن يكون بعد وقت البداية.</span>`;
+      durationPreview.innerHTML = `
+        <span style="display:inline-flex;align-items:center;gap:6px;color:var(--color-danger);">
+          ${icons.alertTriangle(14)}
+          <span>وقت النهاية يجب أن يكون بعد وقت البداية.</span>
+        </span>
+      `;
     } else {
       const hrs = Math.floor(mins / 60);
       const remMins = mins % 60;
@@ -103,7 +111,7 @@ export function renderAvailabilityModal({
       if (hrs > 0) text += `${hrs} ساعة`;
       if (hrs > 0 && remMins > 0) text += ' و ';
       if (remMins > 0) text += `${remMins} دقيقة`;
-      durationPreview.innerHTML = `المدة المحتسبة: <strong style="color:var(--primary);">${text}</strong>`;
+      durationPreview.innerHTML = `المدة المحتسبة: <strong style="color:var(--color-accent);">${text}</strong>`;
     }
   }
 
@@ -153,7 +161,7 @@ export function renderAvailabilityModal({
     if (result?.error) {
       errorEl.textContent = result.error.message || 'فشل حفظ فترة التفرغ، حاول مرة أخرى.';
       saveBtn.disabled = false;
-      saveBtn.textContent = isEditing ? 'حفظ التعديلات' : 'إضافة الفترة';
+      saveBtn.innerHTML = `<span>${isEditing ? 'حفظ التعديلات' : 'إضافة الفترة'}</span>`;
     } else {
       cleanup();
     }

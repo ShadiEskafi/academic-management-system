@@ -1,30 +1,48 @@
 // src/components/LogAchievementModal.js
-// Component "غبي": يرسم Modal بسيط لتسجيل إنجاز، بدون أي لمسة لـ Supabase.
-// وضعين: "موضوع جديد" (اسم حر) أو "من القائمة" (اختيار من Topics غير مكتملة).
+// مودال تسجيل إنجاز دراسي سريع وفق الـ Design System (Phase D)
+import { icons } from '../utils/icons.js';
 
-export function renderLogAchievementModal({ existingTopics, onSubmit, onClose }) {
+export function renderLogAchievementModal({ existingTopics = [], onSubmit, onClose = () => {} }) {
   const overlay = document.createElement('div');
-  overlay.style.cssText = `
-    position:fixed; inset:0; background:rgba(0,0,0,0.55);
-    display:flex; align-items:center; justify-content:center; z-index:1000;
-  `;
+  overlay.className = 'modal-overlay';
+  overlay.setAttribute('role', 'dialog');
+  overlay.setAttribute('aria-modal', 'true');
+  overlay.setAttribute('aria-labelledby', 'log-achievement-title');
 
   overlay.innerHTML = `
-    <div style="background:#1e1e1e;border:1px solid #333;border-radius:8px;padding:1.5rem;width:340px;max-width:90vw;">
-      <h3 style="margin:0 0 1rem;">سجّل إنجاز جديد</h3>
+    <div class="modal-content">
+      <h3 id="log-achievement-title">سجّل إنجاز جديد</h3>
+      <p class="modal-description">سجّل إتمام موضوع دراسي لتحديث موضع تقدمك الأكاديمي تلقائياً.</p>
 
-      <div style="display:flex;gap:0.5rem;margin-bottom:1rem;">
-        <button type="button" id="mode-existing" style="flex:1;">من القائمة</button>
-        <button type="button" id="mode-new" style="flex:1;">موضوع جديد</button>
+      <div style="display:flex;background:var(--color-surface-muted);padding:3px;border-radius:var(--radius-sm);margin-bottom:var(--space-4);border:1px solid var(--color-border);">
+        <button
+          type="button"
+          id="mode-existing"
+          class="btn-tertiary"
+          style="flex:1;min-height:34px;font-size:13px;border-radius:var(--radius-sm);font-weight:500;"
+        >
+          من قائمة المواضيع
+        </button>
+        <button
+          type="button"
+          id="mode-new"
+          class="btn-tertiary"
+          style="flex:1;min-height:34px;font-size:13px;border-radius:var(--radius-sm);font-weight:500;"
+        >
+          موضوع جديد
+        </button>
       </div>
 
-      <div id="modal-body"></div>
+      <div id="modal-body" class="field"></div>
 
-      <p id="modal-error" style="color:#e05252;font-size:13px;min-height:1em;"></p>
+      <p id="modal-error" class="field-error"></p>
 
-      <div style="display:flex;justify-content:flex-end;gap:0.5rem;margin-top:0.5rem;">
-        <button type="button" id="modal-cancel">إلغاء</button>
-        <button type="button" id="modal-save">حفظ</button>
+      <div class="modal-actions">
+        <button type="button" class="btn-secondary" id="modal-cancel">إلغاء</button>
+        <button type="submit" class="btn-primary" id="modal-save">
+          ${icons.check(16)}
+          <span>تأكيد الإنجاز</span>
+        </button>
       </div>
     </div>
   `;
@@ -35,37 +53,97 @@ export function renderLogAchievementModal({ existingTopics, onSubmit, onClose })
   const modalBody = overlay.querySelector('#modal-body');
   const errorEl = overlay.querySelector('#modal-error');
   const saveBtn = overlay.querySelector('#modal-save');
+  const modeExistingBtn = overlay.querySelector('#mode-existing');
+  const modeNewBtn = overlay.querySelector('#mode-new');
+
+  function updateModeButtons() {
+    if (mode === 'existing') {
+      modeExistingBtn.style.background = 'var(--color-surface)';
+      modeExistingBtn.style.color = 'var(--color-text)';
+      modeExistingBtn.style.boxShadow = 'var(--shadow-xs)';
+      modeExistingBtn.style.fontWeight = '600';
+
+      modeNewBtn.style.background = 'transparent';
+      modeNewBtn.style.color = 'var(--color-text-secondary)';
+      modeNewBtn.style.boxShadow = 'none';
+      modeNewBtn.style.fontWeight = '500';
+    } else {
+      modeNewBtn.style.background = 'var(--color-surface)';
+      modeNewBtn.style.color = 'var(--color-text)';
+      modeNewBtn.style.boxShadow = 'var(--shadow-xs)';
+      modeNewBtn.style.fontWeight = '600';
+
+      modeExistingBtn.style.background = 'transparent';
+      modeExistingBtn.style.color = 'var(--color-text-secondary)';
+      modeExistingBtn.style.boxShadow = 'none';
+      modeExistingBtn.style.fontWeight = '500';
+    }
+  }
 
   function renderBody() {
+    updateModeButtons();
     if (mode === 'new') {
       modalBody.innerHTML = `
-        <input type="text" id="new-topic-title" placeholder="اسم الموضوع الذي أنجزته" style="width:100%;box-sizing:border-box;" />
+        <label class="field-label" for="new-topic-title">اسم الموضوع المنجز *</label>
+        <input
+          type="text"
+          id="new-topic-title"
+          class="input"
+          placeholder="أدخل عنوان الموضوع الذي أنهيته..."
+          autocomplete="off"
+        />
       `;
+      const input = modalBody.querySelector('#new-topic-title');
+      if (input) input.focus();
     } else if (existingTopics.length === 0) {
-      modalBody.innerHTML = `<p style="opacity:0.7;font-size:13px;">لا يوجد مواضيع غير مكتملة بعد — أضف موضوع جديد.</p>`;
+      modalBody.innerHTML = `
+        <div class="card" style="background:var(--color-surface-soft);padding:var(--space-3);text-align:center;">
+          <p class="text-secondary" style="font-size:13px;">لا توجد مواضيع غير مكتملة حالياً في هذا المساق — يمكنك إضافة موضوع جديد مباشرة.</p>
+        </div>
+      `;
     } else {
       modalBody.innerHTML = `
-        <select id="existing-topic-select" style="width:100%;">
-          ${existingTopics.map((t) => `<option value="${t.id}">${t.title}</option>`).join('')}
+        <label class="field-label" for="existing-topic-select">اختر الموضوع من القائمة *</label>
+        <select id="existing-topic-select" class="input">
+          ${existingTopics
+            .map((t) => `<option value="${t.id}">${escapeHtml(t.title)}</option>`)
+            .join('')}
         </select>
       `;
     }
   }
+
   renderBody();
 
-  overlay.querySelector('#mode-new').addEventListener('click', () => {
+  function cleanup() {
+    window.removeEventListener('keydown', handleKeyDown);
+    if (overlay.parentElement) {
+      document.body.removeChild(overlay);
+    }
+    onClose();
+  }
+
+  function handleKeyDown(e) {
+    if (e.key === 'Escape') cleanup();
+  }
+
+  window.addEventListener('keydown', handleKeyDown);
+
+  overlay.addEventListener('click', (e) => {
+    if (e.target === overlay) cleanup();
+  });
+
+  modeNewBtn.addEventListener('click', () => {
     mode = 'new';
     renderBody();
   });
-  overlay.querySelector('#mode-existing').addEventListener('click', () => {
+
+  modeExistingBtn.addEventListener('click', () => {
     mode = 'existing';
     renderBody();
   });
 
-  overlay.querySelector('#modal-cancel').addEventListener('click', () => {
-    document.body.removeChild(overlay);
-    onClose?.();
-  });
+  overlay.querySelector('#modal-cancel').addEventListener('click', cleanup);
 
   saveBtn.addEventListener('click', async () => {
     errorEl.textContent = '';
@@ -81,21 +159,33 @@ export function renderLogAchievementModal({ existingTopics, onSubmit, onClose })
     } else {
       const topicId = overlay.querySelector('#existing-topic-select')?.value;
       if (!topicId) {
-        errorEl.textContent = 'الرجاء اختيار موضوع.';
+        errorEl.textContent = 'الرجاء اختيار موضوع من القائمة.';
         return;
       }
       payload = { mode: 'existing', topicId };
     }
 
     saveBtn.disabled = true;
+    saveBtn.textContent = 'جاري الحفظ...';
+
     const result = await onSubmit(payload);
-    saveBtn.disabled = false;
 
     if (result?.error) {
-      errorEl.textContent = result.error.message ?? 'حدث خطأ، حاول مرة ثانية';
+      saveBtn.disabled = false;
+      saveBtn.innerHTML = `${icons.check(16)} <span>تأكيد الإنجاز</span>`;
+      errorEl.textContent = result.error.message || 'حدث خطأ أثناء حفظ الإنجاز';
       return;
     }
 
-    document.body.removeChild(overlay);
+    cleanup();
   });
+}
+
+function escapeHtml(str) {
+  if (!str) return '';
+  return String(str)
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;');
 }
