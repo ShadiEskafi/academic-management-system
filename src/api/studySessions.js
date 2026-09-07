@@ -106,6 +106,7 @@ export async function startStudySession({
     topicTitle: topicTitle || 'موضوع عام',
     courseTitle: courseTitle || '',
     durationMinutes,
+    userNotes: '',
   });
 
   const { data, error } = await supabase
@@ -146,13 +147,37 @@ export async function completeStudySession({
 }) {
   const sessionOutcome = outcome || mapTopicStatusToOutcome(topicStatus);
 
+  // جلب البيانات السابقة للحفاظ على metadata الموضوع والمساق داخل الـ JSON
+  let topicTitle = 'موضوع عام';
+  let courseTitle = '';
+  const { data: current } = await supabase
+    .from('study_sessions')
+    .select('notes')
+    .eq('id', sessionId)
+    .single();
+
+  if (current?.notes) {
+    try {
+      const parsed = JSON.parse(current.notes);
+      topicTitle = parsed.topicTitle || topicTitle;
+      courseTitle = parsed.courseTitle || courseTitle;
+    } catch {}
+  }
+
+  const updatedNotesPayload = JSON.stringify({
+    topicId: topicId || null,
+    topicTitle,
+    courseTitle,
+    userNotes: notes || '',
+  });
+
   const { error: sessionError } = await supabase
     .from('study_sessions')
     .update({
       status: 'completed',
       outcome: sessionOutcome,
       scheduled_end: new Date().toISOString(),
-      notes: notes || null,
+      notes: updatedNotesPayload,
       updated_at: new Date().toISOString(),
     })
     .eq('id', sessionId);
@@ -198,9 +223,6 @@ export async function cancelStudySession(sessionId) {
   return { error };
 }
 
-/**
- * حساب إحصائيات المذاكرة التراكمية للمساق من الجلسات المكتملة
- */
 export async function fetchCourseStudyStats(courseId) {
   const { data, error } = await supabase
     .from('study_sessions')
@@ -217,8 +239,6 @@ export async function fetchCourseStudyStats(courseId) {
 
   (data || []).forEach((session) => {
     const startMs = new Date(session.scheduled_start || session.created_at).getTime();
-    
-    // Fallback: إذا كانت الجلسة قديمة بدون scheduled_end نعتمد على updated_at
     const endMs = session.scheduled_end
       ? new Date(session.scheduled_end).getTime()
       : session.updated_at
@@ -235,4 +255,113 @@ export async function fetchCourseStudyStats(courseId) {
     completedSessionsCount: data?.length || 0,
     error: null,
   };
+}
+
+export async function fetchCourseSessionsHistory(courseId) {
+  const { data, error } = await supabase
+    .from('study_sessions')
+    .select('*')
+    .eq('course_id', courseId)
+    .eq('status', 'completed')
+    .order('scheduled_start', { ascending: false });
+
+  if (error) {
+    console.error('Failed to fetch sessions history:', error);
+    return { sessions: [], error };
+  }
+
+  const normalized = (data || []).map((s) => {
+    const startMs = new Date(s.scheduled_start || s.created_at).getTime();
+    const endMs = s.scheduled_end
+      ? new Date(s.scheduled_end).getTime()
+      : s.updated_at
+      ? new Date(s.updated_at).getTime()
+      : startMs;
+
+    const durationSeconds = Math.max(0, Math.floor((endMs - startMs) / 1000));
+
+    let topicId = null;
+    let topicTitle = 'موضوع عام';
+    let userNotes = '';
+
+    if (s.notes) {
+      try {
+        const parsed = JSON.parse(s.notes);
+        topicId = parsed.topicId || null;
+        topicTitle = parsed.topicTitle || topicTitle;
+        userNotes = parsed.userNotes !== undefined ? parsed.userNotes : '';
+      } catch {
+        // دعم الجلسات القديمة التي سُجلت كنص ملاحظات مباشر
+        userNotes = s.notes;
+      }
+    }
+
+    return {
+      id: s.id,
+      topicId,
+      topicTitle,
+      outcome: s.outcome || 'completed',
+      notes: userNotes,
+      durationSeconds,
+      scheduledStart: s.scheduled_start || s.created_at,
+      scheduledEnd: s.scheduled_end || s.updated_at,
+      raw: s,
+    };
+  });
+
+  return { sessions: normalized, error: null };
+}
+
+export async function updateStudySession(
+  sessionId,
+  { topicId, topicTitle, notes, outcome, durationSeconds }
+) {
+  const payload = {
+    updated_at: new Date().toISOString(),
+  };
+
+  if (outcome !== undefined) payload.outcome = outcome;
+
+  if (durationSeconds !== undefined && Number(durationSeconds) >= 0) {
+    const { data: current } = await supabase
+      .from('study_sessions')
+      .select('scheduled_start, created_at, notes')
+      .eq('id', sessionId)
+      .single();
+
+    if (current) {
+      const startMs = new Date(current.scheduled_start || current.created_at).getTime();
+      payload.scheduled_end = new Date(startMs + Number(durationSeconds) * 1000).toISOString();
+
+      let oldData = {};
+      try {
+        oldData = JSON.parse(current.notes || '{}');
+      } catch {}
+
+      payload.notes = JSON.stringify({
+        ...oldData,
+        topicId: topicId !== undefined ? topicId : oldData.topicId,
+        topicTitle: topicTitle !== undefined ? topicTitle : oldData.topicTitle,
+        userNotes: notes !== undefined ? notes : oldData.userNotes || '',
+      });
+    }
+  }
+
+  const { data, error } = await supabase
+    .from('study_sessions')
+    .update(payload)
+    .eq('id', sessionId)
+    .select()
+    .single();
+
+  return { session: data, error };
+}
+
+export async function deleteStudySession(sessionId) {
+  const { error } = await supabase
+    .from('study_sessions')
+    .delete()
+    .eq('id', sessionId);
+
+  return { error };
 }

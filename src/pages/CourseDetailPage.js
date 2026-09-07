@@ -20,6 +20,7 @@ import {
 
 import { showToast } from '../utils/toast.js';
 import { renderAssessmentsView } from '../components/AssessmentsTable.js';
+import { renderStudySessionLog } from '../components/StudySessionLog.js';
 import { renderTopicNode } from '../components/TopicNode.js';
 import { renderTopicForm } from '../components/TopicForm.js';
 import {
@@ -74,6 +75,7 @@ export async function renderCourseDetailPage(
   let rawTopicsList = [];
   let currentCourseData = null;
   let assessmentsMounted = false;
+  let logMounted = false;
 
   container.innerHTML = `
     <div class="page-container">
@@ -109,10 +111,8 @@ export async function renderCourseDetailPage(
         </button>
       </header>
 
-      <!-- شريط التنبيه الذكي للاستحقاقات العاجلة -->
       <div id="urgent-alert-container"></div>
 
-      <!-- حاوية الإحصائيات -->
       <section id="course-metrics-section" style="margin-bottom:var(--space-6);"></section>
 
       <div class="tabs" role="tablist">
@@ -126,6 +126,12 @@ export async function renderCourseDetailPage(
           <span style="display:inline-flex;align-items:center;gap:8px;">
             ${icons.calendar(16)}
             <span>الاستحقاقات والتقييمات (Assessments)</span>
+          </span>
+        </button>
+        <button type="button" class="tab" id="tab-btn-log" role="tab" aria-selected="false">
+          <span style="display:inline-flex;align-items:center;gap:8px;">
+            ${icons.play(16)}
+            <span>سجل الجلسات (Study Log)</span>
           </span>
         </button>
       </div>
@@ -147,15 +153,21 @@ export async function renderCourseDetailPage(
       </section>
 
       <section id="assessments-view-section" style="display:none;"></section>
+      <section id="log-view-section" style="display:none;"></section>
     </div>
   `;
 
   const backBtn = container.querySelector('#back-to-courses-btn');
   const startSessionBtn = container.querySelector('#start-study-session-btn');
+  
   const tabBtnTree = container.querySelector('#tab-btn-tree');
   const tabBtnAssessments = container.querySelector('#tab-btn-assessments');
+  const tabBtnLog = container.querySelector('#tab-btn-log');
+
   const treeViewSection = container.querySelector('#tree-view-section');
   const assessmentsViewSection = container.querySelector('#assessments-view-section');
+  const logViewSection = container.querySelector('#log-view-section');
+
   const metricsSection = container.querySelector('#course-metrics-section');
   const urgentAlertEl = container.querySelector('#urgent-alert-container');
 
@@ -191,23 +203,24 @@ export async function renderCourseDetailPage(
 
   updateStartButtonState();
 
-  tabBtnTree.addEventListener('click', () => {
-    tabBtnTree.classList.add('active');
-    tabBtnTree.setAttribute('aria-selected', 'true');
-    tabBtnAssessments.classList.remove('active');
-    tabBtnAssessments.setAttribute('aria-selected', 'false');
-    treeViewSection.style.display = 'block';
-    assessmentsViewSection.style.display = 'none';
-  });
+  function switchTab(activeTabBtn, activeSection) {
+    [tabBtnTree, tabBtnAssessments, tabBtnLog].forEach((btn) => {
+      btn.classList.remove('active');
+      btn.setAttribute('aria-selected', 'false');
+    });
+    [treeViewSection, assessmentsViewSection, logViewSection].forEach((sec) => {
+      sec.style.display = 'none';
+    });
+
+    activeTabBtn.classList.add('active');
+    activeTabBtn.setAttribute('aria-selected', 'true');
+    activeSection.style.display = 'block';
+  }
+
+  tabBtnTree.addEventListener('click', () => switchTab(tabBtnTree, treeViewSection));
 
   tabBtnAssessments.addEventListener('click', () => {
-    tabBtnAssessments.classList.add('active');
-    tabBtnAssessments.setAttribute('aria-selected', 'true');
-    tabBtnTree.classList.remove('active');
-    tabBtnTree.setAttribute('aria-selected', 'false');
-    treeViewSection.style.display = 'none';
-    assessmentsViewSection.style.display = 'block';
-
+    switchTab(tabBtnAssessments, assessmentsViewSection);
     if (!assessmentsMounted) {
       renderAssessmentsView(assessmentsViewSection, {
         courseId,
@@ -217,6 +230,21 @@ export async function renderCourseDetailPage(
         },
       });
       assessmentsMounted = true;
+    }
+  });
+
+  tabBtnLog.addEventListener('click', () => {
+    switchTab(tabBtnLog, logViewSection);
+    if (!logMounted) {
+      renderStudySessionLog(logViewSection, {
+        courseId,
+        topics: rawTopicsList,
+        onSessionsChange: async () => {
+          const studyStats = await fetchCourseStudyStats(courseId);
+          renderMetrics(rawTopicsList, studyStats);
+        },
+      });
+      logMounted = true;
     }
   });
 
