@@ -168,6 +168,12 @@ export function renderActiveSessionBar({
   onFinish,
   onCancel,
 }) {
+  // تنظيف أي شريط عائم سابق في DOM لتجنب التكرار
+  const existingBar = document.getElementById('floating-session-bar');
+  if (existingBar && existingBar.parentElement) {
+    existingBar.parentElement.removeChild(existingBar);
+  }
+
   const bar = document.createElement('div');
   bar.className = 'active-session-bar';
   bar.id = 'floating-session-bar';
@@ -224,15 +230,18 @@ export function renderActiveSessionBar({
     const now = Date.now();
 
     if (hasTarget) {
-      const remainingSeconds = Math.floor((endTime - now) / 1000);
+      const remainingSeconds = Math.max(0, Math.floor((endTime - now) / 1000));
 
       if (remainingSeconds <= 0) {
         timerDisplay.textContent = '00:00';
         removeBar();
-        const totalElapsed = Math.floor((endTime - startTime) / 1000);
+        const clickTimeMs = Date.now();
+        const actualEndTime = new Date(clickTimeMs).toISOString();
+        const totalElapsed = Math.max(0, Math.floor((clickTimeMs - startTime) / 1000));
         onFinish({
           elapsedSeconds: totalElapsed,
           formattedTime: formatTime(totalElapsed),
+          actualEndTime,
           isTimeUp: true,
         });
         return;
@@ -245,18 +254,38 @@ export function renderActiveSessionBar({
     }
   }
 
+  function handleVisibilityChange() {
+    if (!document.hidden) {
+      updateClock();
+    }
+  }
+
   updateClock();
   intervalId = setInterval(updateClock, 1000);
+  document.addEventListener('visibilitychange', handleVisibilityChange);
 
   function removeBar() {
-    if (intervalId) clearInterval(intervalId);
-    if (bar.parentElement) document.body.removeChild(bar);
+    if (intervalId) {
+      clearInterval(intervalId);
+      intervalId = null;
+    }
+    document.removeEventListener('visibilitychange', handleVisibilityChange);
+    if (bar.parentElement) {
+      bar.parentElement.removeChild(bar);
+    }
   }
 
   finishBtn.addEventListener('click', () => {
     removeBar();
-    const elapsed = Math.floor((Date.now() - startTime) / 1000);
-    onFinish({ elapsedSeconds: elapsed, formattedTime: formatTime(elapsed), isTimeUp: false });
+    const clickTimeMs = Date.now();
+    const actualEndTime = new Date(clickTimeMs).toISOString();
+    const elapsed = Math.max(0, Math.floor((clickTimeMs - startTime) / 1000));
+    onFinish({
+      elapsedSeconds: elapsed,
+      formattedTime: formatTime(elapsed),
+      actualEndTime,
+      isTimeUp: false,
+    });
   });
 
   abortBtn.addEventListener('click', () => {
@@ -273,6 +302,8 @@ export function renderActiveSessionBar({
 export function renderQuickUpdateModal({
   topicTitle,
   formattedDuration,
+  actualEndTime = null,
+  elapsedSeconds = 0,
   isTimeUp = false,
   onSave,
   onClose = () => {},
@@ -376,7 +407,7 @@ export function renderQuickUpdateModal({
     const topicStatus = formData.get('topicStatus');
     const notes = formData.get('notes')?.trim() || null;
 
-    const result = await onSave({ topicStatus, notes });
+    const result = await onSave({ topicStatus, notes, actualEndTime, elapsedSeconds });
 
     if (result?.error) {
       errorEl.textContent = result.error.message || 'فشل حفظ الجلسة.';

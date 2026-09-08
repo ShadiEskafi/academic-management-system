@@ -16,6 +16,12 @@ const OUTCOME_CONFIG = {
 };
 
 function formatDuration(seconds) {
+  if (!seconds || seconds <= 0) {
+    return 'أقل من دقيقة';
+  }
+  if (seconds < 60) {
+    return `${seconds} ثانية (أقل من دقيقة)`;
+  }
   const mins = Math.floor(seconds / 60);
   const secs = seconds % 60;
   const paddedSecs = String(secs).padStart(2, '0');
@@ -98,6 +104,7 @@ export function renderStudySessionLog(
         ${sessionsList
           .map((s) => {
             const outInfo = OUTCOME_CONFIG[s.outcome] || OUTCOME_CONFIG.completed;
+            const executionDate = s.scheduledEnd || s.scheduledStart;
 
             return `
               <div class="card" style="padding:var(--space-3) var(--space-4);background:var(--color-surface);border:1px solid var(--color-border);border-radius:var(--radius-md);">
@@ -123,7 +130,7 @@ export function renderStudySessionLog(
                 </div>
 
                 <div style="font-size:12px;color:var(--color-text-secondary);margin-bottom:6px;">
-                  <span>📅 ${formatSessionDate(s.scheduledStart)}</span>
+                  <span>📅 ${formatSessionDate(executionDate)}</span>
                 </div>
 
                 ${

@@ -20,6 +20,10 @@ export function renderAppShell(container, { userEmail, onSignOut }) {
               ${icons.layoutDashboard(16)}
               <span>لوحة التحكم</span>
             </a>
+            <a href="#/planner" class="nav-header-link" id="nav-link-planner">
+              ${icons.calendar(16)}
+              <span>جدول المذاكرة</span>
+            </a>
             <a href="#/semesters" class="nav-header-link" id="nav-link-semesters">
               ${icons.book(16)}
               <span>الفصول الدراسية</span>
@@ -45,6 +49,7 @@ export function renderAppShell(container, { userEmail, onSignOut }) {
   `;
 
   const dashboardLink = container.querySelector('#nav-link-dashboard');
+  const plannerLink = container.querySelector('#nav-link-planner');
   const semestersLink = container.querySelector('#nav-link-semesters');
   const availabilityLink = container.querySelector('#nav-link-availability');
   const signOutBtn = container.querySelector('#shell-signout-btn');
@@ -53,10 +58,13 @@ export function renderAppShell(container, { userEmail, onSignOut }) {
   function updateActiveNav() {
     const hash = window.location.hash || '#/dashboard';
     dashboardLink.classList.remove('active');
+    plannerLink.classList.remove('active');
     semestersLink.classList.remove('active');
     availabilityLink.classList.remove('active');
 
-    if (hash.startsWith('#/availability')) {
+    if (hash.startsWith('#/planner')) {
+      plannerLink.classList.add('active');
+    } else if (hash.startsWith('#/availability')) {
       availabilityLink.classList.add('active');
     } else if (hash.startsWith('#/semesters')) {
       semestersLink.classList.add('active');

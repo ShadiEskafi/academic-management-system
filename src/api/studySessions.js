@@ -34,37 +34,46 @@ export async function getActiveStudySession(explicitUserId = null) {
     .select('*')
     .eq('user_id', userId)
     .eq('status', 'planned')
-    .order('scheduled_start', { ascending: false })
-    .limit(1)
-    .maybeSingle();
+    .order('scheduled_start', { ascending: false });
 
   if (error) {
     console.error('Error fetching active study session:', error);
     return { session: null, error };
   }
 
-  if (!data) {
+  if (!data || data.length === 0) {
     return { session: null, error: null };
   }
 
+  // البحث عن الجلسة الحية النشطة صراحة عبر is_live: true
+  let activeSessionRow = null;
   let topicId = null;
   let topicTitle = 'موضوع عام';
   let courseTitle = '';
   let durationMinutes = 0;
 
-  try {
-    if (data.notes) {
-      const parsed = JSON.parse(data.notes);
-      topicId = parsed.topicId || null;
-      topicTitle = parsed.topicTitle || topicTitle;
-      courseTitle = parsed.courseTitle || '';
-      durationMinutes = parsed.durationMinutes || 0;
-    }
-  } catch {}
+  for (const row of data) {
+    if (!row.notes) continue;
+    try {
+      const parsed = JSON.parse(row.notes);
+      if (parsed && parsed.is_live === true) {
+        activeSessionRow = row;
+        topicId = parsed.topicId || null;
+        topicTitle = parsed.topicTitle || topicTitle;
+        courseTitle = parsed.courseTitle || '';
+        durationMinutes = parsed.durationMinutes || 0;
+        break;
+      }
+    } catch {}
+  }
+
+  if (!activeSessionRow) {
+    return { session: null, error: null };
+  }
 
   return {
     session: {
-      ...data,
+      ...activeSessionRow,
       topic_id: topicId,
       topic_title: topicTitle,
       course_title: courseTitle,
@@ -106,6 +115,7 @@ export async function startStudySession({
     topicTitle: topicTitle || 'موضوع عام',
     courseTitle: courseTitle || '',
     durationMinutes,
+    is_live: true,
     userNotes: '',
   });
 
@@ -132,6 +142,7 @@ export async function startStudySession({
       topic_id: topicId,
       topic_title: topicTitle,
       course_title: courseTitle,
+      duration_minutes: durationMinutes,
     },
     error: null,
   };
@@ -144,70 +155,132 @@ export async function completeStudySession({
   topicStatus,
   outcome = null,
   notes,
+  actualEndTime = null,
+  elapsedSeconds = null,
 }) {
   const sessionOutcome = outcome || mapTopicStatusToOutcome(topicStatus);
+  const endTimeIso = actualEndTime || new Date().toISOString();
 
-  // جلب البيانات السابقة للحفاظ على metadata الموضوع والمساق داخل الـ JSON
   let topicTitle = 'موضوع عام';
   let courseTitle = '';
-  const { data: current } = await supabase
-    .from('study_sessions')
-    .select('notes')
-    .eq('id', sessionId)
-    .single();
+  let userId = null;
+  let existingCourseId = courseId;
 
-  if (current?.notes) {
-    try {
-      const parsed = JSON.parse(current.notes);
-      topicTitle = parsed.topicTitle || topicTitle;
-      courseTitle = parsed.courseTitle || courseTitle;
-    } catch {}
+  try {
+    const { data: current } = await supabase
+      .from('study_sessions')
+      .select('notes, user_id, course_id')
+      .eq('id', sessionId)
+      .single();
+
+    if (current) {
+      userId = current.user_id;
+      if (!existingCourseId) existingCourseId = current.course_id;
+
+      if (current.notes) {
+        try {
+          const parsed = JSON.parse(current.notes);
+          topicTitle = parsed.topicTitle || topicTitle;
+          courseTitle = parsed.courseTitle || courseTitle;
+        } catch {}
+      }
+    }
+  } catch (err) {
+    console.error('Error fetching session details:', err);
   }
 
   const updatedNotesPayload = JSON.stringify({
     topicId: topicId || null,
     topicTitle,
     courseTitle,
+    is_live: false,
+    elapsedSeconds: elapsedSeconds !== undefined && elapsedSeconds !== null ? Number(elapsedSeconds) : 0,
     userNotes: notes || '',
   });
 
-  const { error: sessionError } = await supabase
+  // الدفعة 1 (Batch 1): التحديثات الأساسية بالتوازي عبر Promise.all
+  const updateSessionPromise = supabase
     .from('study_sessions')
     .update({
       status: 'completed',
       outcome: sessionOutcome,
-      scheduled_end: new Date().toISOString(),
+      scheduled_end: endTimeIso,
       notes: updatedNotesPayload,
       updated_at: new Date().toISOString(),
     })
     .eq('id', sessionId);
 
-  if (sessionError) return { error: sessionError };
+  const insertSessionTopicPromise = (topicId && userId)
+    ? supabase
+        .from('session_topics')
+        .insert([{ session_id: sessionId, topic_id: topicId, user_id: userId }])
+    : Promise.resolve({ error: null });
 
-  if (topicId) {
-    const { error: topicError } = await supabase
-      .from('topics')
-      .update({ status: topicStatus })
-      .eq('id', topicId);
+  const updateTopicStatusPromise = topicId
+    ? supabase
+        .from('topics')
+        .update({ status: topicStatus })
+        .eq('id', topicId)
+    : Promise.resolve({ error: null });
 
-    if (topicError) {
-      console.error('Failed to update topic status:', topicError);
+  try {
+    const [sessionRes] = await Promise.all([
+      updateSessionPromise,
+      insertSessionTopicPromise,
+      updateTopicStatusPromise,
+    ]);
+
+    if (sessionRes?.error) {
+      return { error: sessionRes.error };
     }
+  } catch (err) {
+    console.error('Network error during primary session completion batch:', err);
+    return { error: err };
   }
 
+  // الدفعة 2 (Batch 2): تحديث تقدم المساق واستدعاء الـ RPC بالتوازي عبر Promise.all
   let nextTopicId = null;
-  if (topicStatus === 'completed' && topicId && courseId) {
-    try {
-      const { data: rpcData, error: rpcError } = await supabase.rpc(
-        'complete_topic_and_advance',
-        {
-          p_course_id: courseId,
-          p_topic_id: topicId,
+  if (existingCourseId) {
+    const courseProgressPromise = (async () => {
+      try {
+        const { data: allTopics } = await supabase
+          .from('topics')
+          .select('id, status')
+          .eq('course_id', existingCourseId);
+
+        if (allTopics && allTopics.length > 0) {
+          const completedCount = allTopics.filter((t) => t.status === 'completed').length;
+          const progressPct = Math.round((completedCount / allTopics.length) * 100);
+          await supabase
+            .from('courses')
+            .update({ progress: progressPct, updated_at: new Date().toISOString() })
+            .eq('id', existingCourseId);
         }
-      );
-      if (!rpcError && rpcData) nextTopicId = rpcData;
-    } catch (e) {
-      console.error('RPC complete error:', e);
+      } catch (cErr) {
+        console.error('Failed to update course progress:', cErr);
+      }
+    })();
+
+    const rpcPromise = (topicStatus === 'completed' && topicId)
+      ? (async () => {
+          try {
+            const { data: rpcData, error: rpcError } = await supabase.rpc(
+              'complete_topic_and_advance',
+              { p_course_id: existingCourseId, p_topic_id: topicId }
+            );
+            if (!rpcError && rpcData) return rpcData;
+          } catch (e) {
+            console.error('RPC complete error:', e);
+          }
+          return null;
+        })()
+      : Promise.resolve(null);
+
+    try {
+      const [_, rpcRes] = await Promise.all([courseProgressPromise, rpcPromise]);
+      if (rpcRes) nextTopicId = rpcRes;
+    } catch (b2Err) {
+      console.error('Batch 2 post-processing error:', b2Err);
     }
   }
 
@@ -228,7 +301,7 @@ export async function fetchCourseStudyStats(courseId) {
     .from('study_sessions')
     .select('scheduled_start, scheduled_end, updated_at, created_at, outcome')
     .eq('course_id', courseId)
-    .eq('status', 'completed');
+    .in('status', ['completed', 'partially_completed']);
 
   if (error) {
     console.error('Failed to fetch course study stats:', error);
@@ -262,7 +335,7 @@ export async function fetchCourseSessionsHistory(courseId) {
     .from('study_sessions')
     .select('*')
     .eq('course_id', courseId)
-    .eq('status', 'completed')
+    .in('status', ['completed', 'partially_completed'])
     .order('scheduled_start', { ascending: false });
 
   if (error) {

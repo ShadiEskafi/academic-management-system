@@ -4,6 +4,7 @@
 import './style.css';
 import { supabase } from './api/supabaseClient.js';
 import { renderDashboardPage } from './pages/DashboardPage.js';
+import { renderWeeklyPlannerPage } from './pages/WeeklyPlannerPage.js';
 import { renderAuthPage } from './pages/AuthPage.js';
 import { renderSemestersPage } from './pages/SemestersPage.js';
 import { renderCoursesPage } from './pages/CoursesPage.js';
@@ -82,6 +83,16 @@ registerRoute('/dashboard', async ({ container }) => {
     loadingText: 'جاري تحميل لوحة التحكم المركزية...',
     retryPath: '/dashboard',
     run: () => renderDashboardPage(container),
+  });
+});
+
+// 0.5. جدول المذاكرة والتخطيط الأسبوعي
+registerRoute('/planner', async ({ container }) => {
+  updateActiveNav('nav-link-planner');
+  return withLifecycle(container, {
+    loadingText: 'جاري تحميل جدول المذاكرة والتخطيط الأسبوعي...',
+    retryPath: '/planner',
+    run: () => renderWeeklyPlannerPage(container),
   });
 });
 

@@ -153,6 +153,9 @@ export async function renderDashboardPage(container) {
   const cleanupActiveSession = renderActiveSessionWidget(activeSessionContainer, {
     activeSession,
     courses,
+    onSessionUpdate: (session) => {
+      // عند التغير صراحة من الودجت
+    },
   });
   mainWrapper.appendChild(activeSessionContainer);
 
@@ -192,8 +195,18 @@ export async function renderDashboardPage(container) {
   container.innerHTML = '';
   container.appendChild(mainWrapper);
 
+  // الاستماع لحدث تحديث جلسة المذاكرة العام لتحديد شاشة لوحة التحكم تلقائياً
+  const handleSessionUpdate = (e) => {
+    if (e.detail?.event === 'completed' || e.detail?.event === 'cancelled') {
+      renderDashboardPage(container);
+    }
+  };
+
+  window.addEventListener('study-session-updated', handleSessionUpdate);
+
   // دالة Cleanup عند تغيير الشاشة
   return () => {
+    window.removeEventListener('study-session-updated', handleSessionUpdate);
     if (typeof cleanupActiveSession === 'function') {
       cleanupActiveSession();
     }
