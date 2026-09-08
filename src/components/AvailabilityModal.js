@@ -1,15 +1,17 @@
 // src/components/AvailabilityModal.js
-// مودال إضافة وتعديل فترات التفرغ الأسبوعية وفق الـ Design System
+// مودال إضافة وتعديل فترات التفرغ الأسبوعية مع فحص التداخل اللحظي
 import {
   DAYS_OF_WEEK,
   formatTimeDisplay,
   calculateSlotDurationMinutes,
+  hasSlotOverlap,
 } from '../api/availability.js';
 import { icons } from '../utils/icons.js';
 
 export function renderAvailabilityModal({
   initialData = null,
   preselectedDay = 'sunday',
+  existingSlots = [],
   onSave,
   onClose = () => {},
 }) {
@@ -91,11 +93,12 @@ export function renderAvailabilityModal({
   const cancelBtn = overlay.querySelector('#cancel-avail-btn');
   const saveBtn = overlay.querySelector('#save-avail-btn');
   const errorEl = overlay.querySelector('#avail-modal-error');
+  const daySelect = overlay.querySelector('#avail-day-select');
   const startInput = overlay.querySelector('#avail-start-time');
   const endInput = overlay.querySelector('#avail-end-time');
   const durationPreview = overlay.querySelector('#slot-duration-preview');
 
-  function updateDurationDisplay() {
+  function validateInputs() {
     const mins = calculateSlotDurationMinutes(startInput.value, endInput.value);
     if (mins <= 0) {
       durationPreview.innerHTML = `
@@ -104,20 +107,39 @@ export function renderAvailabilityModal({
           <span>وقت النهاية يجب أن يكون بعد وقت البداية.</span>
         </span>
       `;
-    } else {
-      const hrs = Math.floor(mins / 60);
-      const remMins = mins % 60;
-      let text = '';
-      if (hrs > 0) text += `${hrs} ساعة`;
-      if (hrs > 0 && remMins > 0) text += ' و ';
-      if (remMins > 0) text += `${remMins} دقيقة`;
-      durationPreview.innerHTML = `المدة المحتسبة: <strong style="color:var(--color-accent);">${text}</strong>`;
+      return false;
     }
+
+    // فحص التداخل للتيار الحالي
+    const selectedDay = daySelect.value;
+    const currentDaySlots = existingSlots.filter((s) => s.day_of_week === selectedDay);
+    const excludeId = isEditing ? initialData.id : null;
+    const isOverlapping = hasSlotOverlap(startInput.value, endInput.value, currentDaySlots, excludeId);
+
+    if (isOverlapping) {
+      durationPreview.innerHTML = `
+        <span style="display:inline-flex;align-items:center;gap:6px;color:var(--color-danger);">
+          ${icons.alertTriangle(14)}
+          <span>توجد فترة تفرغ متداخلة في نفس اليوم.</span>
+        </span>
+      `;
+      return false;
+    }
+
+    const hrs = Math.floor(mins / 60);
+    const remMins = mins % 60;
+    let text = '';
+    if (hrs > 0) text += `${hrs} ساعة`;
+    if (hrs > 0 && remMins > 0) text += ' و ';
+    if (remMins > 0) text += `${remMins} دقيقة`;
+    durationPreview.innerHTML = `المدة المحتسبة: <strong style="color:var(--color-accent);">${text}</strong>`;
+    return true;
   }
 
-  startInput.addEventListener('input', updateDurationDisplay);
-  endInput.addEventListener('input', updateDurationDisplay);
-  updateDurationDisplay();
+  startInput.addEventListener('input', validateInputs);
+  endInput.addEventListener('input', validateInputs);
+  daySelect.addEventListener('change', validateInputs);
+  validateInputs();
 
   function cleanup() {
     window.removeEventListener('keydown', handleKeyDown);
@@ -134,6 +156,10 @@ export function renderAvailabilityModal({
   window.addEventListener('keydown', handleKeyDown);
   cancelBtn.addEventListener('click', cleanup);
 
+  overlay.addEventListener('click', (e) => {
+    if (e.target === overlay) cleanup();
+  });
+
   form.addEventListener('submit', async (e) => {
     e.preventDefault();
     errorEl.textContent = '';
@@ -146,6 +172,13 @@ export function renderAvailabilityModal({
     const mins = calculateSlotDurationMinutes(startTime, endTime);
     if (mins <= 0) {
       errorEl.textContent = 'وقت النهاية يجب أن يكون بعد وقت البداية.';
+      return;
+    }
+
+    const currentDaySlots = existingSlots.filter((s) => s.day_of_week === dayOfWeek);
+    const excludeId = isEditing ? initialData.id : null;
+    if (hasSlotOverlap(startTime, endTime, currentDaySlots, excludeId)) {
+      errorEl.textContent = 'تتعارض هذه الفترة مع فترة تفرغ أخرى مسجلة مسبقاً في نفس اليوم.';
       return;
     }
 

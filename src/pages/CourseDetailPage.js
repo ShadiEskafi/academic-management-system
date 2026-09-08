@@ -30,6 +30,7 @@ import {
 import { renderSessionSetupModal } from '../components/ActiveSessionModal.js';
 import { icons } from '../utils/icons.js';
 import { skeletons } from '../utils/skeletons.js';
+import { escapeHtml } from '../utils/sanitize.js';
 
 function buildTopicTree(topics) {
   const topicMap = new Map();
@@ -626,13 +627,4 @@ export async function renderCourseDetailPage(
     formOpen = false;
     formContainer.innerHTML = '';
   };
-}
-
-function escapeHtml(str) {
-  if (!str) return '';
-  return String(str)
-    .replace(/&/g, '&amp;')
-    .replace(/</g, '&lt;')
-    .replace(/>/g, '&gt;')
-    .replace(/"/g, '&quot;');
-}
+}

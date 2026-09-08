@@ -1,5 +1,5 @@
 // src/pages/AvailabilityPage.js
-// شاشة أوقات التفرغ وفق الـ Design System (مع هياكل التحميل Skeletons)
+// شاشة أوقات التفرغ وفق الـ Design System مع فحص التداخل الزمني وتمرير الفترات المسجلة
 import {
   DAYS_OF_WEEK,
   fetchAvailability,
@@ -13,6 +13,7 @@ import {
 import { renderAvailabilityModal } from '../components/AvailabilityModal.js';
 import { icons } from '../utils/icons.js';
 import { skeletons } from '../utils/skeletons.js';
+import { escapeHtml } from '../utils/sanitize.js';
 
 export async function renderAvailabilityPage(container) {
   let rawSlots = [];
@@ -49,6 +50,7 @@ export async function renderAvailabilityPage(container) {
   addGlobalBtn.addEventListener('click', () => {
     renderAvailabilityModal({
       preselectedDay: 'sunday',
+      existingSlots: rawSlots,
       onSave: async (payload) => {
         const { error } = await createAvailabilitySlot(payload);
         if (error) return { error };
@@ -187,6 +189,7 @@ export async function renderAvailabilityPage(container) {
         const dayKey = btn.dataset.day;
         renderAvailabilityModal({
           preselectedDay: dayKey,
+          existingSlots: rawSlots,
           onSave: async (payload) => {
             const { error } = await createAvailabilitySlot(payload);
             if (error) return { error };
@@ -205,6 +208,7 @@ export async function renderAvailabilityPage(container) {
 
         renderAvailabilityModal({
           initialData: targetSlot,
+          existingSlots: rawSlots,
           onSave: async (payload) => {
             const { error } = await updateAvailabilitySlot(targetSlot.id, payload);
             if (error) return { error };
@@ -289,13 +293,4 @@ export async function renderAvailabilityPage(container) {
   return () => {
     container.innerHTML = '';
   };
-}
-
-function escapeHtml(str) {
-  if (!str) return '';
-  return String(str)
-    .replace(/&/g, '&amp;')
-    .replace(/</g, '&lt;')
-    .replace(/>/g, '&gt;')
-    .replace(/"/g, '&quot;');
-}
+}

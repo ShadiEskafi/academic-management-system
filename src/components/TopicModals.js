@@ -1,6 +1,7 @@
 // src/components/TopicModals.js
-// مودالات تعديل وحذف مواضيع المساق وفق الـ Design System (Phase D)
+// مودالات تعديل وحذف مواضيع المساق وفق الـ Design System (Phase D) مع حماية Type-to-Confirm
 import { icons } from '../utils/icons.js';
+import { escapeHtml } from '../utils/sanitize.js';
 
 export function renderEditTopicModal(topic, { onSave, onClose = () => {} }) {
   const overlay = document.createElement('div');
@@ -94,7 +95,12 @@ export function renderEditTopicModal(topic, { onSave, onClose = () => {} }) {
   });
 }
 
-export function renderDeleteTopicModal(topic, isParent, childCount, { onDelete, onClose = () => {} }) {
+export function renderDeleteTopicModal(
+  topic,
+  isParent,
+  childCount,
+  { onDelete, onClose = () => {} }
+) {
   const overlay = document.createElement('div');
   overlay.className = 'modal-overlay';
   overlay.setAttribute('role', 'dialog');
@@ -112,8 +118,8 @@ export function renderDeleteTopicModal(topic, isParent, childCount, { onDelete, 
       </div>
     `
     : `
-      <p class="modal-description">
-        هل أنت متأكد من رغبتك في حذف الموضوع: <strong>"${escapeHtml(topic.title)}"</strong>؟
+      <p class="modal-description" style="margin-bottom:var(--space-4);">
+        هل أنت متأكد من رغبتك في حذف هذا الموضوع؟ هذا الإجراء نهائي ولا يمكن التراجع عنه.
       </p>
     `;
 
@@ -123,20 +129,49 @@ export function renderDeleteTopicModal(topic, isParent, childCount, { onDelete, 
       
       ${warningContent}
 
+      <div class="field" style="margin-bottom:var(--space-4);">
+        <label class="field-label" for="confirm-topic-title-input">
+          لتأكيد الحذف، اكتب اسم الموضوع <strong>"${escapeHtml(topic.title)}"</strong> في الحقل أدناه:
+        </label>
+        <input
+          id="confirm-topic-title-input"
+          class="input"
+          type="text"
+          placeholder="اكتب اسم الموضوع هنا للتأكيد"
+          autocomplete="off"
+        />
+      </div>
+
       <p id="delete-topic-error" class="field-error"></p>
 
       <div class="modal-actions">
         <button type="button" class="btn-secondary" id="cancel-delete-topic-btn">إلغاء</button>
-        <button type="button" class="btn-danger" id="confirm-delete-topic-btn">تأكيد الحذف</button>
+        <button type="button" class="btn-danger" id="confirm-delete-topic-btn" disabled>تأكيد الحذف</button>
       </div>
     </div>
   `;
 
   document.body.appendChild(overlay);
 
+  const confirmInput = overlay.querySelector('#confirm-topic-title-input');
   const confirmBtn = overlay.querySelector('#confirm-delete-topic-btn');
   const cancelBtn = overlay.querySelector('#cancel-delete-topic-btn');
   const errorEl = overlay.querySelector('#delete-topic-error');
+
+  confirmInput.focus();
+
+  // فحص تطابق النص المدخل مع اسم الموضوع لتمكين الزر
+  confirmInput.addEventListener('input', () => {
+    const isMatch = confirmInput.value.trim() === topic.title.trim();
+    confirmBtn.disabled = !isMatch;
+  });
+
+  confirmInput.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter' && !confirmBtn.disabled) {
+      e.preventDefault();
+      confirmBtn.click();
+    }
+  });
 
   function cleanup() {
     window.removeEventListener('keydown', handleKeyDown);
@@ -158,6 +193,8 @@ export function renderDeleteTopicModal(topic, isParent, childCount, { onDelete, 
   });
 
   confirmBtn.addEventListener('click', async () => {
+    if (confirmInput.value.trim() !== topic.title.trim()) return;
+
     errorEl.textContent = '';
     confirmBtn.disabled = true;
     confirmBtn.textContent = 'جاري الحذف...';
@@ -172,13 +209,4 @@ export function renderDeleteTopicModal(topic, isParent, childCount, { onDelete, 
       cleanup();
     }
   });
-}
-
-function escapeHtml(str) {
-  if (!str) return '';
-  return String(str)
-    .replace(/&/g, '&amp;')
-    .replace(/</g, '&lt;')
-    .replace(/>/g, '&gt;')
-    .replace(/"/g, '&quot;');
 }

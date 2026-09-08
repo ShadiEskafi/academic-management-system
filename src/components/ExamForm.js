@@ -2,6 +2,8 @@
 // مودال إضافة وتعديل الاختبارات والكويزات وفق الـ Design System (Phase E)
 import { icons } from '../utils/icons.js';
 
+import { escapeHtml } from '../utils/sanitize.js';
+
 export function renderExamFormModal({
   initialData = null,
   onSave,
@@ -130,13 +132,4 @@ export function renderExamFormModal({
       cleanup();
     }
   });
-}
-
-function escapeHtml(str) {
-  if (!str) return '';
-  return String(str)
-    .replace(/&/g, '&amp;')
-    .replace(/</g, '&lt;')
-    .replace(/>/g, '&gt;')
-    .replace(/"/g, '&quot;');
 }

@@ -1,6 +1,7 @@
 // src/components/SemesterModals.js
 // مودالات تعديل وحذف الفصل الدراسي متوافقة مع قيود قاعدة البيانات chk_semester_status
 import { icons } from '../utils/icons.js';
+import { escapeHtml } from '../utils/sanitize.js';
 
 /**
  * مودال تعديل الفصل الدراسي
@@ -186,13 +187,4 @@ export function renderDeleteSemesterModal(semester, { onDelete, onClose = () => 
       cleanup();
     }
   });
-}
-
-function escapeHtml(str) {
-  if (!str) return '';
-  return String(str)
-    .replace(/&/g, '&amp;')
-    .replace(/</g, '&lt;')
-    .replace(/>/g, '&gt;')
-    .replace(/"/g, '&quot;');
 }

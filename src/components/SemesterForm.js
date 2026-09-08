@@ -1,6 +1,8 @@
 // src/components/SemesterForm.js
 import { icons } from '../utils/icons.js';
 
+import { escapeHtml } from '../utils/sanitize.js';
+
 export function renderSemesterForm(
   container,
   { semesters = [], onCreate, onSelectSemester, onEditSemester, onDeleteSemester }
@@ -167,13 +169,4 @@ function getStatusLabel(status) {
     default:
       return 'مخطط له';
   }
-}
-
-function escapeHtml(str) {
-  if (!str) return '';
-  return String(str)
-    .replace(/&/g, '&amp;')
-    .replace(/</g, '&lt;')
-    .replace(/>/g, '&gt;')
-    .replace(/"/g, '&quot;');
 }
