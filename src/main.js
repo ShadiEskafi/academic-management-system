@@ -19,45 +19,32 @@ let currentPageCleanup = null;
 let renderRequestId = 0;
 
 /**
- * إدارة تغييرات حالة المصادقة
+ * دالة تهيئة حالة المستخدم وبناء الواجهة
  */
-supabase.auth.onAuthStateChange(async (event, session) => {
-  // تجديد الـ access token لا يحتاج إلى إعادة بناء الواجهة
-  if (event === 'TOKEN_REFRESHED') {
-    return;
-  }
-
+async function syncAuthState(session) {
   const user = session?.user ?? null;
   const newUserId = user?.id ?? null;
 
-  // لا تعيد بناء التطبيق إذا كان نفس المستخدم ما زال مسجلاً
-  if (newUserId === currentUserId) {
+  if (newUserId === currentUserId && contentContainer) {
     return;
   }
 
   currentUserId = newUserId;
 
-  // المستخدم سجّل الخروج
-  if (!user) {
-    if (currentPageCleanup) {
-      currentPageCleanup();
-    }
-
+  if (currentPageCleanup) {
+    currentPageCleanup();
     currentPageCleanup = null;
-    contentContainer = null;
+  }
 
+  // المستخدم غير مسجل دخول
+  if (!user) {
+    contentContainer = null;
     showAuth();
     return;
   }
 
-  // تنظيف الصفحة السابقة قبل إنشاء AppShell جديد
-  if (currentPageCleanup) {
-    currentPageCleanup();
-  }
-
-  currentPageCleanup = null;
-
-  // 1. بناء الهيكل العام للتطبيق
+  // المستخدم مسجل دخول -> بناء الهيكل العام
+  rootEl.innerHTML = '';
   contentContainer = renderAppShell(rootEl, {
     userEmail: user.email,
     onSignOut: async () => {
@@ -66,13 +53,38 @@ supabase.auth.onAuthStateChange(async (event, session) => {
     },
   });
 
-  // 2. تشغيل الراوتر فوراً لمنع الشاشة البيضاء/السوداء
-  handleRoute();
+  // تشغيل الصفحة الحالية فوراً
+  await handleRoute();
 
-  // 3. فحص الجلسات العالقة في الـ Event Loop القادم لمنع Supabase Auth Deadlock
+  // فحص الجلسات غير المكتملة
   setTimeout(() => {
     initGlobalSessionTracker(user.id);
   }, 0);
+}
+
+/**
+ * فحص الجلسة الأولي فور تشغيل التطبيق (Bootstrapping)
+ */
+async function bootstrapApp() {
+  // توجيه المسار الافتراضي إذا كان فارغاً
+  if (!window.location.hash || window.location.hash === '#' || window.location.hash === '#/') {
+    window.location.hash = '#/semesters';
+  }
+
+  const { data, error } = await supabase.auth.getSession();
+  if (error || !data?.session) {
+    await syncAuthState(null);
+  } else {
+    await syncAuthState(data.session);
+  }
+}
+
+/**
+ * الاستماع لتغيرات حالة المصادقة اللاحقة
+ */
+supabase.auth.onAuthStateChange(async (event, session) => {
+  if (event === 'TOKEN_REFRESHED') return;
+  await syncAuthState(session);
 });
 
 /**
@@ -83,13 +95,16 @@ async function handleRoute() {
 
   const requestId = ++renderRequestId;
 
-  // تنظيف الصفحة الحالية قبل تحميل صفحة جديدة
   if (currentPageCleanup) {
     currentPageCleanup();
     currentPageCleanup = null;
   }
 
-  const hash = window.location.hash || '#/semesters';
+  let hash = window.location.hash;
+  if (!hash || hash === '#' || hash === '#/') {
+    hash = '#/semesters';
+  }
+
   const isCurrentRequest = () => requestId === renderRequestId;
 
   // =========================================================
@@ -97,7 +112,7 @@ async function handleRoute() {
   // =========================================================
   if (hash === '#/availability') {
     contentContainer.innerHTML = `
-      <p style="color:var(--text);padding:1rem;">
+      <p style="color:var(--color-text);padding:1rem;">
         جاري تحميل أوقات التفرغ...
       </p>
     `;
@@ -126,7 +141,7 @@ async function handleRoute() {
     const courseId = courseDetailMatch[2];
 
     contentContainer.innerHTML = `
-      <p style="color:var(--text);padding:1rem;">
+      <p style="color:var(--color-text);padding:1rem;">
         جاري تحميل تفاصيل المساق...
       </p>
     `;
@@ -188,7 +203,7 @@ async function handleRoute() {
     }
 
     contentContainer.innerHTML = `
-      <p style="color:var(--text);padding:1rem;">
+      <p style="color:var(--color-text);padding:1rem;">
         جاري تحميل المساقات...
       </p>
     `;
@@ -242,7 +257,7 @@ async function handleRoute() {
   // 4. الشاشة الافتراضية — الفصول الدراسية
   // =========================================================
   contentContainer.innerHTML = `
-    <p style="color:var(--text);padding:1rem;">
+    <p style="color:var(--color-text);padding:1rem;">
       جاري تحميل الفصول الدراسية...
     </p>
   `;
@@ -317,3 +332,6 @@ function showAuth() {
 }
 
 window.addEventListener('hashchange', handleRoute);
+
+// إطلاق التطبيق صراحة فور تحميل الملف
+bootstrapApp();
