@@ -75,10 +75,17 @@ export async function renderSemestersPage(
     });
   });
 
+  async function refreshSemesters() {
+    const { semesters: refreshed, error: refreshErr } = await fetchSemesters();
+    if (!refreshErr) {
+      setSemesters(refreshed || []);
+    }
+  }
+
   async function handleCreate({ title }) {
-    const { semester, error } = await createSemester({ title });
-    if (error) return { error };
-    setSemesters([semester, ...getState("semesters")]);
+    const { error: createErr } = await createSemester({ title });
+    if (createErr) return { error: createErr };
+    await refreshSemesters();
     showToast("تمت إضافة الفصل الدراسي بنجاح", "success");
     return { error: null };
   }
@@ -86,15 +93,12 @@ export async function renderSemestersPage(
   function handleOpenEdit(semester) {
     renderEditSemesterModal(semester, {
       onSave: async (semesterId, updates) => {
-        const { semester: updated, error: updateErr } = await updateSemester(
+        const { error: updateErr } = await updateSemester(
           semesterId,
           updates,
         );
         if (updateErr) return { error: updateErr };
-        const current = getState("semesters") || [];
-        setSemesters(
-          current.map((s) => (s.id === semesterId ? { ...s, ...updated } : s)),
-        );
+        await refreshSemesters();
         showToast("تم تعديل بيانات الفصل بنجاح", "success");
         return { error: null };
       },
@@ -106,8 +110,7 @@ export async function renderSemestersPage(
       onDelete: async (semesterId) => {
         const { error: deleteErr } = await deleteSemester(semesterId);
         if (deleteErr) return { error: deleteErr };
-        const current = getState("semesters") || [];
-        setSemesters(current.filter((s) => s.id !== semesterId));
+        await refreshSemesters();
         showToast("تم حذف الفصل الدراسي نهائياً", "info");
         return { error: null };
       },
