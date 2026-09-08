@@ -7,6 +7,7 @@ import {
 import { icons } from '../utils/icons.js';
 import { skeletons } from '../utils/skeletons.js';
 import { showToast } from '../utils/toast.js';
+import { escapeHtml } from '../utils/sanitize.js';
 
 const OUTCOME_CONFIG = {
   completed: { label: 'مكتمل بالكامل', color: '#10b981', bg: 'rgba(16, 185, 129, 0.15)' },
@@ -278,13 +279,4 @@ export function renderStudySessionLog(
   return () => {
     container.innerHTML = '';
   };
-}
-
-function escapeHtml(str) {
-  if (!str) return '';
-  return String(str)
-    .replace(/&/g, '&amp;')
-    .replace(/</g, '&lt;')
-    .replace(/>/g, '&gt;')
-    .replace(/"/g, '&quot;');
-}
+}

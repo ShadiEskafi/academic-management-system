@@ -1,6 +1,8 @@
 // src/components/AppShell.js
 import { icons } from '../utils/icons.js';
 
+import { escapeHtml } from '../utils/sanitize.js';
+
 export function renderAppShell(container, { userEmail, onSignOut }) {
   const initial = userEmail ? userEmail.trim().charAt(0).toUpperCase() : 'U';
 
@@ -63,13 +65,4 @@ export function renderAppShell(container, { userEmail, onSignOut }) {
   });
 
   return mainContent;
-}
-
-function escapeHtml(str) {
-  if (!str) return '';
-  return String(str)
-    .replace(/&/g, '&amp;')
-    .replace(/</g, '&lt;')
-    .replace(/>/g, '&gt;')
-    .replace(/"/g, '&quot;');
 }

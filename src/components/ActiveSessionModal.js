@@ -1,5 +1,6 @@
 // src/components/ActiveSessionModal.js
 import { icons } from '../utils/icons.js';
+import { escapeHtml } from '../utils/sanitize.js';
 
 /**
  * 1. مودال إعداد وبدء الجلسة
@@ -451,13 +452,4 @@ export function renderStaleSessionModal({
     cleanup();
     await onDiscard();
   });
-}
-
-function escapeHtml(str) {
-  if (!str) return '';
-  return String(str)
-    .replace(/&/g, '&amp;')
-    .replace(/</g, '&lt;')
-    .replace(/>/g, '&gt;')
-    .replace(/"/g, '&quot;');
-}
+}

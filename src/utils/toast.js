@@ -1,6 +1,8 @@
 // src/utils/toast.js
 import { icons } from './icons.js';
 
+import { escapeHtml } from './sanitize.js';
+
 let containerEl = null;
 
 function getToastContainer() {
@@ -62,13 +64,4 @@ export function showToast(message, type = 'info', duration = 3000) {
       toast.classList.add('toast-show');
     });
   });
-}
-
-function escapeHtml(str) {
-  if (!str) return '';
-  return String(str)
-    .replace(/&/g, '&amp;')
-    .replace(/</g, '&lt;')
-    .replace(/>/g, '&gt;')
-    .replace(/"/g, '&quot;');
 }

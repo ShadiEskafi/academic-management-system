@@ -14,6 +14,7 @@ import { renderAssignmentFormModal } from './AssignmentForm.js';
 import { renderExamFormModal } from './ExamForm.js';
 import { icons } from '../utils/icons.js';
 import { skeletons } from '../utils/skeletons.js';
+import { escapeHtml } from '../utils/sanitize.js';
 
 export function renderAssessmentsView(container, { courseId, onAssessmentsChange = () => {} }) {
   let filterCategory = 'all'; // all | exams | assignments
@@ -422,13 +423,4 @@ export function renderAssessmentsView(container, { courseId, onAssessmentsChange
   return () => {
     container.innerHTML = '';
   };
-}
-
-function escapeHtml(str) {
-  if (!str) return '';
-  return String(str)
-    .replace(/&/g, '&amp;')
-    .replace(/</g, '&lt;')
-    .replace(/>/g, '&gt;')
-    .replace(/"/g, '&quot;');
-}
+}

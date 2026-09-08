@@ -1,4 +1,5 @@
 // src/components/AssignmentForm.js
+import { escapeHtml } from '../utils/sanitize.js';
 // مودال مخصص لإضافة وتعديل الواجبات المنزلية، التكليفات، والمشاريع
 
 export function renderAssignmentFormModal({
@@ -254,14 +255,4 @@ export function renderAssignmentFormModal({
 
     cleanup();
   });
-}
-
-function escapeHtml(str) {
-  if (!str) return '';
-
-  return String(str)
-    .replace(/&/g, '&amp;')
-    .replace(/</g, '&lt;')
-    .replace(/>/g, '&gt;')
-    .replace(/"/g, '&quot;');
 }

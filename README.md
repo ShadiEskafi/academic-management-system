@@ -136,3 +136,65 @@ This project is licensed under the **Business Source License 1.1 (BSL 1.1)**.
 * **Free for:** Non-commercial, educational, research, and local evaluation use.
 * **Restricted:** You may **not** provide this software as a hosted, managed, or commercial service (SaaS), nor bundle it into a commercial offering without prior written authorization.
 * See the full [LICENSE](LICENSE) file for exact legal terms.
+
+```
+academic-management-system
+├─ index.html
+├─ LICENSE
+├─ package-lock.json
+├─ package.json
+├─ public
+│  ├─ favicon.svg
+│  └─ icons.svg
+├─ README.md
+└─ src
+   ├─ api
+   │  ├─ assessments.js
+   │  ├─ assignments.js
+   │  ├─ auth.js
+   │  ├─ availability.js
+   │  ├─ courses.js
+   │  ├─ exams.js
+   │  ├─ semesters.js
+   │  ├─ studySessions.js
+   │  ├─ supabaseClient.js
+   │  └─ topics.js
+   ├─ assets
+   │  ├─ hero.png
+   │  ├─ javascript.svg
+   │  └─ vite.svg
+   ├─ components
+   │  ├─ ActiveSessionModal.js
+   │  ├─ AppShell.js
+   │  ├─ AssessmentsTable.js
+   │  ├─ AssignmentForm.js
+   │  ├─ AuthForm.js
+   │  ├─ AvailabilityModal.js
+   │  ├─ CourseForm.js
+   │  ├─ CourseModals.js
+   │  ├─ ExamForm.js
+   │  ├─ LogAchievementModal.js
+   │  ├─ SemesterForm.js
+   │  ├─ SemesterModals.js
+   │  ├─ StudySessionLog.js
+   │  ├─ TopicForm.js
+   │  ├─ TopicModals.js
+   │  └─ TopicNode.js
+   ├─ main.js
+   ├─ pages
+   │  ├─ AuthPage.js
+   │  ├─ AvailabilityPage.js
+   │  ├─ CourseDetailPage.js
+   │  ├─ CoursesPage.js
+   │  └─ SemestersPage.js
+   ├─ state
+   │  ├─ router.js
+   │  └─ store.js
+   ├─ style.css
+   └─ utils
+      ├─ icons.js
+      ├─ sessionManager.js
+      ├─ skeletons.js
+      └─ toast.js
+
+```

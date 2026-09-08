@@ -10,6 +10,7 @@ import { renderCourseDetailPage } from './pages/CourseDetailPage.js';
 import { renderAvailabilityPage } from './pages/AvailabilityPage.js';
 import { renderAppShell } from './components/AppShell.js';
 import { initGlobalSessionTracker } from './utils/sessionManager.js';
+import { escapeHtml } from './utils/sanitize.js';
 
 const rootEl = document.getElementById('app');
 
@@ -305,14 +306,6 @@ async function handleRoute() {
   updateActiveNav('nav-link-semesters');
 }
 
-function escapeHtml(str) {
-  if (!str) return '';
-  return String(str)
-    .replace(/&/g, '&amp;')
-    .replace(/</g, '&lt;')
-    .replace(/>/g, '&gt;')
-    .replace(/"/g, '&quot;');
-}
 
 function updateActiveNav(activeId) {
   const links = document.querySelectorAll('.nav-header-link');

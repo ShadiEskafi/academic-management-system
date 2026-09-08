@@ -1,5 +1,5 @@
 // src/pages/CoursesPage.js
-// شاشة المساقات وفق الـ Design System مع دعم الـ Skeletons الفوري
+// شاشة المساقات وفق الـ Design System مع تحميل مباشر وخالٍ من استعلامات N+1
 import {
   fetchCoursesBySemester,
   createCourse,
@@ -21,6 +21,7 @@ import {
 } from '../components/CourseModals.js';
 import { skeletons } from '../utils/skeletons.js';
 import { icons } from '../utils/icons.js';
+import { escapeHtml } from '../utils/sanitize.js';
 
 export async function renderCoursesPage(
   container,
@@ -95,6 +96,7 @@ export async function renderCoursesPage(
     semester = semesterData;
   }
 
+  // جلب كل المساقات ومواضيعها التابعة بطلب شبكة واحد موحد
   const { courses: initialCourses, error } = await fetchCoursesBySemester(semester.id);
 
   if (error) {
@@ -113,8 +115,7 @@ export async function renderCoursesPage(
     return () => {};
   }
 
-  const enrichedCourses = await enrichCoursesWithCurrentPosition(initialCourses);
-  setCourses(enrichedCourses);
+  setCourses(initialCourses);
 
   function render() {
     renderCourseForm(container, {
@@ -146,48 +147,6 @@ export async function renderCoursesPage(
     });
   });
 
-  async function enrichCoursesWithCurrentPosition(coursesList) {
-    return Promise.all(
-      coursesList.map(async (course) => {
-        let topicId = course.current_position_topic_id;
-        let topicTitle =
-          course.current_topic?.title ||
-          course.current_position_topic_title ||
-          course.current_topic_title ||
-          null;
-
-        if (topicId && !topicTitle) {
-          const { data: topicData } = await supabase
-            .from('topics')
-            .select('title')
-            .eq('id', topicId)
-            .maybeSingle();
-
-          if (topicData) {
-            topicTitle = topicData.title;
-          }
-        }
-
-        if (!topicId) {
-          const { topics } = await fetchIncompleteLeafTopics(course.id);
-          if (topics && topics.length > 0) {
-            const firstPending = topics[0];
-            topicId = firstPending.id;
-            topicTitle = firstPending.title;
-          }
-        }
-
-        return {
-          ...course,
-          current_position_topic_id: topicId,
-          current_position_topic_title: topicTitle,
-          current_topic_title: topicTitle,
-          current_topic: topicTitle ? { id: topicId, title: topicTitle } : null,
-        };
-      })
-    );
-  }
-
   async function handleCreate({ title, creditHours, difficulty, priority }) {
     const { error: createError } = await createCourse({
       semesterId: semester.id,
@@ -206,8 +165,7 @@ export async function renderCoursesPage(
   async function refreshCourses() {
     const { courses: refreshed, error: refreshError } = await fetchCoursesBySemester(semester.id);
     if (!refreshError) {
-      const enriched = await enrichCoursesWithCurrentPosition(refreshed);
-      setCourses(enriched);
+      setCourses(refreshed);
     }
   }
 
@@ -276,13 +234,4 @@ export async function renderCoursesPage(
   return () => {
     unsubscribe();
   };
-}
-
-function escapeHtml(str) {
-  if (!str) return '';
-  return String(str)
-    .replace(/&/g, '&amp;')
-    .replace(/</g, '&lt;')
-    .replace(/>/g, '&gt;')
-    .replace(/"/g, '&quot;');
-}
+}

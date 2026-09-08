@@ -14,6 +14,7 @@ import {
 import { skeletons } from "../utils/skeletons.js";
 import { icons } from "../utils/icons.js";
 import { showToast } from "../utils/toast.js";
+import { escapeHtml } from '../utils/sanitize.js';
 
 export async function renderSemestersPage(
   container,
@@ -118,11 +119,3 @@ export async function renderSemestersPage(
   };
 }
 
-function escapeHtml(str) {
-  if (!str) return "";
-  return String(str)
-    .replace(/&/g, "&amp;")
-    .replace(/</g, "&lt;")
-    .replace(/>/g, "&gt;")
-    .replace(/"/g, "&quot;");
-}

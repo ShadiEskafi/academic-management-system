@@ -1,6 +1,7 @@
 // src/components/TopicForm.js
 // نموذج إضافة موضوع رئيسي أو فرعي وفق الـ Design System (Phase D)
 import { icons } from '../utils/icons.js';
+import { escapeHtml } from '../utils/sanitize.js';
 
 export function renderTopicForm(container, { parentTopic = null, onSave, onCancel }) {
   const isChild = Boolean(parentTopic);
@@ -95,13 +96,4 @@ export function renderTopicForm(container, { parentTopic = null, onSave, onCance
 
     form.reset();
   });
-}
-
-function escapeHtml(str) {
-  if (!str) return '';
-  return String(str)
-    .replace(/&/g, '&amp;')
-    .replace(/</g, '&lt;')
-    .replace(/>/g, '&gt;')
-    .replace(/"/g, '&quot;');
 }
