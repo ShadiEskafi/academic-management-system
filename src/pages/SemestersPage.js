@@ -4,6 +4,7 @@ import {
   createSemester,
   updateSemester,
   deleteSemester,
+  setCurrentSemester,
 } from "../api/semesters.js";
 import { setSemesters, getState, subscribe } from "../state/store.js";
 import { renderSemesterForm } from "../components/SemesterForm.js";
@@ -60,6 +61,7 @@ export async function renderSemestersPage(
       onSelectSemester,
       onEditSemester: handleOpenEdit,
       onDeleteSemester: handleOpenDelete,
+      onSetCurrentSemester: handleSetCurrent,
     });
   }
 
@@ -72,6 +74,7 @@ export async function renderSemestersPage(
       onSelectSemester,
       onEditSemester: handleOpenEdit,
       onDeleteSemester: handleOpenDelete,
+      onSetCurrentSemester: handleSetCurrent,
     });
   });
 
@@ -79,6 +82,16 @@ export async function renderSemestersPage(
     const { semesters: refreshed, error: refreshErr } = await fetchSemesters();
     if (!refreshErr) {
       setSemesters(refreshed || []);
+    }
+  }
+
+  async function handleSetCurrent(semesterId) {
+    const { error: setErr } = await setCurrentSemester(semesterId);
+    if (setErr) {
+      showToast("حدث خطأ أثناء تعيين الفصل الحالي", "error");
+    } else {
+      showToast("تم تعيين الفصل كفصل حالي نشط بنجاح", "success");
+      await refreshSemesters();
     }
   }
 

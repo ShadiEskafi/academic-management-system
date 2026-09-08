@@ -97,5 +97,46 @@ export const icons = {
       `<path d="M20 20a2 2 0 0 0 2-2V8a2 2 0 0 0-2-2h-7.9a2 2 0 0 1-1.69-.9L9.6 3.9A2 2 0 0 0 8 3H4a2 2 0 0 0-2 2v13a2 2 0 0 0 2 2h4"/><circle cx="12" cy="13" r="2"/><path d="M12 15v5"/>`,
       size
     ),
+
+  // أيقونات لوحة التحكم والإحصائيات
+  layoutDashboard: (size = 18) =>
+    createSvg(
+      `<rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/>`,
+      size
+    ),
+
+  trendingUp: (size = 18) =>
+    createSvg(
+      `<polyline points="23 6 13.5 15.5 8.5 10.5 1 18"/><polyline points="17 6 23 6 23 12"/>`,
+      size
+    ),
+
+  target: (size = 18) =>
+    createSvg(
+      `<circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="6"/><circle cx="12" cy="12" r="2"/>`,
+      size
+    ),
+
+  award: (size = 18) =>
+    createSvg(
+      `<circle cx="12" cy="8" r="7"/><polyline points="8.21 13.89 7 23 12 20 17 23 15.79 13.88"/>`,
+      size
+    ),
+
+  fileText: (size = 18) =>
+    createSvg(
+      `<path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><line x1="10" y1="9" x2="8" y2="9"/>`,
+      size
+    ),
+
+  barChart: (size = 18) =>
+    createSvg(
+      `<line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/>`,
+      size
+    ),
+
+  zap: (size = 18) =>
+    createSvg(`<polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/>`, size),
 };
+
 

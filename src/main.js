@@ -3,6 +3,7 @@
 
 import './style.css';
 import { supabase } from './api/supabaseClient.js';
+import { renderDashboardPage } from './pages/DashboardPage.js';
 import { renderAuthPage } from './pages/AuthPage.js';
 import { renderSemestersPage } from './pages/SemestersPage.js';
 import { renderCoursesPage } from './pages/CoursesPage.js';
@@ -74,6 +75,16 @@ async function withLifecycle(container, { loadingText, retryPath, run }) {
 // تسجيل المسارات التصريحي (Declarative Route Table)
 // =========================================================
 
+// 0. لوحة التحكم المركزية (الشاشة الافتراضية)
+registerRoute('/dashboard', async ({ container }) => {
+  updateActiveNav('nav-link-dashboard');
+  return withLifecycle(container, {
+    loadingText: 'جاري تحميل لوحة التحكم المركزية...',
+    retryPath: '/dashboard',
+    run: () => renderDashboardPage(container),
+  });
+});
+
 // 1. شاشة أوقات التفرغ
 registerRoute('/availability', async ({ container }) => {
   updateActiveNav('nav-link-availability');
@@ -124,7 +135,7 @@ registerRoute('/semesters/:semesterId/courses', async ({ params, container }) =>
   });
 });
 
-// 4. الفصول الدراسية (الشاشة الافتراضية)
+// 4. الفصول الدراسية
 registerRoute('/semesters', async ({ container }) => {
   updateActiveNav('nav-link-semesters');
 
@@ -142,9 +153,9 @@ registerRoute('/semesters', async ({ container }) => {
   });
 });
 
-// مسار احتياطي (404 داخلي) — توجيه للفصول الدراسية
+// مسار احتياطي (404 داخلي) — توجيه للوحة التحكم
 setNotFoundHandler(async () => {
-  navigate('/semesters');
+  navigate('/dashboard');
   return null;
 });
 
@@ -194,7 +205,7 @@ async function syncAuthState(session) {
 async function bootstrapApp() {
   // توجيه المسار الافتراضي إذا كان فارغاً
   if (!window.location.hash || window.location.hash === '#' || window.location.hash === '#/') {
-    window.location.hash = '#/semesters';
+    window.location.hash = '#/dashboard';
   }
 
   const { data, error } = await supabase.auth.getSession();

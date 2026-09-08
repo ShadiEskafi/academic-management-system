@@ -67,3 +67,35 @@ export async function deleteSemester(semesterId) {
 
   return { error };
 }
+
+/**
+ * تعيين فصل دراسي محدد كـ "فصل حالي نشط" وتصفير بقية الفصول لـ false
+ */
+export async function setCurrentSemester(semesterId) {
+  const { data: userData } = await supabase.auth.getUser();
+  const userId = userData?.user?.id;
+
+  if (!userId) {
+    return { success: false, error: new Error('المستخدم غير مسجل الدخول') };
+  }
+
+  // 1. إعادة ضبط جميع فصول المستخدم إلى is_current = false
+  const { error: resetErr } = await supabase
+    .from('semesters')
+    .update({ is_current: false })
+    .eq('user_id', userId);
+
+  if (resetErr) {
+    console.error('Error resetting current semesters:', resetErr);
+  }
+
+  // 2. تعيين الفصل المختار كـ is_current = true
+  const { data, error } = await supabase
+    .from('semesters')
+    .update({ is_current: true })
+    .eq('id', semesterId)
+    .select()
+    .single();
+
+  return { semester: data ?? null, success: !error, error };
+}

@@ -5,7 +5,7 @@ import { escapeHtml } from '../utils/sanitize.js';
 
 export function renderSemesterForm(
   container,
-  { semesters = [], onCreate, onSelectSemester, onEditSemester, onDeleteSemester }
+  { semesters = [], onCreate, onSelectSemester, onEditSemester, onDeleteSemester, onSetCurrentSemester }
 ) {
   container.innerHTML = `
     <div class="page-container">
@@ -49,18 +49,34 @@ export function renderSemesterForm(
               ${semesters
                 .map(
                   (s) => `
-                <article class="card card-level2 semester-card" data-id="${s.id}" style="display:flex;flex-direction:column;justify-content:space-between;gap:var(--space-4);cursor:pointer;">
+                <article class="card card-level2 semester-card" data-id="${s.id}" style="display:flex;flex-direction:column;justify-content:space-between;gap:var(--space-4);cursor:pointer; ${s.is_current ? 'border: 2px solid var(--color-primary);' : ''}">
                   <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:var(--space-2);">
                     <div>
-                      <h3 style="margin:0 0 var(--space-2);font-size:17px;font-weight:600;color:var(--color-text);">
-                        ${escapeHtml(s.title)}
-                      </h3>
+                      <div style="display:flex;align-items:center;gap:6px;margin-bottom:var(--space-2);flex-wrap:wrap;">
+                        <h3 style="margin:0;font-size:17px;font-weight:600;color:var(--color-text);">
+                          ${escapeHtml(s.title)}
+                        </h3>
+                        ${
+                          s.is_current
+                            ? `<span class="badge" style="background: rgba(16, 185, 129, 0.15); color: #10b981; font-weight: 700; border: 1px solid rgba(16, 185, 129, 0.3); font-size: 11px;">
+                                ${icons.check(12)} الفصل الحالي
+                              </span>`
+                            : ''
+                        }
+                      </div>
                       <span class="${getStatusBadgeClass(s.status)}">
                         ${getStatusLabel(s.status)}
                       </span>
                     </div>
 
                     <div class="semester-card-actions" style="display:flex;align-items:center;gap:4px;">
+                      ${
+                        !s.is_current
+                          ? `<button type="button" class="btn-secondary set-current-btn" data-id="${s.id}" title="تعيين كفصل حالي" style="font-size: 11px; padding: 3px 8px; min-height: 28px;">
+                              تعيين كحالي
+                            </button>`
+                          : ''
+                      }
                       <button type="button" class="btn-icon edit-semester-btn" data-id="${s.id}" title="تعديل الفصل" aria-label="تعديل الفصل">
                         ${icons.edit(15)}
                       </button>
@@ -95,6 +111,17 @@ export function renderSemesterForm(
       const semester = semesters.find((s) => s.id === card.dataset.id);
       if (semester && onSelectSemester) {
         onSelectSemester(semester);
+      }
+    });
+  });
+
+  // ربط زر تعيين كفصل حالي
+  container.querySelectorAll('.set-current-btn').forEach((btn) => {
+    btn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      const semesterId = btn.dataset.id;
+      if (semesterId && onSetCurrentSemester) {
+        onSetCurrentSemester(semesterId);
       }
     });
   });
