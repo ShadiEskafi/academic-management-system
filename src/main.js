@@ -1,5 +1,5 @@
 // src/main.js
-// نقطة الدخول الرئيسية للتطبيق — توجيه الراوتر وإدارة دورة حياة الجلسة
+// نقطة الدخول الرئيسية للتطبيق — الراوتر التصريحي وإدارة دورة حياة الجلسة
 
 import './style.css';
 import { supabase } from './api/supabaseClient.js';
@@ -11,17 +11,147 @@ import { renderAvailabilityPage } from './pages/AvailabilityPage.js';
 import { renderAppShell } from './components/AppShell.js';
 import { initGlobalSessionTracker } from './utils/sessionManager.js';
 import { escapeHtml } from './utils/sanitize.js';
+import { icons } from './utils/icons.js';
+import {
+  registerRoute,
+  setNotFoundHandler,
+  configureRouter,
+  startRouter,
+  stopRouter,
+  navigate,
+} from './state/router.js';
 
 const rootEl = document.getElementById('app');
 
 let currentUserId = null;
 let contentContainer = null;
-let currentPageCleanup = null;
-let renderRequestId = 0;
 
-/**
- * دالة تهيئة حالة المستخدم وبناء الواجهة
- */
+// =========================================================
+// دالة مساعدة موحدة لعرض حالات الخطأ وفق الـ Design System
+// =========================================================
+function renderErrorState(container, err, retryPath) {
+  container.innerHTML = `
+    <div class="card error-state">
+      <div class="error-state-icon" aria-hidden="true">${icons.alertTriangle(28)}</div>
+      <h3>تعذر تحميل الصفحة</h3>
+      <p>${escapeHtml(err.message)}</p>
+      ${retryPath ? '<button type="button" class="btn-secondary" id="error-retry-btn">إعادة المحاولة</button>' : ''}
+    </div>
+  `;
+
+  if (retryPath) {
+    container.querySelector('#error-retry-btn')?.addEventListener('click', () => {
+      const targetHash = '#' + retryPath;
+      if (window.location.hash === targetHash) {
+        // نفس المسار — إعادة تشغيل معالج الراوتر يدوياً
+        window.dispatchEvent(new HashChangeEvent('hashchange'));
+      } else {
+        navigate(retryPath);
+      }
+    });
+  }
+}
+
+// =========================================================
+// دالة مساعدة: تحميل مبدئي + معالجة أخطاء موحدة
+// =========================================================
+async function withLifecycle(container, { loadingText, retryPath, run }) {
+  container.innerHTML = `
+    <p style="color:var(--color-text);padding:1rem;">
+      ${loadingText}
+    </p>
+  `;
+  try {
+    return await run();
+  } catch (err) {
+    console.error(err);
+    renderErrorState(container, err, retryPath);
+    return null;
+  }
+}
+
+// =========================================================
+// تسجيل المسارات التصريحي (Declarative Route Table)
+// =========================================================
+
+// 1. شاشة أوقات التفرغ
+registerRoute('/availability', async ({ container }) => {
+  updateActiveNav('nav-link-availability');
+  return withLifecycle(container, {
+    loadingText: 'جاري تحميل أوقات التفرغ...',
+    retryPath: '/availability',
+    run: () => renderAvailabilityPage(container),
+  });
+});
+
+// 2. تفاصيل المساق — مع دعم الـ Deep Link عبر ?topicId=
+registerRoute('/semesters/:semesterId/courses/:courseId', async ({ params, query, container }) => {
+  updateActiveNav('nav-link-semesters');
+  const { semesterId, courseId } = params;
+
+  return withLifecycle(container, {
+    loadingText: 'جاري تحميل تفاصيل المساق...',
+    retryPath: `/semesters/${semesterId}/courses/${courseId}`,
+    run: () =>
+      renderCourseDetailPage(container, {
+        courseId,
+        currentPositionTopicId: query.topicId || null,
+        onBack: () => navigate(`/semesters/${semesterId}/courses`),
+      }),
+  });
+});
+
+// 3. مساقات الفصل
+registerRoute('/semesters/:semesterId/courses', async ({ params, container }) => {
+  updateActiveNav('nav-link-semesters');
+  const { semesterId } = params;
+
+  // Guard دفاعي — حماية من قيمة غير سليمة لو انسربت
+  if (semesterId.includes('[object')) {
+    navigate('/semesters');
+    return;
+  }
+
+  return withLifecycle(container, {
+    loadingText: 'جاري تحميل المساقات...',
+    retryPath: `/semesters/${semesterId}/courses`,
+    run: () =>
+      renderCoursesPage(container, {
+        semesterId,
+        onBack: () => navigate('/semesters'),
+        onSelectCourse: (courseId) => navigate(`/semesters/${semesterId}/courses/${courseId}`),
+      }),
+  });
+});
+
+// 4. الفصول الدراسية (الشاشة الافتراضية)
+registerRoute('/semesters', async ({ container }) => {
+  updateActiveNav('nav-link-semesters');
+
+  return withLifecycle(container, {
+    loadingText: 'جاري تحميل الفصول الدراسية...',
+    retryPath: '/semesters',
+    run: () =>
+      renderSemestersPage(container, {
+        onSelectSemester: (target) => {
+          const semesterId =
+            target && typeof target === 'object' ? target.id || target.semesterId : target;
+          if (semesterId) navigate(`/semesters/${semesterId}/courses`);
+        },
+      }),
+  });
+});
+
+// مسار احتياطي (404 داخلي) — توجيه للفصول الدراسية
+setNotFoundHandler(async () => {
+  navigate('/semesters');
+  return null;
+});
+
+// =========================================================
+// إدارة دورة حياة المصادقة (Auth Lifecycle)
+// =========================================================
+
 async function syncAuthState(session) {
   const user = session?.user ?? null;
   const newUserId = user?.id ?? null;
@@ -31,11 +161,7 @@ async function syncAuthState(session) {
   }
 
   currentUserId = newUserId;
-
-  if (currentPageCleanup) {
-    currentPageCleanup();
-    currentPageCleanup = null;
-  }
+  stopRouter();
 
   // المستخدم غير مسجل دخول
   if (!user) {
@@ -54,10 +180,9 @@ async function syncAuthState(session) {
     },
   });
 
-  // تشغيل الصفحة الحالية فوراً
-  await handleRoute();
+  configureRouter({ getContainer: () => contentContainer });
+  startRouter();
 
-  // فحص الجلسات غير المكتملة
   setTimeout(() => {
     initGlobalSessionTracker(user.id);
   }, 0);
@@ -88,225 +213,6 @@ supabase.auth.onAuthStateChange(async (event, session) => {
   await syncAuthState(session);
 });
 
-/**
- * معالجة الـ hash routing
- */
-async function handleRoute() {
-  if (!contentContainer) return;
-
-  const requestId = ++renderRequestId;
-
-  if (currentPageCleanup) {
-    currentPageCleanup();
-    currentPageCleanup = null;
-  }
-
-  let hash = window.location.hash;
-  if (!hash || hash === '#' || hash === '#/') {
-    hash = '#/semesters';
-  }
-
-  const isCurrentRequest = () => requestId === renderRequestId;
-
-  // =========================================================
-  // 1. شاشة أوقات التفرغ
-  // =========================================================
-  if (hash === '#/availability') {
-    contentContainer.innerHTML = `
-      <p style="color:var(--color-text);padding:1rem;">
-        جاري تحميل أوقات التفرغ...
-      </p>
-    `;
-
-    const cleanup = await renderAvailabilityPage(contentContainer);
-
-    if (!isCurrentRequest()) {
-      if (cleanup) cleanup();
-      return;
-    }
-
-    currentPageCleanup = cleanup;
-    updateActiveNav('nav-link-availability');
-    return;
-  }
-
-  // =========================================================
-  // 2. شاشة تفاصيل المساق
-  // =========================================================
-  const courseDetailMatch = hash.match(
-    /^#\/semesters\/([^/]+)\/courses\/([^/]+)$/
-  );
-
-  if (courseDetailMatch) {
-    const semesterId = courseDetailMatch[1];
-    const courseId = courseDetailMatch[2];
-
-    contentContainer.innerHTML = `
-      <p style="color:var(--color-text);padding:1rem;">
-        جاري تحميل تفاصيل المساق...
-      </p>
-    `;
-
-    try {
-      const cleanup = await renderCourseDetailPage(contentContainer, {
-        courseId,
-        onBack: () => {
-          window.location.hash = `#/semesters/${semesterId}/courses`;
-        },
-      });
-
-      if (!isCurrentRequest()) {
-        if (cleanup) cleanup();
-        return;
-      }
-
-      currentPageCleanup = cleanup;
-    } catch (err) {
-      console.error('Failed to render course detail page:', err);
-
-      if (!isCurrentRequest()) return;
-
-      contentContainer.innerHTML = `
-        <div style="padding:1.5rem;color:#ef4444;">
-          <h3>فشل تحميل تفاصيل المساق</h3>
-          <p>${escapeHtml(err.message)}</p>
-          <button
-            type="button"
-            class="btn-secondary"
-            onclick="window.location.hash='#/semesters/${semesterId}/courses'"
-          >
-            العودة لمساقات الفصل
-          </button>
-        </div>
-      `;
-    }
-
-    updateActiveNav('nav-link-semesters');
-    return;
-  }
-
-  // =========================================================
-  // 3. شاشة مساقات الفصل
-  // =========================================================
-  const coursesMatch = hash.match(
-    /^#\/semesters\/([^/]+)(?:\/courses)?$/
-  );
-
-  if (coursesMatch && coursesMatch[1] !== 'courses') {
-    const rawSemesterId = coursesMatch[1];
-
-    if (
-      rawSemesterId.includes('[object') ||
-      rawSemesterId === '[object%20Object]'
-    ) {
-      window.location.hash = '#/semesters';
-      return;
-    }
-
-    contentContainer.innerHTML = `
-      <p style="color:var(--color-text);padding:1rem;">
-        جاري تحميل المساقات...
-      </p>
-    `;
-
-    const navigationCallbacks = {
-      onBack: () => {
-        window.location.hash = '#/semesters';
-      },
-      onSelectCourse: (courseId) => {
-        window.location.hash = `#/semesters/${rawSemesterId}/courses/${courseId}`;
-      },
-    };
-
-    try {
-      const cleanup = await renderCoursesPage(contentContainer, {
-        semesterId: rawSemesterId,
-        ...navigationCallbacks,
-      });
-
-      if (!isCurrentRequest()) {
-        if (cleanup) cleanup();
-        return;
-      }
-
-      currentPageCleanup = cleanup;
-    } catch (err) {
-      console.error('Failed to render courses page:', err);
-
-      if (!isCurrentRequest()) return;
-
-      contentContainer.innerHTML = `
-        <div style="padding:1.5rem;color:#ef4444;">
-          <h3>فشل تحميل صفحة المساقات</h3>
-          <p>${escapeHtml(err.message)}</p>
-          <button
-            type="button"
-            class="btn-secondary"
-            onclick="window.location.hash='#/semesters'"
-          >
-            العودة للفصول الدراسية
-          </button>
-        </div>
-      `;
-    }
-
-    updateActiveNav('nav-link-semesters');
-    return;
-  }
-
-  // =========================================================
-  // 4. الشاشة الافتراضية — الفصول الدراسية
-  // =========================================================
-  contentContainer.innerHTML = `
-    <p style="color:var(--color-text);padding:1rem;">
-      جاري تحميل الفصول الدراسية...
-    </p>
-  `;
-
-  try {
-    const cleanup = await renderSemestersPage(contentContainer, {
-      onSelectSemester: (target) => {
-        const semesterId =
-          target && typeof target === 'object'
-            ? target.id || target.semesterId
-            : target;
-
-        if (semesterId) {
-          window.location.hash = `#/semesters/${semesterId}/courses`;
-        }
-      },
-    });
-
-    if (!isCurrentRequest()) {
-      if (cleanup) cleanup();
-      return;
-    }
-
-    currentPageCleanup = cleanup;
-  } catch (err) {
-    console.error('Failed to render semesters page:', err);
-
-    if (!isCurrentRequest()) return;
-
-    contentContainer.innerHTML = `
-      <div style="padding:1.5rem;color:#ef4444;">
-        <h3>فشل تحميل الفصول الدراسية</h3>
-        <p>${escapeHtml(err.message)}</p>
-        <button
-          type="button"
-          class="btn-secondary"
-          onclick="window.location.hash='#/semesters'"
-        >
-          إعادة المحاولة
-        </button>
-      </div>
-    `;
-  }
-
-  updateActiveNav('nav-link-semesters');
-}
-
-
 function updateActiveNav(activeId) {
   const links = document.querySelectorAll('.nav-header-link');
   links.forEach((link) => {
@@ -323,8 +229,6 @@ function showAuth() {
   rootEl.innerHTML = '';
   renderAuthPage(rootEl);
 }
-
-window.addEventListener('hashchange', handleRoute);
 
 // إطلاق التطبيق صراحة فور تحميل الملف
 bootstrapApp();
