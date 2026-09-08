@@ -9,49 +9,30 @@
 const emitter = new EventTarget();
 
 const state = {
-  currentUser: null,
   semesters: [],
   courses: [],
-  topics: [],
-  sessions: [],
-  weeklyPlan: null,
 };
 
 /**
- * يرجّع نسخة معزولة (Deep Copy) من جزء الـ state المطلوب — مش Reference مباشر.
- * هيك أي Component ما بيقدر يعدّل الداتا "بالخفاء" (مثلاً .push على array)
- * بدون ما يمرّ عبر setXxx ويطلق الحدث المناسب.
- *
- * ملاحظة أداء (لمراجعة لاحقة): structuredClone بيعمل Deep Copy فعلي، وده
- * تكلفته بتزيد مع حجم البيانات. بحجمنا الحالي (NFR-3: حتى 500 Topic) الأداء
- * مقبول، بس لو صار في استدعاء متكرر جدًا لـ getState('courses') بكل render،
- * لازم نراجعها (مثلاً Memoization أو تصغير حجم الجزء المُرجَع).
+ * يرجّع جزء الـ state المطلوب بشكل مباشر — بدون structuredClone.
  */
 export function getState(key) {
-  return structuredClone(state[key]);
+  return state[key];
 }
 
 /**
- * يطلق الحدث ومعه نسخة معزولة من البيانات الجديدة عبر CustomEvent.detail —
- * هيك الـ Component بيستلم الداتا جاهزة بالـ callback مباشرة (event.detail)
- * بدون ما يحتاج ينادي getState() من جديد. بيخلي الـ Component أبسط (Pure)
- * وما بيحتاج يعرف أصلاً إنه في store بالخلفية.
+ * يطلق الحدث ومعه البيانات الجديدة عبر CustomEvent.detail
  */
 function emit(eventName, payload) {
-  emitter.dispatchEvent(new CustomEvent(eventName, { detail: structuredClone(payload) }));
+  emitter.dispatchEvent(new CustomEvent(eventName, { detail: payload }));
 }
 
 export function subscribe(eventName, callback) {
   emitter.addEventListener(eventName, callback);
-  return () => emitter.removeEventListener(eventName, callback); // دالة unsubscribe جاهزة
+  return () => emitter.removeEventListener(eventName, callback);
 }
 
 // ---- دوال التعديل — الطريقة الوحيدة المسموحة لتغيير الـ state ----
-
-export function setCurrentUser(user) {
-  state.currentUser = user;
-  emit('currentUser:changed', user);
-}
 
 export function setSemesters(semesters) {
   state.semesters = semesters;
@@ -61,19 +42,4 @@ export function setSemesters(semesters) {
 export function setCourses(courses) {
   state.courses = courses;
   emit('courses:changed', courses);
-}
-
-export function setTopics(topics) {
-  state.topics = topics;
-  emit('topics:changed', topics);
-}
-
-export function setSessions(sessions) {
-  state.sessions = sessions;
-  emit('sessions:changed', sessions);
-}
-
-export function setWeeklyPlan(plan) {
-  state.weeklyPlan = plan;
-  emit('weeklyPlan:changed', plan);
 }
