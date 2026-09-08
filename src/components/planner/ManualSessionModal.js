@@ -15,8 +15,9 @@ export function renderManualSessionModal({ courses = [], defaultDate = new Date(
     left: 0;
     right: 0;
     bottom: 0;
-    background: rgba(0, 0, 0, 0.6);
-    backdrop-filter: blur(4px);
+    background: rgba(0, 0, 0, 0.75);
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
     display: flex;
     align-items: center;
     justify-content: center;
@@ -32,54 +33,83 @@ export function renderManualSessionModal({ courses = [], defaultDate = new Date(
   const formattedDateIso = defaultDate.toISOString().split('T')[0];
 
   overlay.innerHTML = `
-    <div class="modal-card card" style="width: 100%; max-width: 480px; padding: var(--space-6); background: var(--color-bg-card); border-radius: var(--radius-xl);">
-      <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: var(--space-4);">
+    <div class="modal-card card" style="
+      position: relative;
+      width: 100%;
+      max-width: 500px;
+      padding: var(--space-6);
+      background: var(--color-bg-card);
+      border: 1px solid var(--color-border);
+      border-radius: var(--radius-xl);
+      box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.5), 0 10px 10px -5px rgba(0, 0, 0, 0.4);
+    ">
+      <button type="button" id="close-modal-btn" aria-label="إغلاق" style="
+        position: absolute;
+        top: 16px;
+        left: 16px;
+        width: 32px;
+        height: 32px;
+        border-radius: 50%;
+        background: var(--color-bg-secondary);
+        border: 1px solid var(--color-border);
+        color: var(--color-text-secondary);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        cursor: pointer;
+        font-size: 16px;
+        transition: all 0.2s ease;
+      " onmouseover="this.style.color='var(--color-text)';this.style.background='var(--color-bg-subtle)';" onmouseout="this.style.color='var(--color-text-secondary)';this.style.background='var(--color-bg-secondary)';">
+        ✕
+      </button>
+
+      <div style="margin-bottom: var(--space-5); padding-left: 36px;">
         <h3 style="font-size: 18px; font-weight: 700; color: var(--color-text); margin: 0; display: flex; align-items: center; gap: 8px;">
           ${icons.plus(20)}
           <span>إضافة جلسة مذاكرة يدوية</span>
         </h3>
-        <button type="button" class="btn-icon" id="close-modal-btn" aria-label="إغلاق">${icons.plus(18)}</button>
+        <p style="font-size: 13px; color: var(--color-text-secondary); margin: 4px 0 0 0;">حدد المساق والتوقيت لإدراج جلسة مذاكرة مخصصة في جدولك</p>
       </div>
 
       <form id="manual-session-form" style="display: flex; flex-direction: column; gap: var(--space-4);">
         <div>
-          <label class="form-label" style="font-size: 13px; font-weight: 600;">المساق الدراسي</label>
-          <select id="modal-course-select" class="form-control" required style="font-size: 13px; min-height: 40px;">
+          <label class="form-label" style="font-size: 13px; font-weight: 600; margin-bottom: 6px; display: block; color: var(--color-text);">المساق الدراسي *</label>
+          <select id="modal-course-select" class="form-control" required style="font-size: 13px; min-height: 42px;">
             ${courseOptions}
           </select>
         </div>
 
         <div>
-          <label class="form-label" style="font-size: 13px; font-weight: 600;">الموضوع المستهدف</label>
-          <select id="modal-topic-select" class="form-control" style="font-size: 13px; min-height: 40px;">
+          <label class="form-label" style="font-size: 13px; font-weight: 600; margin-bottom: 6px; display: block; color: var(--color-text);">الموضوع المستهدف</label>
+          <select id="modal-topic-select" class="form-control" style="font-size: 13px; min-height: 42px;">
             <option value="">مذاكرة عامة للمساق</option>
           </select>
         </div>
 
         <div>
-          <label class="form-label" style="font-size: 13px; font-weight: 600;">تاريخ الجلسة</label>
-          <input type="date" id="modal-date-input" class="form-control" value="${formattedDateIso}" required style="font-size: 13px; min-height: 40px;" />
+          <label class="form-label" style="font-size: 13px; font-weight: 600; margin-bottom: 6px; display: block; color: var(--color-text);">تاريخ الجلسة *</label>
+          <input type="date" id="modal-date-input" class="form-control" value="${formattedDateIso}" required style="font-size: 13px; min-height: 42px;" />
         </div>
 
         <div style="display: grid; grid-template-columns: 1fr 1fr; gap: var(--space-3);">
           <div>
-            <label class="form-label" style="font-size: 13px; font-weight: 600;">وقت البداية</label>
-            <input type="time" id="modal-start-time" class="form-control" value="09:00" required style="font-size: 13px; min-height: 40px;" />
+            <label class="form-label" style="font-size: 13px; font-weight: 600; margin-bottom: 6px; display: block; color: var(--color-text);">وقت البداية *</label>
+            <input type="time" id="modal-start-time" class="form-control" value="09:00" required style="font-size: 13px; min-height: 42px;" />
           </div>
           <div>
-            <label class="form-label" style="font-size: 13px; font-weight: 600;">وقت النهاية</label>
-            <input type="time" id="modal-end-time" class="form-control" value="09:50" required style="font-size: 13px; min-height: 40px;" />
+            <label class="form-label" style="font-size: 13px; font-weight: 600; margin-bottom: 6px; display: block; color: var(--color-text);">وقت النهاية *</label>
+            <input type="time" id="modal-end-time" class="form-control" value="09:50" required style="font-size: 13px; min-height: 42px;" />
           </div>
         </div>
 
         <div>
-          <label class="form-label" style="font-size: 13px; font-weight: 600;">ملاحظات الجلسة (اختياري)</label>
-          <input type="text" id="modal-notes-input" class="form-control" placeholder="مثال: التركيز على حل أسئلة الفصل الأول" style="font-size: 13px; min-height: 40px;" />
+          <label class="form-label" style="font-size: 13px; font-weight: 600; margin-bottom: 6px; display: block; color: var(--color-text);">ملاحظات الجلسة (اختياري)</label>
+          <input type="text" id="modal-notes-input" class="form-control" placeholder="مثال: التركيز على حل أسئلة الفصل الأول" style="font-size: 13px; min-height: 42px;" />
         </div>
 
-        <div style="display: flex; justify-content: flex-end; gap: var(--space-3); margin-top: var(--space-2);">
-          <button type="button" class="btn-secondary" id="cancel-modal-btn">إلغاء</button>
-          <button type="submit" class="btn-primary" id="save-modal-btn">حفظ الجلسة</button>
+        <div style="display: flex; justify-content: flex-end; gap: var(--space-3); margin-top: var(--space-3);">
+          <button type="button" class="btn-secondary" id="cancel-modal-btn" style="min-height: 40px; padding-inline: 18px;">إلغاء</button>
+          <button type="submit" class="btn-primary" id="save-modal-btn" style="min-height: 40px; padding-inline: 20px;">حفظ الجلسة</button>
         </div>
       </form>
     </div>

@@ -264,6 +264,27 @@ export async function renderWeeklyPlannerPage(container) {
       </div>
     `;
 
+    calendarCard.addEventListener('click', async (e) => {
+      const deleteBtn = e.target.closest('[data-action="delete-session"]');
+      if (deleteBtn) {
+        e.stopPropagation();
+        const sessionId = deleteBtn.dataset.sessionId;
+        if (!sessionId) return;
+
+        if (confirm('هل أنت متأكد من حذف هذه الجلسة المخططة؟')) {
+          deleteBtn.disabled = true;
+          const { error } = await deletePlannerSession(sessionId);
+          if (error) {
+            showToast('تعذر حذف الجلسة', 'error');
+          } else {
+            showToast('تم حذف الجلسة المخططة', 'info');
+            loadAndRender();
+          }
+        }
+        return;
+      }
+    });
+
     mainWrapper.appendChild(calendarCard);
 
     // -------------------------------------------------------------

@@ -212,18 +212,40 @@ export function generateWeeklyPlanAlgorithm({
   // 3. تتبع السقف اليومي للجلسات للمادة الواحدة (Daily Cap = 2)
   const dailyCourseCounts = {}; // { 'sunday_courseId': count }
 
-  // 4. الحفاظ على الجلسات المكتملة مسبقاً في هذا الأسبوع وعدم حذفها
-  const preservedSessions = existingSessions.filter((s) => s.status === 'completed' || s.status === 'partially_completed');
+  // 4. الحفاظ على الجلسات المكتملة أو الجزئية السابقة وعدم إهدارها
+  const preservedSessions = (existingSessions || []).filter(
+    (s) => s.status === 'completed' || s.status === 'partially_completed'
+  );
 
-  // تسجيل الجلسات المحفوظة لمنع التعارض الساعي
-  const occupiedSlots = new Set();
-  preservedSessions.forEach((s) => {
+  // 5. تجميع الجلسات الموجودة مسبقاً (سواء مكتملة، جزئية، أو مخططة) كحاجز زمني لمنع التداخل (BR-8)
+  const occupiedIntervals = (existingSessions || []).map((s) => {
     const sStart = new Date(s.scheduled_start);
+    const sEnd = s.scheduled_end
+      ? new Date(s.scheduled_end)
+      : new Date(sStart.getTime() + 45 * 60 * 1000);
+
     const dayIdx = sStart.getDay();
     const dayKey = INDEX_TO_DAY[dayIdx];
     const startMins = sStart.getHours() * 60 + sStart.getMinutes();
-    occupiedSlots.add(`${dayKey}_${startMins}`);
+    let endMins = sEnd.getHours() * 60 + sEnd.getMinutes();
+    if (endMins <= startMins) endMins = startMins + 45;
+
+    return {
+      dayOfWeek: dayKey,
+      startMinutes: startMins,
+      endMinutes: endMins,
+    };
   });
+
+  function hasConflict(candidate, occupiedList) {
+    return occupiedList.some((existing) => {
+      // 1. فحص مطابقة اليوم نفسه (sameDay)
+      if (candidate.dayOfWeek !== existing.dayOfWeek) return false;
+
+      // 2. فحص التداخل الزمني الصارم: startA < endB && endA > startB
+      return candidate.startMinutes < existing.endMinutes && candidate.endMinutes > existing.startMinutes;
+    });
+  }
 
   const generatedPlannedSessions = [];
   const underScheduledMap = {}; // تتبع الساعات المخصصة لكل مادة
@@ -232,10 +254,9 @@ export function generateWeeklyPlanAlgorithm({
 
   chunks.forEach((chunk) => {
     const dayKey = chunk.dayOfWeek;
-    const slotKey = `${dayKey}_${chunk.startMinutes}`;
 
-    // تخطي إذا كانت الفترة محجوزة بجلسة مكتملة مسبقاً (BR-8 Conflict)
-    if (occupiedSlots.has(slotKey)) return;
+    // تخطي إذا كانت الفترة تتعارض مع أي جلسة مسجلة أو مضافة مسبقاً في نفس اليوم (BR-8 Conflict)
+    if (hasConflict(chunk, occupiedIntervals)) return;
 
     // البحث عن مادة مناسبة بالتوزيع الدائري (Round-Robin) لم تتجاوز السقف اليومي (dailyCap = 2)
     let selectedCourse = null;
@@ -264,6 +285,13 @@ export function generateWeeklyPlanAlgorithm({
         id: selectedCourse.current_position_topic_id || null,
         title: selectedCourse.current_position_topic_title || 'مذاكرة وتغطية المادة',
       };
+
+      // إضافة الفترة المقترحة إلى الفترات المشغولة لمنع تداخل الشظايا التالية معها
+      occupiedIntervals.push({
+        dayOfWeek: dayKey,
+        startMinutes: chunk.startMinutes,
+        endMinutes: chunk.endMinutes,
+      });
 
       generatedPlannedSessions.push({
         course_id: selectedCourse.id,

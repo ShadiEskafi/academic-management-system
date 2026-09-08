@@ -49,6 +49,9 @@ export function renderSessionCard(session = {}, { onDeleteSession, onStartSessio
     formattedTime = `${startStr} - ${endStr}`;
   }
 
+  card.setAttribute('data-session-id', session.id || '');
+  card.setAttribute('data-action', 'view-session');
+
   card.innerHTML = `
     <div>
       <div style="display: flex; align-items: center; justify-content: space-between; gap: 4px; margin-bottom: 4px;">
@@ -84,8 +87,8 @@ export function renderSessionCard(session = {}, { onDeleteSession, onStartSessio
 
       <div style="display: flex; align-items: center; gap: 4px;">
         ${
-          !isCompleted && onDeleteSession
-            ? `<button type="button" class="btn-icon delete-planner-session-btn" title="حذف الجلسة المخططة" aria-label="حذف الجلسة المخططة" style="width: 22px; height: 22px; color: var(--color-danger);">
+          !isCompleted
+            ? `<button type="button" class="btn-icon delete-planner-session-btn" data-action="delete-session" data-session-id="${session.id || ''}" title="حذف الجلسة المخططة" aria-label="حذف الجلسة المخططة" style="width: 22px; height: 22px; color: var(--color-danger);">
                 ${icons.trash(12)}
               </button>`
             : ''
