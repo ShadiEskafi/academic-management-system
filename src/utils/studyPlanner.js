@@ -212,6 +212,7 @@ export function generateWeeklyPlanAlgorithm({
   // 3. تتبع السقف اليومي للجلسات للمادة الواحدة (Daily Cap = 2)
   const dailyCourseCounts = {}; // { 'sunday_courseId': count }
 
+  // 4. تجميع الجلسات الموجودة مسبقاً (سواء مكتملة، جزئية، أو مخططة) كحاجز زمني لمنع التداخل (BR-8)
   // 4. الحفاظ على الجلسات المكتملة أو الجزئية السابقة وعدم إهدارها
   const preservedSessions = (existingSessions || []).filter(
     (s) => s.status === 'completed' || s.status === 'partially_completed'
