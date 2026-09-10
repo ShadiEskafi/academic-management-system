@@ -2,7 +2,7 @@
 // شاشة تسجيل الدخول والتسجيل وفق نظام التصميم المعتمد
 import { icons } from '../utils/icons.js';
 
-export function renderAuthForm(container, { onSubmit }) {
+export function renderAuthForm(container, { onSubmit, onGoogleSignIn }) {
   let mode = 'signin';
 
   function render() {
@@ -58,6 +58,15 @@ export function renderAuthForm(container, { onSubmit }) {
             </button>
           </form>
 
+          <div class="auth-divider">
+            <span class="auth-divider-text">أو</span>
+          </div>
+
+          <button type="button" id="google-signin-btn" class="auth-google-btn">
+            ${icons.google(18)}
+            <span>المتابعة باستخدام Google</span>
+          </button>
+
           <div class="auth-footer">
             <button type="button" id="toggle-mode" class="auth-toggle-btn">
               ${mode === 'signin' ? 'ليس لديك حساب؟ سجل حساباً جديداً' : 'لديك حساب مسجل بالفعل؟ تسجيل الدخول'}
@@ -71,6 +80,27 @@ export function renderAuthForm(container, { onSubmit }) {
       mode = mode === 'signin' ? 'signup' : 'signin';
       render();
     });
+
+    const googleBtn = container.querySelector('#google-signin-btn');
+    if (googleBtn) {
+      googleBtn.addEventListener('click', async () => {
+        const errorEl = container.querySelector('#auth-error');
+        errorEl.textContent = '';
+        googleBtn.disabled = true;
+        googleBtn.innerHTML = `<span>جاري الاتصال بـ Google...</span>`;
+
+        try {
+          if (onGoogleSignIn) {
+            await onGoogleSignIn();
+          }
+        } catch (err) {
+          console.error('Google sign in error:', err);
+          errorEl.textContent = err.message || 'تعذر تسجيل الدخول باستخدام Google، يرجى المحاولة مرة أخرى.';
+          googleBtn.disabled = false;
+          googleBtn.innerHTML = `${icons.google(18)}<span>المتابعة باستخدام Google</span>`;
+        }
+      });
+    }
 
     container.querySelector('#auth-form').addEventListener('submit', async (e) => {
       e.preventDefault();

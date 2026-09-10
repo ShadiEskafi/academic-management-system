@@ -4,7 +4,7 @@
 // المستمع العام onAuthStateChange بـ main.js (مش هذا الملف) — هو اللي
 // بيحدّث الـ store ويقرر الانتقال، فور ما Supabase يأكّد الجلسة فعليًا.
 
-import { signIn, signUp } from '../api/auth.js';
+import { signIn, signUp, signInWithGoogle } from '../api/auth.js';
 import { renderAuthForm } from '../components/AuthForm.js';
 
 export function renderAuthPage(container) {
@@ -18,6 +18,9 @@ export function renderAuthPage(container) {
       // onAuthStateChange بـ main.js رح يلتقط الجلسة الجديدة تلقائيًا
       // ويتولى الانتقال، بمجرد ما Supabase يأكدها فعليًا.
       return { error: result.error ?? null };
+    },
+    onGoogleSignIn: async () => {
+      await signInWithGoogle();
     },
   });
 }

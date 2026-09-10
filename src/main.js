@@ -214,8 +214,11 @@ async function syncAuthState(session) {
  * فحص الجلسة الأولي فور تشغيل التطبيق (Bootstrapping)
  */
 async function bootstrapApp() {
-  // توجيه المسار الافتراضي إذا كان فارغاً
-  if (!window.location.hash || window.location.hash === '#' || window.location.hash === '#/') {
+  const currentHash = window.location.hash;
+  const currentPath = window.location.pathname;
+
+  // توجيه المسار الافتراضي إذا كان فارغاً أو بعد تسجيل الدخول
+  if (!currentHash || currentHash === '#' || currentHash === '#/' || currentHash === '#/login' || currentPath === '/login') {
     window.location.hash = '#/dashboard';
   }
 
@@ -228,10 +231,29 @@ async function bootstrapApp() {
 }
 
 /**
- * الاستماع لتغيرات حالة المصادقة اللاحقة
+ * الاستماع لتغيرات حالة المصادقة اللاحقة (بما فيها عودة Google OAuth)
  */
 supabase.auth.onAuthStateChange(async (event, session) => {
   if (event === 'TOKEN_REFRESHED') return;
+
+  // توجيه تلقائي للوحة التحكم فور توفر الجلسة إذا كان المسار يشير للدخول أو خالي
+  if (session) {
+    const currentHash = window.location.hash;
+    const currentPath = window.location.pathname;
+    const isAtAuthOrRoot =
+      !currentHash ||
+      currentHash === '#' ||
+      currentHash === '#/' ||
+      currentHash === '#/login' ||
+      currentHash.startsWith('#access_token') ||
+      currentHash.startsWith('#error') ||
+      currentPath === '/login';
+
+    if (isAtAuthOrRoot) {
+      window.location.hash = '#/dashboard';
+    }
+  }
+
   await syncAuthState(session);
 });
 
