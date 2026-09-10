@@ -1,7 +1,7 @@
 // src/components/AppShell.js
 import { icons } from '../utils/icons.js';
-
 import { escapeHtml } from '../utils/sanitize.js';
+import { getTheme, toggleTheme } from '../utils/theme.js';
 
 export function renderAppShell(container, { userEmail, onSignOut }) {
   const initial = userEmail ? userEmail.trim().charAt(0).toUpperCase() : 'U';
@@ -36,6 +36,7 @@ export function renderAppShell(container, { userEmail, onSignOut }) {
         </div>
 
         <div class="app-user-area">
+          <button type="button" id="shell-theme-toggle-btn" class="theme-toggle-btn" title="تبديل المظهر" aria-label="تبديل المظهر"></button>
           <span class="app-user-email" title="${escapeHtml(userEmail)}">${escapeHtml(userEmail)}</span>
           <div class="app-user-avatar" aria-hidden="true">${escapeHtml(initial)}</div>
           <button type="button" id="shell-signout-btn" class="btn-secondary" style="min-height:36px;padding-inline:12px;font-size:13px;">
@@ -52,8 +53,32 @@ export function renderAppShell(container, { userEmail, onSignOut }) {
   const plannerLink = container.querySelector('#nav-link-planner');
   const semestersLink = container.querySelector('#nav-link-semesters');
   const availabilityLink = container.querySelector('#nav-link-availability');
+  const themeToggleBtn = container.querySelector('#shell-theme-toggle-btn');
   const signOutBtn = container.querySelector('#shell-signout-btn');
   const mainContent = container.querySelector('#app-content-container');
+
+  function updateThemeButton() {
+    const currentTheme = getTheme();
+    if (currentTheme === 'dark') {
+      themeToggleBtn.innerHTML = icons.sun(18);
+      themeToggleBtn.title = 'التبديل إلى الوضع الفاتح';
+      themeToggleBtn.setAttribute('aria-label', 'التبديل إلى الوضع الفاتح');
+    } else {
+      themeToggleBtn.innerHTML = icons.moon(18);
+      themeToggleBtn.title = 'التبديل إلى الوضع الداكن';
+      themeToggleBtn.setAttribute('aria-label', 'التبديل إلى الوضع الداكن');
+    }
+  }
+
+  updateThemeButton();
+
+  themeToggleBtn.addEventListener('click', () => {
+    toggleTheme();
+    updateThemeButton();
+  });
+
+  const onThemeChanged = () => updateThemeButton();
+  window.addEventListener('theme-changed', onThemeChanged);
 
   function updateActiveNav() {
     const hash = window.location.hash || '#/dashboard';
@@ -78,6 +103,7 @@ export function renderAppShell(container, { userEmail, onSignOut }) {
 
   signOutBtn.addEventListener('click', () => {
     window.removeEventListener('hashchange', updateActiveNav);
+    window.removeEventListener('theme-changed', onThemeChanged);
     if (onSignOut) onSignOut();
   });
 

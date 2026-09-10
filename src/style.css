@@ -5,41 +5,13 @@
             Skeleton, Badge, Card)
    ========================================================= */
 
-/* ---------- 1. Design Tokens (Light) ---------- */
-:root {
+/* ---------- 1. Design Tokens (Dark — Base Default) ---------- */
+:root,
+html[data-theme="dark"] {
   /* Typography */
   --font-ar: "IBM Plex Sans Arabic", system-ui, sans-serif;
   --font-en: "Inter", system-ui, sans-serif;
   --font-mono: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
-
-  /* Colors — Light palette */
-  --color-bg: #f5f5f7;
-  --color-surface: #ffffff;
-  --color-surface-soft: #fafafb;
-  --color-surface-muted: #f2f2f5;
-
-  --color-text: #1d1d1f;
-  --color-text-secondary: #6e6e73;
-  --color-text-tertiary: #8e8e93;
-
-  --color-border: #e5e5ea;
-  --color-border-strong: #d1d1d6;
-
-  --color-accent: #0a84ff;
-  --color-accent-soft: #eaf4ff;
-  --color-accent-border: #b9dcff;
-
-  --color-success: #34c759;
-  --color-success-soft: #ecf9f0;
-
-  --color-warning: #ff9f0a;
-  --color-warning-soft: #fff5e5;
-
-  --color-danger: #ff3b30;
-  --color-danger-soft: #fff0ef;
-
-  --color-info: #5e5ce6;
-  --color-info-soft: #f0f0ff;
 
   /* Radius */
   --radius-sm: 8px;
@@ -68,51 +40,98 @@
   --ease-standard: cubic-bezier(0.2, 0.8, 0.2, 1);
   --ease-emphasized: cubic-bezier(0.16, 1, 0.3, 1);
 
-  /* Shadows */
-  --shadow-xs: 0 1px 2px rgba(0, 0, 0, 0.04);
-  --shadow-sm: 0 4px 12px rgba(0, 0, 0, 0.06);
-  --shadow-md: 0 12px 32px rgba(0, 0, 0, 0.1);
-  --shadow-lg: 0 20px 50px rgba(0, 0, 0, 0.14);
+  /* Colors — Dark Palette (Base Default) */
+  --color-bg: #101114;
+  --color-surface: #18191d;
+  --color-surface-soft: #1f2026;
+  --color-surface-muted: #262830;
 
-  color-scheme: light dark;
+  --color-text: #f5f5f7;
+  --color-text-secondary: #b0b0b8;
+  --color-text-tertiary: #92929e;
+  --color-text-muted: #92929e;
+
+  --color-border: #2e3038;
+  --color-border-strong: #424550;
+
+  --color-accent: #64b5ff;
+  --color-accent-soft: #132537;
+  --color-accent-border: #254a6e;
+
+  --color-success: #30b656;
+  --color-success-soft: #16261b;
+
+  --color-warning: #e8940a;
+  --color-warning-soft: #2c2110;
+
+  --color-danger: #ff6259;
+  --color-danger-soft: #2c1917;
+
+  --color-info: #7a78ea;
+  --color-info-soft: #1c1c2c;
+
+  /* Compatibility Aliases */
+  --color-bg-card: var(--color-surface);
+  --color-bg-secondary: var(--color-surface-soft);
+  --color-bg-subtle: var(--color-surface-muted);
+  --color-primary: #6366f1;
+  --color-primary-hover: #4f46e5;
+  --color-primary-soft: rgba(99, 102, 241, 0.15);
+
+  --shadow-xs: 0 1px 2px rgba(0, 0, 0, 0.3);
+  --shadow-sm: 0 4px 12px rgba(0, 0, 0, 0.35);
+  --shadow-md: 0 12px 32px rgba(0, 0, 0, 0.45);
+  --shadow-lg: 0 20px 50px rgba(0, 0, 0, 0.55);
+
+  color-scheme: dark;
 }
 
-/* ---------- 1.1 Design Tokens (Dark) ---------- */
-@media (prefers-color-scheme: dark) {
-  :root {
-    --color-bg: #101114;
-    --color-surface: #18191d;
-    --color-surface-soft: #1f2026;
-    --color-surface-muted: #262830;
+/* ---------- 1.1 Design Tokens (Light Theme Override) ---------- */
+html[data-theme="light"] {
+  /* Colors — Slate Light Palette */
+  --color-bg: #f8fafc;
+  --color-surface: #ffffff;
+  --color-surface-soft: #f1f5f9;
+  --color-surface-muted: #e2e8f0;
 
-    --color-text: #f5f5f7;
-    --color-text-secondary: #b0b0b8; /* تم رفع السطوع لتحقيق تباين أعلى */
-    --color-text-tertiary: #92929e; /* تم رفعه من #71717a ليصبح مقروءاً بوضوح بنسبة 4.6:1 */
+  --color-text: #0f172a;
+  --color-text-secondary: #475569;
+  --color-text-tertiary: #64748b;
+  --color-text-muted: #64748b;
 
-    --color-border: #2e3038;
-    --color-border-strong: #424550;
+  --color-border: #e2e8f0;
+  --color-border-strong: #cbd5e1;
 
-    --color-accent: #64b5ff;
-    --color-accent-soft: #132537;
-    --color-accent-border: #254a6e;
-    /* Semantic colors تبقى مميزة، أقل سطوعًا من Light mode */
-    --color-success: #30b656;
-    --color-success-soft: #16261b;
+  --color-accent: #0284c7;
+  --color-accent-soft: #e0f2fe;
+  --color-accent-border: #bae6fd;
 
-    --color-warning: #e8940a;
-    --color-warning-soft: #2c2110;
+  --color-success: #16a34a;
+  --color-success-soft: #dcfce7;
 
-    --color-danger: #ff6259;
-    --color-danger-soft: #2c1917;
+  --color-warning: #d97706;
+  --color-warning-soft: #fef3c7;
 
-    --color-info: #7a78ea;
-    --color-info-soft: #1c1c2c;
+  --color-danger: #dc2626;
+  --color-danger-soft: #fee2e2;
 
-    --shadow-xs: 0 1px 2px rgba(0, 0, 0, 0.3);
-    --shadow-sm: 0 4px 12px rgba(0, 0, 0, 0.35);
-    --shadow-md: 0 12px 32px rgba(0, 0, 0, 0.45);
-    --shadow-lg: 0 20px 50px rgba(0, 0, 0, 0.55);
-  }
+  --color-info: #4f46e5;
+  --color-info-soft: #e0e7ff;
+
+  /* Compatibility Aliases */
+  --color-bg-card: #ffffff;
+  --color-bg-secondary: #f8fafc;
+  --color-bg-subtle: #f1f5f9;
+  --color-primary: #4f46e5;
+  --color-primary-hover: #4338ca;
+  --color-primary-soft: rgba(79, 70, 229, 0.1);
+
+  --shadow-xs: 0 1px 2px rgba(0, 0, 0, 0.05);
+  --shadow-sm: 0 2px 8px rgba(0, 0, 0, 0.06);
+  --shadow-md: 0 8px 24px rgba(0, 0, 0, 0.08);
+  --shadow-lg: 0 16px 40px rgba(0, 0, 0, 0.12);
+
+  color-scheme: light;
 }
 
 /* ---------- 2. Reset / Base ---------- */
@@ -122,9 +141,6 @@
   box-sizing: border-box;
 }
 
-html {
-  color-scheme: light dark;
-}
 
 body {
   margin: 0;
@@ -406,6 +422,36 @@ a {
   font-family: var(--font-en);
 }
 
+.theme-toggle-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  border-radius: var(--radius-sm);
+  background: transparent;
+  border: 1px solid var(--color-border);
+  color: var(--color-text-secondary);
+  cursor: pointer;
+  padding: 0;
+  flex-shrink: 0;
+  transition:
+    background var(--motion-base) var(--ease-standard),
+    color var(--motion-base) var(--ease-standard),
+    border-color var(--motion-base) var(--ease-standard);
+}
+
+.theme-toggle-btn:hover {
+  background: var(--color-surface-muted);
+  color: var(--color-text);
+  border-color: var(--color-border-strong);
+}
+
+.theme-toggle-btn:focus-visible {
+  outline: 2px solid var(--color-accent);
+  outline-offset: 2px;
+}
+
 .app-main-content {
   flex: 1;
   width: 100%;
@@ -581,7 +627,8 @@ button:focus-visible {
 input:not([type="checkbox"]):not([type="radio"]),
 select,
 textarea,
-.input {
+.input,
+.form-control {
   width: 100%;
   min-height: 42px;
   padding-inline: var(--space-3);
@@ -597,6 +644,16 @@ textarea,
     outline-color var(--motion-base) var(--ease-standard);
 }
 
+select option {
+  background: var(--color-surface);
+  color: var(--color-text);
+}
+
+input[type="date"],
+input[type="time"] {
+  color-scheme: inherit;
+}
+
 textarea {
   min-height: 80px;
   padding-block: var(--space-2);
@@ -605,7 +662,8 @@ textarea {
 
 input:focus-visible,
 select:focus-visible,
-textarea:focus-visible {
+textarea:focus-visible,
+.form-control:focus-visible {
   outline: 2px solid var(--color-accent);
   outline-offset: 1px;
   border-color: transparent;
@@ -613,19 +671,22 @@ textarea:focus-visible {
 
 input.field-invalid,
 select.field-invalid,
-textarea.field-invalid {
+textarea.field-invalid,
+.form-control.field-invalid {
   border-color: var(--color-danger);
 }
 
 input::placeholder,
-textarea::placeholder {
+textarea::placeholder,
+.form-control::placeholder {
   color: var(--color-text-tertiary);
   opacity: 0.85; /* ضمان بقاء النص الافتراضي مقروءاً في كل الشاشات */
 }
 
 input:disabled,
 select:disabled,
-textarea:disabled {
+textarea:disabled,
+.form-control:disabled {
   opacity: 0.7;
   background: var(--color-surface-muted);
   cursor: not-allowed;
@@ -1067,73 +1128,7 @@ tbody tr:hover {
   transition: background-color var(--motion-slow) var(--ease-standard);
 }
 
-/* ---------- 19. Floating Active Session Bar ---------- */
-.active-session-bar {
-  position: fixed;
-  bottom: var(--space-6);
-  inset-inline-start: 50%;
-  transform: translateX(-50%);
-  background: var(--color-surface);
-  border: 1px solid var(--color-border);
-  box-shadow: var(--shadow-lg);
-  border-radius: var(--radius-lg);
-  padding: var(--space-3) var(--space-5);
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: var(--space-6);
-  z-index: 999;
-  min-width: 320px;
-  max-width: 90vw;
-  box-sizing: border-box;
-  animation: slide-up-bar var(--motion-slow) var(--ease-emphasized);
-}
-
-@keyframes slide-up-bar {
-  from {
-    transform: translate(-50%, 40px);
-    opacity: 0;
-  }
-  to {
-    transform: translate(-50%, 0);
-    opacity: 1;
-  }
-}
-
-.active-session-pulse {
-  width: 9px;
-  height: 9px;
-  background-color: var(--color-success);
-  border-radius: 50%;
-  display: inline-block;
-  animation: pulse-green 1.8s infinite;
-}
-
-@keyframes pulse-green {
-  0% {
-    box-shadow: 0 0 0 0
-      color-mix(in srgb, var(--color-success) 55%, transparent);
-  }
-  70% {
-    box-shadow: 0 0 0 8px transparent;
-  }
-  100% {
-    box-shadow: 0 0 0 0 transparent;
-  }
-}
-
-.session-timer-clock {
-  font-family: var(--font-mono);
-  font-size: 16px;
-  font-weight: 700;
-  color: var(--color-text);
-  background: var(--color-surface-muted);
-  padding: 3px 10px;
-  border-radius: var(--radius-sm);
-  border: 1px solid var(--color-border);
-}
-
-/* ---------- 20. Quick Update status choices ---------- */
+/* ---------- 19. Quick Update status choices ---------- */
 .quick-status-group {
   display: flex;
   flex-direction: column;
@@ -1392,4 +1387,29 @@ tbody tr:hover {
   min-width: 58px;
   text-align: center;
   letter-spacing: 0.5px;
+}
+
+/* ---------- 20. Weekly Planner Session Cards (Theming & Contrast) ---------- */
+.planner-session-card {
+  border-top: 1px solid var(--color-border);
+  border-bottom: 1px solid var(--color-border);
+  border-left: 1px solid var(--color-border);
+  cursor: pointer;
+}
+
+.planner-session-card:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-sm) !important;
+}
+
+html[data-theme="light"] .planner-session-card {
+  background: var(--color-surface) !important;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.06), 0 1px 2px rgba(0, 0, 0, 0.04) !important;
+}
+
+html[data-theme="light"] .planner-session-card.completed {
+  background: rgba(16, 185, 129, 0.08) !important;
+  border-top-color: rgba(16, 185, 129, 0.3) !important;
+  border-bottom-color: rgba(16, 185, 129, 0.3) !important;
+  border-left-color: rgba(16, 185, 129, 0.3) !important;
 }
