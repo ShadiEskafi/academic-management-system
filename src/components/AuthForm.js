@@ -17,7 +17,7 @@ export function renderAuthForm(container, { onSubmit, onGoogleSignIn }) {
               ${mode === 'signin' ? 'تسجيل الدخول' : 'إنشاء حساب جديد'}
             </h2>
             <p class="auth-subtitle">
-              نظام إدارة الدراسة الأكاديمية وجدولة المساقات
+              مِحْوَر — نظام إدارة الدراسة الأكاديمية وجدولة المساقات
             </p>
           </div>
 

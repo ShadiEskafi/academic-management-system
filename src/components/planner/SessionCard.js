@@ -39,6 +39,19 @@ export function renderSessionCard(session = {}, { onDeleteSession, onStartSessio
     } catch {}
   }
 
+  const REASON_MAP = {
+    exam: 'امتحان قريب',
+    assign: 'تسليم عاجل',
+    diff: 'صعوبة عالية',
+    rem: 'محتوى متبقي',
+    missed: 'تدارك تفويت',
+    urgent_exam: 'امتحان قريب',
+    overdue: 'متأخر',
+  };
+  if (REASON_MAP[reasonBadgeText]) {
+    reasonBadgeText = REASON_MAP[reasonBadgeText];
+  }
+
   // حساب النطاق الزمني للشريحة
   let formattedTime = session.formattedTimeRange || '';
   if (!formattedTime && session.scheduled_start && session.scheduled_end) {

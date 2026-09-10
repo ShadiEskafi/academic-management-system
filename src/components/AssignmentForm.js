@@ -42,21 +42,21 @@ export function renderAssignmentFormModal({
               value="homework"
               ${initialData?.type === 'homework' ? 'selected' : ''}
             >
-              📝 واجب منزلي (Homework)
+              واجب منزلي
             </option>
 
             <option
               value="assignment"
               ${!initialData || initialData?.type === 'assignment' ? 'selected' : ''}
             >
-              💼 تكليف أسبوعي (Assignment)
+              تكليف أسبوعي
             </option>
 
             <option
               value="project"
               ${initialData?.type === 'project' ? 'selected' : ''}
             >
-              🚀 مشروع فصلي (Project)
+              مشروع فصلي
             </option>
           </select>
         </div>
@@ -100,21 +100,21 @@ export function renderAssignmentFormModal({
                 value="low"
                 ${initialData?.priority === 'low' ? 'selected' : ''}
               >
-                منخفضة (Low)
+                منخفضة
               </option>
 
               <option
                 value="medium"
                 ${!initialData || initialData?.priority === 'medium' ? 'selected' : ''}
               >
-                متوسطة (Medium)
+                متوسطة
               </option>
 
               <option
                 value="high"
                 ${initialData?.priority === 'high' ? 'selected' : ''}
               >
-                عالية (High)
+                عالية
               </option>
             </select>
           </div>

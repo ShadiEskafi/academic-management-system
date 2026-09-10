@@ -156,7 +156,7 @@ export async function renderWeeklyPlannerPage(container) {
     }
 
     // -------------------------------------------------------------
-    // 3. شبكة التقويم الأسبوعية بـ Pure CSS Grid
+    // 3. شبكة التقويم الأسبوعي
     // -------------------------------------------------------------
     const calendarCard = document.createElement('div');
     calendarCard.className = 'card planner-calendar-card';

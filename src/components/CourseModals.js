@@ -44,9 +44,9 @@ export function renderEditCourseModal(course, { onSave, onClose = () => {} }) {
           <div class="field">
             <label class="field-label" for="edit-difficulty">مستوى الصعوبة *</label>
             <select id="edit-difficulty" class="input" name="difficulty" required>
-              <option value="easy" ${course.difficulty === 'easy' ? 'selected' : ''}>سهل (Easy)</option>
-              <option value="medium" ${course.difficulty === 'medium' ? 'selected' : ''}>متوسط (Medium)</option>
-              <option value="hard" ${course.difficulty === 'hard' ? 'selected' : ''}>صعب (Hard)</option>
+              <option value="easy" ${course.difficulty === 'easy' ? 'selected' : ''}>سهل</option>
+              <option value="medium" ${course.difficulty === 'medium' ? 'selected' : ''}>متوسط</option>
+              <option value="hard" ${course.difficulty === 'hard' ? 'selected' : ''}>صعب</option>
             </select>
           </div>
         </div>
@@ -54,9 +54,9 @@ export function renderEditCourseModal(course, { onSave, onClose = () => {} }) {
         <div class="field">
           <label class="field-label" for="edit-priority">الأولوية التقديرية</label>
           <select id="edit-priority" class="input" name="priority">
-            <option value="low" ${course.priority === 'low' ? 'selected' : ''}>منخفضة (Low)</option>
-            <option value="medium" ${course.priority === 'medium' ? 'selected' : ''}>متوسطة (Medium)</option>
-            <option value="high" ${course.priority === 'high' ? 'selected' : ''}>مرتفعة (High)</option>
+            <option value="low" ${course.priority === 'low' ? 'selected' : ''}>منخفضة</option>
+            <option value="medium" ${course.priority === 'medium' ? 'selected' : ''}>متوسطة</option>
+            <option value="high" ${course.priority === 'high' ? 'selected' : ''}>مرتفعة</option>
           </select>
         </div>
 

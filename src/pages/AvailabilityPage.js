@@ -92,11 +92,11 @@ export async function renderAvailabilityPage(container) {
           </div>
           <div>
             <span class="text-tertiary" style="font-size:12px;display:block;font-weight:600;text-transform:uppercase;">
-              إجمالي الطاقة الاستيعابية الأسبوعية (Study Capacity)
+              ساعات التفرغ الأسبوعية
             </span>
             <div style="display:flex;align-items:baseline;gap:8px;margin-top:2px;">
               <span style="font-size:24px;font-weight:700;color:var(--color-text);">${formattedText}</span>
-              <span class="text-secondary font-en" style="font-size:13px;">(${totalHoursDecimal} hrs / week)</span>
+              <span class="text-secondary" style="font-size:13px;">(${totalHoursDecimal} ساعة / أسبوع)</span>
             </div>
           </div>
         </div>
@@ -168,7 +168,7 @@ export async function renderAvailabilityPage(container) {
       <div class="card" style="padding:var(--space-2);background:var(--color-surface-soft);border:1px solid var(--color-border);display:flex;flex-direction:column;gap:6px;" data-slot-id="${slot.id}">
         <div style="display:flex;align-items:center;justify-content:space-between;gap:4px;">
           <span class="font-en" style="font-size:12px;font-weight:600;color:var(--color-text);">${startStr} - ${endStr}</span>
-          <span class="badge badge-info font-en" style="font-size:10px;padding:1px 6px;">${durationHrs}h</span>
+          <span class="badge badge-info" style="font-size:10px;padding:1px 6px;">${durationHrs} س</span>
         </div>
 
         <div style="display:flex;justify-content:flex-end;gap:4px;border-top:1px solid var(--color-border);padding-top:4px;">
@@ -293,4 +293,4 @@ export async function renderAvailabilityPage(container) {
   return () => {
     container.innerHTML = '';
   };
-}
+}

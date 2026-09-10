@@ -73,7 +73,7 @@ export function renderSessionSetupModal({
         <div class="field">
           <label class="field-label" for="session-duration-select">المدة الزمنية المستهدفة</label>
           <select class="input" name="durationMinutes" id="session-duration-select">
-            <option value="25">25 دقيقة (Pomodoro Focus)</option>
+            <option value="25">25 دقيقة (جلسة بومودورو)</option>
             <option value="45" selected>45 دقيقة (جلسة دراسة قياسية)</option>
             <option value="60">60 دقيقة (ساعة كاملة)</option>
             <option value="90">90 دقيقة (تركيز معمّق)</option>
@@ -330,7 +330,7 @@ export function renderQuickUpdateModal({
             <label class="status-option">
               <input type="radio" name="topicStatus" value="completed" checked />
               <div>
-                <strong>مكتمل (Completed)</strong>
+                <strong>مكتمل بالكامل</strong>
                 <p>أنجزت المطلوب بالكامل ويمكن الانتقال لما بعده.</p>
               </div>
             </label>
@@ -338,7 +338,7 @@ export function renderQuickUpdateModal({
             <label class="status-option">
               <input type="radio" name="topicStatus" value="in_progress" />
               <div>
-                <strong>قيد المتابعة (In Progress)</strong>
+                <strong>قيد الدراسة والمتابعة</strong>
                 <p>أحرزت تقدماً جيداً ولكنه يتطلب جلسة عمل أخرى.</p>
               </div>
             </label>
@@ -346,7 +346,7 @@ export function renderQuickUpdateModal({
             <label class="status-option">
               <input type="radio" name="topicStatus" value="needs_review" />
               <div>
-                <strong>يحتاج مراجعة (Needs Review)</strong>
+                <strong>بحاجة إلى مراجعة</strong>
                 <p>تمت دراسته لكنه بحاجة إلى حل تمارين ومراجعة سريعة.</p>
               </div>
             </label>
@@ -483,4 +483,4 @@ export function renderStaleSessionModal({
     cleanup();
     await onDiscard();
   });
-}
+}

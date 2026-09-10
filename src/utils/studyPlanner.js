@@ -80,11 +80,11 @@ export function calculateCoursePriorityScore(course, { today = new Date(), exams
 
   // تحديد العامل المهيمن (Dominant Factor) لشارة السبب (Reason Badge)
   const factors = [
-    { key: 'exam', val: weightedExam, badgeText: '🎓 امتحان قريب', priority: 1 },
-    { key: 'assign', val: weightedAssign, badgeText: '⚡ تسليم عاجل', priority: 2 },
-    { key: 'diff', val: weightedDiff, badgeText: '🔥 صعوبة عالية', priority: 3 },
-    { key: 'rem', val: weightedRem, badgeText: '📈 محتوى متبقي', priority: 4 },
-    { key: 'missed', val: weightedMissed, badgeText: '🔄 تدارك تفويت', priority: 5 },
+    { key: 'exam', val: weightedExam, badgeText: 'امتحان قريب', priority: 1 },
+    { key: 'assign', val: weightedAssign, badgeText: 'تسليم عاجل', priority: 2 },
+    { key: 'diff', val: weightedDiff, badgeText: 'صعوبة عالية', priority: 3 },
+    { key: 'rem', val: weightedRem, badgeText: 'محتوى متبقي', priority: 4 },
+    { key: 'missed', val: weightedMissed, badgeText: 'تدارك تفويت', priority: 5 },
   ];
 
   factors.sort((a, b) => b.val - a.val || a.priority - b.priority);

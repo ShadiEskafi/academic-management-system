@@ -12,7 +12,7 @@ export function renderAppShell(container, { userEmail, onSignOut }) {
         <div class="app-header-start">
           <a href="#/dashboard" class="app-logo">
             ${icons.academicCap(20)}
-            <span class="app-logo-text">نظام إدارة الدراسة</span>
+            <span class="app-logo-text">مِحْوَر | Mihwar</span>
           </a>
 
           <nav class="app-nav">

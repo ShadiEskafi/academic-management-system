@@ -61,7 +61,7 @@ export function renderCourseForm(
                 type="number"
                 name="creditHours"
                 class="input font-en"
-                placeholder="الساعات المعتمدة (CH) *"
+                placeholder="الساعات المعتمدة *"
                 min="1"
                 required
               />
@@ -70,9 +70,9 @@ export function renderCourseForm(
             <div class="field">
               <select name="difficulty" class="input" required>
                 <option value="" disabled selected>الصعوبة *</option>
-                <option value="easy">سهل (Easy)</option>
-                <option value="medium">متوسط (Medium)</option>
-                <option value="hard">صعب (Hard)</option>
+                <option value="easy">سهل</option>
+                <option value="medium">متوسط</option>
+                <option value="hard">صعب</option>
               </select>
             </div>
 

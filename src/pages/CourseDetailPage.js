@@ -120,19 +120,19 @@ export async function renderCourseDetailPage(
         <button type="button" class="tab active" id="tab-btn-tree" role="tab" aria-selected="true">
           <span style="display:inline-flex;align-items:center;gap:8px;">
             ${icons.folderTree(16)}
-            <span>شجرة المحتوى (Topic Tree)</span>
+            <span>شجرة المحتوى الدراسي</span>
           </span>
         </button>
         <button type="button" class="tab" id="tab-btn-assessments" role="tab" aria-selected="false">
           <span style="display:inline-flex;align-items:center;gap:8px;">
             ${icons.calendar(16)}
-            <span>الاستحقاقات والتقييمات (Assessments)</span>
+            <span>الاستحقاقات والتقييمات</span>
           </span>
         </button>
         <button type="button" class="tab" id="tab-btn-log" role="tab" aria-selected="false">
           <span style="display:inline-flex;align-items:center;gap:8px;">
             ${icons.play(16)}
-            <span>سجل الجلسات (Study Log)</span>
+            <span>سجل الجلسات</span>
           </span>
         </button>
       </div>
@@ -627,4 +627,4 @@ export async function renderCourseDetailPage(
     formOpen = false;
     formContainer.innerHTML = '';
   };
-}
+}

@@ -15,7 +15,7 @@ export function renderTopicForm(container, { parentTopic = null, onSave, onCance
     <form id="topic-form" style="display:flex;flex-direction:column;gap:var(--space-3);">
       <div>
         <h4 style="margin:0 0 4px;font-size:15px;font-weight:600;color:var(--color-text);">
-          ${isChild ? 'إضافة موضوع فرعي (Subtopic)' : 'إضافة موضوع رئيسي (Root Topic)'}
+          ${isChild ? 'إضافة موضوع فرعي' : 'إضافة موضوع رئيسي'}
         </h4>
         <p class="text-secondary" style="font-size:13px;margin:0;">
           ${

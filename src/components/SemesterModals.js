@@ -40,9 +40,9 @@ export function renderEditSemesterModal(semester, { onSave, onClose = () => {} }
         <div class="field">
           <label class="field-label" for="edit-semester-status">الحالة الأكاديمية</label>
           <select id="edit-semester-status" name="status" class="input">
-            <option value="active" ${isCurrentActive ? 'selected' : ''}>قيد الدراسة (Active)</option>
-            <option value="planned" ${isCurrentPlanned ? 'selected' : ''}>مخطط له / قادم (Planned)</option>
-            <option value="completed" ${isCurrentCompleted ? 'selected' : ''}>مكتمل (Completed)</option>
+            <option value="active" ${isCurrentActive ? 'selected' : ''}>فصل حالي نشط</option>
+            <option value="planned" ${isCurrentPlanned ? 'selected' : ''}>مخطط له / قادم</option>
+            <option value="completed" ${isCurrentCompleted ? 'selected' : ''}>مكتمل</option>
           </select>
         </div>
 

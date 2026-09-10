@@ -39,10 +39,10 @@ export function renderExamFormModal({
         <div class="field">
           <label class="field-label" for="exam-type">نوع الاختبار</label>
           <select id="exam-type" class="input" name="examType">
-            <option value="quiz" ${initialData?.type === 'quiz' ? 'selected' : ''}>كويز قصير (Quiz)</option>
-            <option value="midterm" ${!initialData || initialData?.type === 'midterm' ? 'selected' : ''}>امتحان نصفي (Midterm)</option>
-            <option value="final" ${initialData?.type === 'final' ? 'selected' : ''}>امتحان نهائي (Final)</option>
-            <option value="practical" ${initialData?.type === 'practical' ? 'selected' : ''}>امتحان عملي / شفوي (Practical)</option>
+            <option value="quiz" ${initialData?.type === 'quiz' ? 'selected' : ''}>اختبار قصير (كويز)</option>
+            <option value="midterm" ${!initialData || initialData?.type === 'midterm' ? 'selected' : ''}>امتحان نصفي</option>
+            <option value="final" ${initialData?.type === 'final' ? 'selected' : ''}>امتحان نهائي</option>
+            <option value="practical" ${initialData?.type === 'practical' ? 'selected' : ''}>امتحان عملي / شفوي</option>
           </select>
         </div>
 

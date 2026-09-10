@@ -54,7 +54,7 @@ export function renderStudySessionLog(
     <div style="display:flex;flex-direction:column;gap:var(--space-4);">
       <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:var(--space-2);">
         <div>
-          <h3 style="margin:0 0 4px;">سجل جلسات المذاكرة (Study Log)</h3>
+          <h3 style="margin:0 0 4px;">سجل جلسات المذاكرة</h3>
           <p class="text-secondary" style="font-size:13px;margin:0;">أرشيف الجلسات المنجزة، الملاحظات المدونة، والوقت الفعلي المستثمر.</p>
         </div>
         <span id="sessions-total-count" class="badge" style="background:var(--color-bg-subtle);font-size:12px;"></span>
@@ -117,8 +117,8 @@ export function renderStudySessionLog(
                   </div>
 
                   <div style="display:flex;align-items:center;gap:var(--space-2);">
-                    <span class="badge" style="background:rgba(255,255,255,0.06);font-family:monospace;font-size:12px;">
-                      ⏱️ ${formatDuration(s.durationSeconds)}
+                    <span class="badge" style="background:rgba(255,255,255,0.06);font-family:monospace;font-size:12px;display:inline-flex;align-items:center;gap:4px;">
+                      ${icons.clock(12)} ${formatDuration(s.durationSeconds)}
                     </span>
                     <button type="button" class="btn-icon edit-log-btn" data-id="${s.id}" title="تعديل الجلسة">
                       ${icons.edit(14)}
@@ -129,8 +129,8 @@ export function renderStudySessionLog(
                   </div>
                 </div>
 
-                <div style="font-size:12px;color:var(--color-text-secondary);margin-bottom:6px;">
-                  <span>📅 ${formatSessionDate(executionDate)}</span>
+                <div style="font-size:12px;color:var(--color-text-secondary);margin-bottom:6px;display:inline-flex;align-items:center;gap:4px;">
+                  ${icons.calendar(12)} <span>${formatSessionDate(executionDate)}</span>
                 </div>
 
                 ${
@@ -286,4 +286,4 @@ export function renderStudySessionLog(
   return () => {
     container.innerHTML = '';
   };
-}
+}
