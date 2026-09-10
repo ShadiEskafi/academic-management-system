@@ -3,6 +3,7 @@
 
 import './style.css';
 import { supabase } from './api/supabaseClient.js';
+import { renderLandingPage } from './pages/LandingPage.js';
 import { renderDashboardPage } from './pages/DashboardPage.js';
 import { renderWeeklyPlannerPage } from './pages/WeeklyPlannerPage.js';
 import { renderAuthPage } from './pages/AuthPage.js';
@@ -25,8 +26,10 @@ import {
 
 const rootEl = document.getElementById('app');
 
-let currentUserId = null;
+let currentUser = null;
 let contentContainer = null;
+let isShellMounted = false;
+let landingCleanup = null;
 
 // =========================================================
 // دالة مساعدة موحدة لعرض حالات الخطأ وفق الـ Design System
@@ -171,44 +174,119 @@ setNotFoundHandler(async () => {
 });
 
 // =========================================================
-// إدارة دورة حياة المصادقة (Auth Lifecycle)
+// إدارة دورة حياة المصادقة والتوجيه (Auth Lifecycle & Routing)
 // =========================================================
 
-async function syncAuthState(session) {
-  const user = session?.user ?? null;
-  const newUserId = user?.id ?? null;
-
-  if (newUserId === currentUserId && contentContainer) {
-    return;
-  }
-
-  currentUserId = newUserId;
-  stopRouter();
-
-  // المستخدم غير مسجل دخول
-  if (!user) {
-    contentContainer = null;
-    showAuth();
-    return;
-  }
-
-  // المستخدم مسجل دخول -> بناء الهيكل العام
-  rootEl.innerHTML = '';
-  contentContainer = renderAppShell(rootEl, {
-    userEmail: user.email,
-    onSignOut: async () => {
-      await supabase.auth.signOut();
-      window.location.hash = '';
-    },
-  });
-
-  configureRouter({ getContainer: () => contentContainer });
-  startRouter();
-
-  setTimeout(() => {
-    initGlobalSessionTracker(user.id);
-  }, 0);
+function getCleanPath() {
+  const raw = window.location.hash.replace(/^#/, '') || '/';
+  return raw.split('?')[0] || '/';
 }
+
+function isProtectedRoute(path) {
+  return (
+    path === '/dashboard' ||
+    path === '/planner' ||
+    path === '/availability' ||
+    path === '/semesters' ||
+    path.startsWith('/semesters/')
+  );
+}
+
+function clearLandingPage() {
+  if (landingCleanup) {
+    try {
+      landingCleanup();
+    } catch (err) {
+      console.error('Error cleaning up landing page:', err);
+    }
+    landingCleanup = null;
+  }
+}
+
+/**
+ * معالج تبديل المشهد الرئيسي بين صفحة الهبوط، صفحة الدخول، وهيكل التطبيق
+ */
+function renderRouteView() {
+  const path = getCleanPath();
+
+  // 1. الزائر غير المسجل (Guest)
+  if (!currentUser) {
+    if (isShellMounted) {
+      stopRouter();
+      isShellMounted = false;
+      contentContainer = null;
+    }
+
+    if (path === '/login') {
+      clearLandingPage();
+      rootEl.innerHTML = '';
+      renderAuthPage(rootEl);
+      return;
+    }
+
+    if (path === '/' || path === '') {
+      clearLandingPage();
+      rootEl.innerHTML = '';
+      landingCleanup = renderLandingPage(rootEl, { user: null });
+      return;
+    }
+
+    // محاولة دخول مسار محمي أثناء عدم تسجيل الدخول -> تحويل لصفحة الدخول
+    if (isProtectedRoute(path)) {
+      navigate('/login');
+      return;
+    }
+
+    // أي مسار آخر غير معروف للزائر -> توجيه لصفحة الهبوط
+    navigate('/');
+    return;
+  }
+
+  // 2. المستخدم المسجل (Authenticated User)
+  if (path === '/login') {
+    // المسجل بالفعل يتم توجيهه للوحة التحكم مباشرة
+    navigate('/dashboard');
+    return;
+  }
+
+  if (path === '/' || path === '') {
+    // عرض صفحة الهبوط في وضع المستخدم المسجل
+    if (isShellMounted) {
+      stopRouter();
+      isShellMounted = false;
+      contentContainer = null;
+    }
+    clearLandingPage();
+    rootEl.innerHTML = '';
+    landingCleanup = renderLandingPage(rootEl, { user: currentUser });
+    return;
+  }
+
+  // مسارات التطبيق الداخلية المحمية
+  clearLandingPage();
+  if (!isShellMounted || !contentContainer) {
+    rootEl.innerHTML = '';
+    contentContainer = renderAppShell(rootEl, {
+      userEmail: currentUser.email,
+      onSignOut: async () => {
+        await supabase.auth.signOut();
+        navigate('/');
+      },
+    });
+    isShellMounted = true;
+    configureRouter({ getContainer: () => contentContainer });
+    startRouter();
+
+    setTimeout(() => {
+      initGlobalSessionTracker(currentUser.id);
+    }, 0);
+  }
+}
+
+// الاستماع الموحد لتنقل المسارات عبر الـ hash
+window.addEventListener('hashchange', () => {
+  renderRouteView();
+});
 
 /**
  * فحص الجلسة الأولي فور تشغيل التطبيق (Bootstrapping)
@@ -217,17 +295,29 @@ async function bootstrapApp() {
   const currentHash = window.location.hash;
   const currentPath = window.location.pathname;
 
-  // توجيه المسار الافتراضي إذا كان فارغاً أو بعد تسجيل الدخول
-  if (!currentHash || currentHash === '#' || currentHash === '#/' || currentHash === '#/login' || currentPath === '/login') {
-    window.location.hash = '#/dashboard';
+  // إذا تم فتح الموقع بدون hash، يُعين كمسار افتراضي #/
+  if (!currentHash || currentHash === '#') {
+    window.location.hash = '#/';
   }
 
   const { data, error } = await supabase.auth.getSession();
-  if (error || !data?.session) {
-    await syncAuthState(null);
-  } else {
-    await syncAuthState(data.session);
+  const session = !error && data?.session ? data.session : null;
+  currentUser = session?.user ?? null;
+
+  // توجيه تلقائي فور تسجيل الدخول أو عودة Google OAuth
+  if (currentUser) {
+    const isAtAuthOrToken =
+      currentHash.startsWith('#access_token') ||
+      currentHash.startsWith('#error') ||
+      currentHash === '#/login' ||
+      currentPath === '/login';
+
+    if (isAtAuthOrToken) {
+      window.location.hash = '#/dashboard';
+    }
   }
+
+  renderRouteView();
 }
 
 /**
@@ -236,25 +326,35 @@ async function bootstrapApp() {
 supabase.auth.onAuthStateChange(async (event, session) => {
   if (event === 'TOKEN_REFRESHED') return;
 
-  // توجيه تلقائي للوحة التحكم فور توفر الجلسة إذا كان المسار يشير للدخول أو خالي
+  const newUser = session?.user ?? null;
+  const prevUserId = currentUser?.id ?? null;
+  currentUser = newUser;
+
   if (session) {
     const currentHash = window.location.hash;
     const currentPath = window.location.pathname;
-    const isAtAuthOrRoot =
-      !currentHash ||
-      currentHash === '#' ||
-      currentHash === '#/' ||
+    const isAtAuthOrToken =
       currentHash === '#/login' ||
       currentHash.startsWith('#access_token') ||
       currentHash.startsWith('#error') ||
       currentPath === '/login';
 
-    if (isAtAuthOrRoot) {
+    if (isAtAuthOrToken) {
       window.location.hash = '#/dashboard';
     }
+  } else if (event === 'SIGNED_OUT') {
+    window.location.hash = '#/';
   }
 
-  await syncAuthState(session);
+  // إذا تغيرت هوية المستخدم، نعيد بناء المشهد
+  if (currentUser?.id !== prevUserId || !currentUser) {
+    if (!currentUser && isShellMounted) {
+      stopRouter();
+      isShellMounted = false;
+      contentContainer = null;
+    }
+    renderRouteView();
+  }
 });
 
 function updateActiveNav(activeId) {
@@ -267,11 +367,6 @@ function updateActiveNav(activeId) {
   if (target) {
     target.classList.add('active');
   }
-}
-
-function showAuth() {
-  rootEl.innerHTML = '';
-  renderAuthPage(rootEl);
 }
 
 // إطلاق التطبيق صراحة فور تحميل الملف
