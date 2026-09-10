@@ -4,6 +4,7 @@
 import './style.css';
 import { supabase } from './api/supabaseClient.js';
 import { renderLandingPage } from './pages/LandingPage.js';
+import { renderOnboardingPage } from './pages/OnboardingPage.js';
 import { renderDashboardPage } from './pages/DashboardPage.js';
 import { renderWeeklyPlannerPage } from './pages/WeeklyPlannerPage.js';
 import { renderAuthPage } from './pages/AuthPage.js';
@@ -30,6 +31,8 @@ let currentUser = null;
 let contentContainer = null;
 let isShellMounted = false;
 let landingCleanup = null;
+let onboardingCleanup = null;
+let isOnboardedCache = null;
 
 // =========================================================
 // دالة مساعدة موحدة لعرض حالات الخطأ وفق الـ Design System
@@ -203,19 +206,80 @@ function clearLandingPage() {
   }
 }
 
+function clearOnboardingPage() {
+  if (onboardingCleanup) {
+    try {
+      onboardingCleanup();
+    } catch (err) {
+      console.error('Error cleaning up onboarding page:', err);
+    }
+    onboardingCleanup = null;
+  }
+}
+
 /**
- * معالج تبديل المشهد الرئيسي بين صفحة الهبوط، صفحة الدخول، وهيكل التطبيق
+ * فحص حالة التهيئة للمستخدم مع نظام تخزين مؤقت محلي (Cache)
  */
-function renderRouteView() {
+async function checkIsOnboarded(user) {
+  if (!user) return false;
+  if (isOnboardedCache !== null) return isOnboardedCache;
+
+  // 1. فحص user_metadata
+  if (user.user_metadata?.is_onboarded === true) {
+    isOnboardedCache = true;
+    return true;
+  }
+
+  // 2. فحص جدول profiles في Supabase
+  try {
+    const { data, error } = await supabase
+      .from('profiles')
+      .select('is_onboarded')
+      .eq('id', user.id)
+      .maybeSingle();
+
+    if (!error && data && data.is_onboarded !== undefined) {
+      isOnboardedCache = Boolean(data.is_onboarded);
+      return isOnboardedCache;
+    }
+  } catch (err) {
+    console.warn('Profiles table check skipped:', err);
+  }
+
+  // 3. Fallback للمستخدمين الحاليين: فحص وجود مساقات مسجلة مسبقاً
+  try {
+    const { count, error } = await supabase
+      .from('courses')
+      .select('id', { count: 'exact', head: true })
+      .eq('user_id', user.id);
+
+    if (!error && typeof count === 'number' && count > 0) {
+      isOnboardedCache = true;
+      return true;
+    }
+  } catch (err) {
+    console.warn('Courses count check skipped:', err);
+  }
+
+  isOnboardedCache = false;
+  return false;
+}
+
+/**
+ * معالج تبديل المشهد الرئيسي بين صفحة الهبوط، صفحة الدخول، معالج التهيئة، وهيكل التطبيق
+ */
+async function renderRouteView() {
   const path = getCleanPath();
 
   // 1. الزائر غير المسجل (Guest)
   if (!currentUser) {
+    isOnboardedCache = null;
     if (isShellMounted) {
       stopRouter();
       isShellMounted = false;
       contentContainer = null;
     }
+    clearOnboardingPage();
 
     if (path === '/login') {
       clearLandingPage();
@@ -232,7 +296,7 @@ function renderRouteView() {
     }
 
     // محاولة دخول مسار محمي أثناء عدم تسجيل الدخول -> تحويل لصفحة الدخول
-    if (isProtectedRoute(path)) {
+    if (isProtectedRoute(path) || path === '/onboarding') {
       navigate('/login');
       return;
     }
@@ -243,6 +307,42 @@ function renderRouteView() {
   }
 
   // 2. المستخدم المسجل (Authenticated User)
+  const isUserOnboarded = await checkIsOnboarded(currentUser);
+
+  // حارس التهيئة: إذا لم يكمل المستخدم التهيئة يتم توجيهه إجبارياً إلى #/onboarding
+  if (!isUserOnboarded) {
+    if (path !== '/onboarding') {
+      navigate('/onboarding');
+      return;
+    }
+
+    // إخفاء الـ AppShell تماماً أثناء التهيئة لتوفير وضع تركيز كامل
+    if (isShellMounted) {
+      stopRouter();
+      isShellMounted = false;
+      contentContainer = null;
+    }
+    clearLandingPage();
+    clearOnboardingPage();
+    rootEl.innerHTML = '';
+    onboardingCleanup = renderOnboardingPage(rootEl, {
+      user: currentUser,
+      onComplete: () => {
+        isOnboardedCache = true;
+        navigate('/dashboard');
+      },
+    });
+    return;
+  }
+
+  // المستخدم مكتمل التهيئة بالفعل
+  clearOnboardingPage();
+
+  if (path === '/onboarding') {
+    navigate('/dashboard');
+    return;
+  }
+
   if (path === '/login') {
     // المسجل بالفعل يتم توجيهه للوحة التحكم مباشرة
     navigate('/dashboard');
@@ -269,6 +369,7 @@ function renderRouteView() {
     contentContainer = renderAppShell(rootEl, {
       userEmail: currentUser.email,
       onSignOut: async () => {
+        isOnboardedCache = null;
         await supabase.auth.signOut();
         navigate('/');
       },
@@ -304,20 +405,25 @@ async function bootstrapApp() {
   const session = !error && data?.session ? data.session : null;
   currentUser = session?.user ?? null;
 
-  // توجيه تلقائي فور تسجيل الدخول أو عودة Google OAuth
+  // توجيه تلقائي فور تسجيل الدخول أو عودة Google OAuth مع فحص التهيئة
   if (currentUser) {
-    const isAtAuthOrToken =
-      currentHash.startsWith('#access_token') ||
-      currentHash.startsWith('#error') ||
-      currentHash === '#/login' ||
-      currentPath === '/login';
+    const isUserOnboarded = await checkIsOnboarded(currentUser);
+    if (!isUserOnboarded) {
+      window.location.hash = '#/onboarding';
+    } else {
+      const isAtAuthOrToken =
+        currentHash.startsWith('#access_token') ||
+        currentHash.startsWith('#error') ||
+        currentHash === '#/login' ||
+        currentPath === '/login';
 
-    if (isAtAuthOrToken) {
-      window.location.hash = '#/dashboard';
+      if (isAtAuthOrToken) {
+        window.location.hash = '#/dashboard';
+      }
     }
   }
 
-  renderRouteView();
+  await renderRouteView();
 }
 
 /**
@@ -331,6 +437,8 @@ supabase.auth.onAuthStateChange(async (event, session) => {
   currentUser = newUser;
 
   if (session) {
+    isOnboardedCache = null;
+    const isUserOnboarded = await checkIsOnboarded(session.user);
     const currentHash = window.location.hash;
     const currentPath = window.location.pathname;
     const isAtAuthOrToken =
@@ -339,10 +447,13 @@ supabase.auth.onAuthStateChange(async (event, session) => {
       currentHash.startsWith('#error') ||
       currentPath === '/login';
 
-    if (isAtAuthOrToken) {
+    if (!isUserOnboarded) {
+      window.location.hash = '#/onboarding';
+    } else if (isAtAuthOrToken) {
       window.location.hash = '#/dashboard';
     }
   } else if (event === 'SIGNED_OUT') {
+    isOnboardedCache = null;
     window.location.hash = '#/';
   }
 
@@ -353,7 +464,7 @@ supabase.auth.onAuthStateChange(async (event, session) => {
       isShellMounted = false;
       contentContainer = null;
     }
-    renderRouteView();
+    await renderRouteView();
   }
 });
 
