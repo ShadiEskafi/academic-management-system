@@ -1418,33 +1418,79 @@ html[data-theme="light"] .planner-session-card.completed {
    22. Landing Page — SaaS Precision Aesthetic (Linear × Mintlify × Hellotime)
    ========================================================= */
 
-/* Scoped Root Container & SaaS Design Tokens */
+/* Scoped Root Container & Mihwar Brand Tokens */
 .landing-page {
-  --saas-bg: #07080b;
-  --saas-bg-secondary: #0b0d13;
-  --saas-surface: #0e1118;
-  --saas-surface-elevated: #141822;
-  --saas-surface-glass: rgba(14, 17, 24, 0.75);
-  --saas-border: rgba(255, 255, 255, 0.08);
-  --saas-border-subtle: rgba(255, 255, 255, 0.04);
-  --saas-border-strong: rgba(255, 255, 255, 0.16);
-  --saas-border-emerald: rgba(10, 132, 255, 0.4);
-  --saas-border-active: rgba(10, 132, 255, 0.4);
-  --saas-emerald: #0a84ff;
-  --saas-emerald-dim: #0066cc;
-  --saas-emerald-soft: rgba(10, 132, 255, 0.12);
-  --saas-accent: #0a84ff;
-  --saas-accent-soft: rgba(10, 132, 255, 0.12);
-  --saas-cyan: #00d2ff;
-  --saas-cyan-soft: rgba(0, 210, 255, 0.08);
-  --saas-amber: #ffb020;
-  --saas-amber-soft: rgba(255, 176, 32, 0.1);
-  --saas-red: #ff4d4d;
-  --saas-red-soft: rgba(255, 77, 77, 0.1);
-  --saas-text: #f0f4f8;
-  --saas-text-secondary: #8c96a5;
-  --saas-text-muted: #647082;
-  --saas-text-dim: #454d5a;
+  /* ═══════════════════════════════════════════════════════════
+     مِحْوَر Design System V2 — Pre-Launch Minimal Luxury
+     ═══════════════════════════════════════════════════════════ */
+
+  /* Primary Brand Colors */
+  --mihwar-amber: #F5A622;
+  --mihwar-amber-soft: rgba(245, 166, 34, 0.12);
+  --mihwar-amber-glow: rgba(245, 166, 34, 0.08);
+  --mihwar-amber-hover: #FFAF38;
+  --mihwar-amber-pressed: #E09615;
+
+  --mihwar-coral: #FF6B5E;
+  --mihwar-coral-soft: rgba(255, 107, 94, 0.16);
+  --mihwar-coral-pulse: rgba(255, 107, 94, 0.25);
+  --mihwar-coral-hover: #FF7F74;
+
+  /* Backgrounds & Surfaces */
+  --mihwar-navy-deep: #14151F;
+  --mihwar-navy-surface: #1B1D28;
+  --mihwar-navy-elevated: #222533;
+  --mihwar-navy-border: rgba(250, 247, 242, 0.1);
+
+  --mihwar-cream: #FAF7F2;
+  --mihwar-gray-warm: #E8E5DF;
+
+  /* Typography Colors */
+  --mihwar-text-primary: #FAF7F2;
+  --mihwar-text-secondary: rgba(250, 247, 242, 0.65);
+  --mihwar-text-tertiary: rgba(250, 247, 242, 0.45);
+  --mihwar-text-on-light: #14151F;
+
+  /* Interactive States */
+  --mihwar-success: #10B981;
+  --mihwar-warning: #F5A622;
+  --mihwar-error: #EF4444;
+  --mihwar-info: #3B82F6;
+
+  /* Opacity & Shadows */
+  --mihwar-glass-bg: rgba(27, 29, 40, 0.75);
+  --mihwar-glass-border: rgba(245, 166, 34, 0.2);
+  --mihwar-shadow-soft: 0 4px 24px rgba(0, 0, 0, 0.35);
+  --mihwar-shadow-amber: 0 8px 32px rgba(245, 166, 34, 0.18);
+  --mihwar-shadow-coral: 0 4px 16px rgba(255, 107, 94, 0.2);
+
+  /* Legacy Compatibility — Override old tokens within .landing-page scope */
+  --saas-bg: var(--mihwar-navy-deep);
+  --saas-bg-secondary: var(--mihwar-navy-surface);
+  --saas-surface: var(--mihwar-navy-surface);
+  --saas-surface-elevated: var(--mihwar-navy-elevated);
+  --saas-surface-glass: var(--mihwar-glass-bg);
+  --saas-border: rgba(250, 247, 242, 0.1);
+  --saas-border-subtle: rgba(250, 247, 242, 0.05);
+  --saas-border-strong: rgba(250, 247, 242, 0.18);
+  --saas-border-emerald: rgba(245, 166, 34, 0.4);
+  --saas-border-active: rgba(245, 166, 34, 0.45);
+  --saas-emerald: var(--mihwar-amber);
+  --saas-emerald-dim: var(--mihwar-amber-pressed);
+  --saas-emerald-soft: var(--mihwar-amber-soft);
+  --saas-accent: var(--mihwar-coral);
+  --saas-accent-soft: var(--mihwar-coral-soft);
+  --saas-accent-rgb: 255, 107, 94;
+  --saas-cyan: #10B981;
+  --saas-cyan-soft: rgba(16, 185, 129, 0.12);
+  --saas-amber: var(--mihwar-amber);
+  --saas-amber-soft: var(--mihwar-amber-soft);
+  --saas-red: var(--mihwar-error);
+  --saas-red-soft: rgba(239, 68, 68, 0.1);
+  --saas-text: var(--mihwar-text-primary);
+  --saas-text-secondary: var(--mihwar-text-secondary);
+  --saas-text-muted: var(--mihwar-text-tertiary);
+  --saas-text-dim: #4c4e5c;
   --saas-font-mono: 'JetBrains Mono', 'IBM Plex Mono', Consolas, monospace;
   --saas-font-sans: 'IBM Plex Sans Arabic', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
   --saas-radius-lg: 12px;
@@ -1460,6 +1506,10 @@ html[data-theme="light"] .planner-session-card.completed {
   flex-direction: column;
   box-sizing: border-box;
   font-family: var(--saas-font-sans);
+}
+
+.landing-page section {
+  scroll-margin-top: 80px;
 }
 
 /* ---------------------------------------------------------
@@ -1517,11 +1567,11 @@ html[data-theme="light"] .planner-session-card.completed {
   width: 7px;
   height: 7px;
   border-radius: 50%;
-  background: var(--saas-emerald);
+  background: var(--mihwar-amber);
   position: relative;
   display: inline-block;
   flex-shrink: 0;
-  box-shadow: 0 0 10px rgba(10, 132, 255, 0.6);
+  box-shadow: 0 0 10px var(--mihwar-amber);
 }
 
 .landing-page .beacon-lamp::before,
@@ -1530,18 +1580,18 @@ html[data-theme="light"] .planner-session-card.completed {
   position: absolute;
   inset: -3px;
   border-radius: 50%;
-  background: var(--saas-emerald);
+  background: var(--mihwar-amber);
   opacity: 0.7;
   animation: beaconPulse 2s cubic-bezier(0, 0, 0.2, 1) infinite;
 }
 
-.landing-page .beacon-lamp.lamp-amber {
-  background: var(--saas-amber);
-  box-shadow: 0 0 10px var(--saas-amber);
+.landing-page .beacon-lamp.lamp-coral {
+  background: var(--mihwar-coral);
+  box-shadow: 0 0 10px var(--mihwar-coral);
 }
 
-.landing-page .beacon-lamp.lamp-amber::before {
-  background: var(--saas-amber);
+.landing-page .beacon-lamp.lamp-coral::before {
+  background: var(--mihwar-coral);
 }
 
 /* Common Layout Container */
@@ -1569,8 +1619,18 @@ html[data-theme="light"] .planner-session-card.completed {
 .landing-page .spotlight-glow {
   position: absolute;
   inset: 0;
-  background: radial-gradient(650px circle at var(--mouse-x, 50%) var(--mouse-y, 30%), rgba(10, 132, 255, 0.12), rgba(99, 102, 241, 0.04) 40%, transparent 80%);
+  background: radial-gradient(
+    600px circle at var(--mouse-x, 50%) var(--mouse-y, 30%),
+    var(--mihwar-amber-glow) 0%,
+    transparent 60%
+  );
+  mix-blend-mode: screen;
   pointer-events: none;
+  transition: opacity 0.8s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.landing-page .spotlight-glow.idle {
+  opacity: 0.3;
 }
 
 .landing-page .spotlight-dots {
@@ -1590,45 +1650,81 @@ html[data-theme="light"] .planner-session-card.completed {
   position: sticky;
   top: 0;
   z-index: 100;
-  background: rgba(7, 8, 11, 0.85);
+  background: rgba(20, 21, 31, 0.85);
   backdrop-filter: blur(16px);
   -webkit-backdrop-filter: blur(16px);
-  border-bottom: 1px solid var(--saas-border);
+  border-bottom: 1px solid var(--mihwar-border);
 }
 
 .landing-page .landing-navbar-inner {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  height: 60px;
+  height: 64px;
 }
 
 .landing-page .landing-brand {
   display: inline-flex;
   align-items: center;
+  gap: 10px;
   text-decoration: none;
   cursor: pointer;
 }
 
+.landing-page .landing-brand-logo {
+  display: inline-block;
+  flex-shrink: 0;
+  transition: transform 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.landing-page .landing-brand:hover .landing-brand-logo {
+  transform: scale(1.06);
+}
+
 .landing-page .brand-name-ar {
   font-weight: 700;
-  color: #ffffff;
+  color: var(--mihwar-cream);
   font-size: 1.25rem;
   letter-spacing: -0.2px;
 }
 
 .landing-page .brand-divider {
-  color: rgba(255, 255, 255, 0.2);
-  margin: 0 6px;
+  color: var(--mihwar-border-strong);
+  margin: 0 4px;
   user-select: none;
   font-weight: 300;
 }
 
 .landing-page .brand-name-en {
   font-family: var(--saas-font-mono);
-  color: #8c96a5;
+  color: var(--mihwar-text-secondary);
   font-size: 0.95rem;
   letter-spacing: 0.3px;
+}
+
+/* روابط أقسام الترويسة */
+.landing-page .landing-nav-links {
+  display: flex;
+  align-items: center;
+  gap: 22px;
+}
+
+.landing-page .landing-nav-link {
+  color: var(--mihwar-text-secondary);
+  font-size: 13px;
+  font-weight: 500;
+  text-decoration: none;
+  transition: color 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.landing-page .landing-nav-link:hover {
+  color: var(--mihwar-cream);
+}
+
+@media (max-width: 860px) {
+  .landing-page .landing-nav-links {
+    display: none;
+  }
 }
 
 .landing-page .landing-nav-actions {
@@ -1637,61 +1733,34 @@ html[data-theme="light"] .planner-session-card.completed {
   gap: 12px;
 }
 
-.landing-page .landing-nav-dashboard-btn {
-  background: rgba(10, 132, 255, 0.08);
-  border: 1px solid var(--saas-border-emerald);
-  border-radius: var(--saas-radius-md);
-  color: #ffffff;
-  padding: 7px 16px;
-  font-size: 13px;
-  font-weight: 600;
-  text-decoration: none;
+/* زر الحجز المدمج في الترويسة */
+.landing-page .landing-nav-pill-btn {
   display: inline-flex;
   align-items: center;
   gap: 8px;
-  transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
-  font-family: inherit;
-}
-
-.landing-page .landing-nav-dashboard-btn:hover {
-  background: var(--saas-emerald);
-  color: #ffffff;
-  transform: scale(1.02);
-  box-shadow: 0 0 24px rgba(10, 132, 255, 0.35);
-}
-
-.landing-page .landing-nav-dashboard-btn:active {
-  transform: scale(0.98);
-}
-
-.landing-page .landing-nav-login-glass {
-  background: rgba(10, 132, 255, 0.08);
-  backdrop-filter: blur(12px);
-  -webkit-backdrop-filter: blur(12px);
-  border: 1px solid rgba(10, 132, 255, 0.3);
-  border-radius: var(--saas-radius-md);
-  color: #ffffff;
-  font-size: 13px;
-  font-weight: 600;
+  background: rgba(245, 166, 34, 0.1);
+  color: var(--mihwar-amber);
+  border: 1px solid rgba(245, 166, 34, 0.35);
+  border-radius: 9999px;
   padding: 7px 18px;
+  font-size: 13px;
+  font-weight: 700;
   cursor: pointer;
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
-  box-shadow: 0 0 16px rgba(10, 132, 255, 0.12);
+  box-shadow: 0 0 16px rgba(245, 166, 34, 0.12);
   transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
   font-family: inherit;
+  text-decoration: none;
 }
 
-.landing-page .landing-nav-login-glass:hover {
-  background: rgba(10, 132, 255, 0.16);
-  border-color: rgba(10, 132, 255, 0.55);
-  box-shadow: 0 0 24px rgba(10, 132, 255, 0.28);
-  transform: scale(1.02);
+.landing-page .landing-nav-pill-btn:hover {
+  background: var(--mihwar-amber);
+  color: #14151F;
+  transform: translateY(-1px);
+  box-shadow: 0 0 24px rgba(245, 166, 34, 0.35);
 }
 
-.landing-page .landing-nav-login-glass:active {
-  transform: scale(0.98);
+.landing-page .landing-nav-pill-btn:active {
+  transform: translateY(0) scale(0.98);
 }
 
 /* ---------------------------------------------------------
@@ -1708,12 +1777,12 @@ html[data-theme="light"] .planner-session-card.completed {
   align-items: center;
   gap: 8px;
   padding: 4px 12px;
-  background: var(--saas-surface);
-  border: 1px solid var(--saas-border);
+  background: var(--mihwar-navy-surface);
+  border: 1px solid var(--mihwar-navy-border);
   border-radius: var(--saas-radius-sm);
   font-family: var(--saas-font-mono);
   font-size: 11px;
-  color: var(--saas-emerald);
+  color: var(--mihwar-amber);
   margin-bottom: 24px;
 }
 
@@ -1727,9 +1796,15 @@ html[data-theme="light"] .planner-session-card.completed {
 }
 
 .landing-page .hero-title-gradient {
-  background: linear-gradient(135deg, var(--saas-text) 30%, #93c5fd 70%, var(--saas-emerald) 100%);
+  background: linear-gradient(
+    135deg,
+    var(--mihwar-text-primary) 30%,
+    var(--mihwar-amber) 70%,
+    var(--mihwar-coral) 100%
+  );
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
+  background-clip: text;
 }
 
 .landing-page .hero-desc {
@@ -1749,37 +1824,42 @@ html[data-theme="light"] .planner-session-card.completed {
   margin-bottom: 48px;
 }
 
+.landing-page .hero-cta-subnote {
+  font-family: var(--saas-font-mono);
+  font-size: 11px;
+  color: var(--mihwar-text-tertiary);
+  letter-spacing: 0.5px;
+  margin-top: 10px;
+  width: 100%;
+  text-align: center;
+}
+
 .landing-page .saas-btn-primary {
-  background: var(--saas-emerald);
-  color: #ffffff;
+  background: var(--mihwar-amber);
+  color: #14151F;
   font-weight: 700;
   font-size: 14px;
   border-radius: var(--saas-radius-md);
-  border: 1px solid var(--saas-emerald);
+  border: 1px solid var(--mihwar-amber);
   padding: 12px 26px;
   cursor: pointer;
   display: inline-flex;
   align-items: center;
   gap: 10px;
-  box-shadow: 0 0 24px rgba(10, 132, 255, 0.28);
-  transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+  box-shadow: 0 0 24px rgba(245, 166, 34, 0.25);
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
   font-family: inherit;
 }
 
 .landing-page .saas-btn-primary:hover {
-  background: #0070e0;
-  box-shadow: 0 0 24px rgba(10, 132, 255, 0.35);
-  transform: scale(1.02) translateY(-1px);
+  background: var(--mihwar-amber-hover);
+  border-color: var(--mihwar-amber-hover);
+  box-shadow: 0 0 32px rgba(245, 166, 34, 0.4);
+  transform: translateY(-1px);
 }
 
 .landing-page .saas-btn-primary:active {
   transform: scale(0.98);
-}
-
-.landing-page .saas-btn-primary:disabled {
-  opacity: 0.6;
-  cursor: not-allowed;
-  transform: none;
 }
 
 .landing-page .saas-btn-secondary {
@@ -1793,29 +1873,17 @@ html[data-theme="light"] .planner-session-card.completed {
   display: inline-flex;
   align-items: center;
   gap: 8px;
-  transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
 .landing-page .saas-btn-secondary:hover {
   border-color: var(--saas-border-strong);
   background: var(--saas-surface-elevated);
-  transform: scale(1.02);
+  transform: translateY(-1px);
 }
 
 .landing-page .saas-btn-secondary:active {
   transform: scale(0.98);
-}
-
-.landing-page .landing-auth-error {
-  max-width: 520px;
-  margin: -24px auto 28px;
-  padding: 8px 14px;
-  background: var(--saas-red-soft);
-  color: var(--saas-red);
-  border: 1px solid var(--saas-red);
-  border-radius: var(--saas-radius-sm);
-  font-size: 12px;
-  text-align: center;
 }
 
 /* Floating HUD Mockup Card */
@@ -1839,8 +1907,8 @@ html[data-theme="light"] .planner-session-card.completed {
 }
 
 .landing-page .floating-hud-card:hover {
-  border-color: rgba(10, 132, 255, 0.35);
-  box-shadow: 0 32px 72px rgba(0, 0, 0, 0.75), 0 0 24px -4px rgba(10, 132, 255, 0.15);
+  border-color: rgba(245, 166, 34, 0.35);
+  box-shadow: 0 32px 72px rgba(0, 0, 0, 0.75), 0 0 24px -4px rgba(245, 166, 34, 0.12);
 }
 
 .landing-page .hud-header-bar {
@@ -1898,7 +1966,7 @@ html[data-theme="light"] .planner-session-card.completed {
   font-weight: 700;
   color: var(--saas-emerald);
   background: var(--saas-emerald-soft);
-  border: 1px solid rgba(10, 132, 255, 0.25);
+  border: 1px solid rgba(245, 166, 34, 0.25);
   padding: 2px 8px;
   border-radius: var(--saas-radius-sm);
 }
@@ -2099,8 +2167,8 @@ html[data-theme="light"] .planner-session-card.completed {
 .landing-page .audit-ledger-box:hover,
 .landing-page .final-cta-card:hover {
   transform: translateY(-4px);
-  border-color: rgba(10, 132, 255, 0.35);
-  box-shadow: 0 12px 32px -8px rgba(0, 0, 0, 0.6), 0 0 20px -4px rgba(10, 132, 255, 0.1);
+  border-color: rgba(245, 166, 34, 0.35);
+  box-shadow: 0 16px 40px -8px rgba(0, 0, 0, 0.7), 0 0 24px -4px rgba(245, 166, 34, 0.12);
 }
 
 .landing-page .capacity-widget-card {
@@ -2258,18 +2326,19 @@ html[data-theme="light"] .planner-session-card.completed {
 }
 
 .landing-page .tree-lecture-node.is-active-checkpoint {
-  background: var(--saas-emerald-soft);
-  border: 1px solid var(--saas-border-emerald);
+  background: var(--mihwar-amber-soft);
+  border: 1px solid rgba(245, 166, 34, 0.35);
   color: var(--saas-text);
-  box-shadow: 0 0 20px rgba(10, 132, 255, 0.15);
+  box-shadow: 0 0 20px rgba(245, 166, 34, 0.12);
 }
 
 .landing-page .tree-resume-pill {
   font-family: var(--saas-font-mono);
   font-size: 11px;
   font-weight: 700;
-  color: var(--saas-emerald);
-  background: rgba(10, 132, 255, 0.15);
+  color: var(--mihwar-amber);
+  background: rgba(245, 166, 34, 0.12);
+  border: 1px solid rgba(245, 166, 34, 0.25);
   padding: 3px 10px;
   border-radius: var(--saas-radius-sm);
 }
@@ -2373,8 +2442,8 @@ html[data-theme="light"] .planner-session-card.completed {
 }
 
 .landing-page .audit-row-calibrated {
-  background: rgba(10, 132, 255, 0.06);
-  color: var(--saas-emerald);
+  background: rgba(16, 185, 129, 0.08);
+  color: var(--mihwar-success);
 }
 
 .landing-page .audit-tag {
@@ -2535,17 +2604,47 @@ html[data-theme="light"] .planner-session-card.completed {
 
 .landing-page .landing-footer-links {
   display: flex;
-  gap: 18px;
+  align-items: center;
+  gap: 16px;
 }
 
 .landing-page .landing-footer-link {
-  color: var(--saas-text-muted);
+  color: var(--mihwar-text-secondary);
   text-decoration: none;
-  transition: color 0.15s ease;
+  font-size: 12px;
+  transition: color 0.2s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
 .landing-page .landing-footer-link:hover {
-  color: var(--saas-emerald);
+  color: var(--mihwar-cream);
+}
+
+.landing-page .landing-footer-waitlist-link {
+  background: none;
+  border: none;
+  padding: 0;
+  color: var(--mihwar-amber);
+  cursor: pointer;
+  font-family: inherit;
+  font-size: 12px;
+  font-weight: 600;
+  transition: opacity 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.landing-page .landing-footer-waitlist-link:hover {
+  opacity: 0.8;
+  text-decoration: underline;
+}
+
+/* Accessible Focus States */
+.landing-page .landing-nav-pill-btn:focus-visible,
+.landing-page .landing-waitlist-pill-btn:focus-visible,
+.landing-page .landing-nav-link:focus-visible,
+.landing-page .faq-trigger:focus-visible,
+.landing-page .landing-footer-link:focus-visible,
+.landing-page .landing-footer-waitlist-link:focus-visible {
+  outline: 2px solid var(--mihwar-amber);
+  outline-offset: 2px;
 }
 
 /* ---------------------------------------------------------
@@ -3066,5 +3165,417 @@ html[data-theme="light"] .planner-session-card.completed {
   .course-field-group.field-diff,
   .course-field-group.field-exam {
     width: 100%;
+  }
+}
+
+/* =========================================================
+   24. نظام قائمة الانتظار والتذاكر الرقمية (Mihwar Waitlist & Ticket Modal)
+   ========================================================= */
+
+/* زر الحجز البيضاوي (Amber/Ink Pill Trigger Button) */
+.landing-waitlist-pill-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  background: #141522;
+  color: #F5A622;
+  border: 1px solid rgba(245, 166, 34, 0.45);
+  border-radius: 9999px;
+  padding: 12px 28px;
+  font-size: 14px;
+  font-weight: 700;
+  cursor: pointer;
+  box-shadow: 0 0 22px rgba(245, 166, 34, 0.18), inset 0 1px 0 rgba(255, 255, 255, 0.08);
+  transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+  font-family: inherit;
+  text-decoration: none;
+  position: relative;
+  overflow: hidden;
+}
+
+.landing-waitlist-pill-btn:hover {
+  background: rgba(245, 166, 34, 0.14);
+  border-color: #F5A622;
+  color: #ffffff;
+  transform: translateY(-2px) scale(1.02);
+  box-shadow: 0 0 32px rgba(245, 166, 34, 0.35);
+}
+
+.landing-waitlist-pill-btn:active {
+  transform: translateY(0) scale(0.98);
+}
+
+.landing-waitlist-pill-btn .pill-sparkle {
+  color: #F5A622;
+  display: inline-flex;
+  align-items: center;
+}
+
+.landing-waitlist-pill-btn .pill-arrow {
+  font-size: 16px;
+  transition: transform 0.2s ease;
+}
+
+.landing-waitlist-pill-btn:hover .pill-arrow {
+  transform: translateX(-4px);
+}
+
+/* النافذة المنبثقة الزجاجية الفاخرة (Frosted Glass Modal Overlay) */
+.waitlist-modal-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 9999;
+  background: rgba(20, 21, 31, 0.75);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+  box-sizing: border-box;
+  animation: waitlistFadeIn 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+  overflow-y: auto;
+}
+
+.waitlist-modal-overlay.is-closing {
+  animation: waitlistFadeOut 0.2s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+@keyframes waitlistFadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes waitlistFadeOut {
+  from {
+    opacity: 1;
+  }
+  to {
+    opacity: 0;
+  }
+}
+
+/* بطاقة المودال الأساسية */
+.waitlist-modal-card {
+  background: #0e0f17;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 20px;
+  max-width: 520px;
+  width: 100%;
+  padding: 34px 30px;
+  box-shadow: 0 28px 72px rgba(0, 0, 0, 0.8), 0 0 0 1px rgba(255, 255, 255, 0.04);
+  position: relative;
+  box-sizing: border-box;
+  animation: waitlistScaleUp 0.28s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.waitlist-modal-card.waitlist-ticket-modal {
+  max-width: 1060px;
+  padding: 28px;
+  background: #0a0b12;
+}
+
+@keyframes waitlistScaleUp {
+  from {
+    opacity: 0;
+    transform: scale(0.95) translateY(12px);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+  }
+}
+
+.waitlist-close-btn {
+  position: absolute;
+  top: 18px;
+  left: 18px;
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  background: rgba(255, 255, 255, 0.05);
+  color: #8c96a5;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s ease;
+  z-index: 10;
+}
+
+.waitlist-close-btn:hover {
+  background: rgba(255, 255, 255, 0.12);
+  color: #ffffff;
+  transform: scale(1.05);
+}
+
+.waitlist-header {
+  text-align: right;
+  margin-bottom: 24px;
+}
+
+.waitlist-badge-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  background: rgba(245, 166, 34, 0.1);
+  border: 1px solid rgba(245, 166, 34, 0.28);
+  border-radius: 9999px;
+  padding: 4px 12px;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 11px;
+  font-weight: 700;
+  color: #F5A622;
+  margin-bottom: 12px;
+}
+
+.waitlist-amber-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: #F5A622;
+  box-shadow: 0 0 8px #F5A622;
+}
+
+.waitlist-title {
+  font-size: 22px;
+  font-weight: 800;
+  color: #f0f4f8;
+  margin: 0 0 8px;
+  line-height: 1.3;
+}
+
+.waitlist-subtitle {
+  font-size: 13px;
+  color: #8c96a5;
+  margin: 0;
+  line-height: 1.6;
+}
+
+.waitlist-error-banner {
+  background: rgba(255, 77, 77, 0.1);
+  border: 1px solid #ff4d4d;
+  color: #ff6b6b;
+  padding: 10px 14px;
+  border-radius: 8px;
+  font-size: 13px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 18px;
+}
+
+/* نموذج الحقول الفاخرة */
+.waitlist-form {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  text-align: right;
+}
+
+.waitlist-row-2col {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+}
+
+.waitlist-field-group {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.waitlist-label {
+  font-size: 12px;
+  font-weight: 600;
+  color: #b0b8c6;
+}
+
+.waitlist-input {
+  width: 100%;
+  min-height: 44px;
+  background: rgba(255, 255, 255, 0.035);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 10px;
+  color: #ffffff;
+  padding: 10px 14px;
+  font-size: 14px;
+  font-family: inherit;
+  box-sizing: border-box;
+  transition: all 0.2s ease;
+}
+
+.waitlist-input:focus {
+  outline: none;
+  border-color: #F5A622;
+  box-shadow: 0 0 0 3px rgba(245, 166, 34, 0.18);
+  background: rgba(255, 255, 255, 0.05);
+}
+
+.waitlist-input::placeholder {
+  color: rgba(255, 255, 255, 0.25);
+}
+
+.waitlist-help-text {
+  font-size: 11px;
+  color: #647082;
+  line-height: 1.4;
+}
+
+.waitlist-actions {
+  margin-top: 10px;
+}
+
+.waitlist-submit-btn {
+  width: 100%;
+  min-height: 46px;
+  background: linear-gradient(135deg, #F5A622, #e08b08);
+  color: #08090e;
+  border: none;
+  border-radius: 10px;
+  font-size: 14px;
+  font-weight: 800;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  box-shadow: 0 0 24px rgba(245, 166, 34, 0.28);
+  transition: all 0.2s ease;
+  font-family: inherit;
+}
+
+.waitlist-submit-btn:hover:not(:disabled) {
+  background: linear-gradient(135deg, #ffb438, #f59e0b);
+  transform: translateY(-1px);
+  box-shadow: 0 0 32px rgba(245, 166, 34, 0.42);
+}
+
+.waitlist-submit-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+/* شارات وشاشة التذكرة (Ticket View) */
+.waitlist-ticket-banner {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 12px 18px;
+  border-radius: 12px;
+  font-size: 14px;
+  font-weight: 700;
+  margin-bottom: 20px;
+  text-align: right;
+}
+
+.waitlist-ticket-banner.is-success {
+  background: rgba(48, 182, 86, 0.12);
+  border: 1px solid rgba(48, 182, 86, 0.35);
+  color: #30b656;
+}
+
+.waitlist-ticket-banner.is-returning {
+  background: rgba(245, 166, 34, 0.12);
+  border: 1px solid rgba(245, 166, 34, 0.35);
+  color: #F5A622;
+}
+
+.waitlist-canvas-container {
+  width: 100%;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  overflow: hidden;
+  border-radius: 16px;
+  background: #000000;
+  box-shadow: 0 16px 48px rgba(0, 0, 0, 0.6);
+}
+
+/* التنسيق الإلزامي للاستجابة السلسة على الشاشات الصغير والموبايل */
+.waitlist-ticket-canvas {
+  width: 100%;
+  max-width: 1000px;
+  height: auto;
+  aspect-ratio: 1000 / 520;
+  display: block;
+  border-radius: 16px;
+}
+
+.waitlist-ticket-actions {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 14px;
+  margin-top: 22px;
+  flex-wrap: wrap;
+}
+
+.waitlist-download-btn {
+  background: #F5A622;
+  color: #08090e;
+  border: none;
+  border-radius: 9999px;
+  padding: 11px 26px;
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  box-shadow: 0 0 20px rgba(245, 166, 34, 0.28);
+  transition: all 0.2s ease;
+  font-family: inherit;
+}
+
+.waitlist-download-btn:hover {
+  background: #ffb438;
+  transform: translateY(-1px);
+  box-shadow: 0 0 28px rgba(245, 166, 34, 0.4);
+}
+
+.waitlist-cancel-btn {
+  background: rgba(255, 255, 255, 0.06);
+  color: #c4cbd6;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 9999px;
+  padding: 11px 22px;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  font-family: inherit;
+}
+
+.waitlist-cancel-btn:hover {
+  background: rgba(255, 255, 255, 0.12);
+  color: #ffffff;
+}
+
+@media (max-width: 600px) {
+  .waitlist-modal-card {
+    padding: 24px 18px;
+  }
+
+  .waitlist-row-2col {
+    grid-template-columns: 1fr;
+    gap: 14px;
+  }
+
+  .waitlist-ticket-actions {
+    flex-direction: column;
+    width: 100%;
+  }
+
+  .waitlist-download-btn,
+  .waitlist-cancel-btn {
+    width: 100%;
+    justify-content: center;
   }
 }

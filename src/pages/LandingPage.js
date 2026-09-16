@@ -4,36 +4,24 @@
 // وضع داكن حصري، ودجات تفاعلية حقيقية (Micro-UI Widgets)، أرقام جدولية، وعزل اتجاهي BiDi صارم
 
 import { icons } from '../utils/icons.js';
-import { signInWithGoogle } from '../api/auth.js';
 import { escapeHtml } from '../utils/sanitize.js';
+import { openWaitlistModal } from '../components/WaitlistModal.js';
+
+// شعار مِحْوَر الفيكتوري الرسمي المعتمد (Official Mihwar Vector Logo)
+const officialMihwarLogoSvg = `
+  <svg class="landing-brand-logo" viewBox="0 0 606 481" width="28" height="23" fill="none" aria-hidden="true">
+    <path d="M329.556 3.23995C382.302 12.484 426.347 37.4974 459.517 77.0567C480.452 102.07 495.406 133.473 502.339 167.051C505.873 183.636 505.873 224.826 502.475 239.78C496.222 267.648 487.521 288.175 472.568 310.47C462.78 325.016 438.31 348.942 421.453 360.089C413.84 365.119 407.315 369.061 407.043 368.653C406.771 368.381 408.131 366.342 410.17 364.167C415.2 358.594 423.492 348.126 430.154 339.154C460.605 297.555 474.335 253.102 470.121 210.144C463.867 145.708 427.842 92.6901 371.019 64.414C349.404 53.5387 328.604 47.965 300.328 45.3821C247.855 40.4882 187.904 61.4233 143.995 100.167C110.009 130.074 80.7814 177.926 70.7216 220.34C69.0903 227.001 68.1387 228.089 56.0398 238.013C29.2592 259.763 15.2571 271.59 7.64433 279.067C-1.46382 287.903 -1.46381 288.175 2.61446 265.337C8.32404 232.983 12.2664 218.573 22.3261 192.88C39.9986 148.155 65.148 110.227 97.7742 78.824C135.838 42.3914 178.932 18.7374 230.318 5.9588C258.322 -0.838327 299.105 -1.92587 329.556 3.23995Z" fill="#F5A622"/>
+    <path d="M197.556 114.985C188.176 125.045 185.593 128.171 176.757 139.863C156.501 166.915 144.81 192.2 138.557 223.467C133.663 246.985 135.43 282.738 142.499 306.256C156.909 354.244 193.614 396.794 238.475 417.865C267.294 431.323 294.075 436.489 327.925 435.13C358.648 433.77 384.885 427.245 412.481 413.787C432.736 403.999 450.273 391.492 468.625 373.82C491.192 352.069 503.155 335.756 518.788 305.305C524.226 294.837 534.014 268.192 536.053 257.997C536.868 254.462 541.762 249.704 561.066 233.527C574.253 222.38 589.614 209.057 594.916 203.891C600.353 198.726 605.111 194.783 605.383 195.055C605.791 195.327 605.519 198.318 604.84 201.716C604.16 205.115 601.985 216.398 600.082 226.866C590.022 280.427 567.727 330.726 536.868 369.741C495.678 421.671 438.582 459.327 379.175 473.465C357.968 478.495 351.443 479.311 325.886 479.991C305.766 480.534 296.93 480.262 284.423 478.359C222.162 469.251 170.096 437.577 135.43 387.686C126.458 374.771 115.583 352.884 110.145 336.979C95.0553 291.846 96.6866 243.859 114.767 201.58C124.283 179.558 137.469 160.798 156.501 142.445C170.096 129.395 195.245 111.179 200.275 110.771C201.09 110.635 199.731 112.674 197.556 114.985Z" fill="#F5A622"/>
+    <path d="M303.455 295.38C334.162 295.38 359.055 270.487 359.055 239.78C359.055 209.072 334.162 184.179 303.455 184.179C272.747 184.179 247.854 209.072 247.854 239.78C247.854 270.487 272.747 295.38 303.455 295.38Z" fill="#FF6B5E"/>
+  </svg>
+`;
 
 /**
  * دالة رسم صفحة الهبوط
  * @param {HTMLElement} container - عنصر الحاوية الرئيسي (#app)
- * @param {Object} options
- * @param {Object|null} options.user - كائن المستخدم في حال وجود جلسة نشطة
  * @returns {Function} cleanup - دالة تنظيف لإيقاف المؤقت وفك الارتباطات ومنع تسريب الذاكرة
  */
-export function renderLandingPage(container, { user = null } = {}) {
-  // فحص حالة المستخدم إما من المعامل الممرر أو من تخزين الجلسة المحلي مباشرة
-  const hasStoredAuth = (() => {
-    try {
-      for (let i = 0; i < localStorage.length; i++) {
-        const key = localStorage.key(i);
-        if (key && key.startsWith('sb-') && key.endsWith('-auth-token')) {
-          const item = localStorage.getItem(key);
-          if (item && item.includes('access_token')) return true;
-        }
-      }
-    } catch {
-      // تجاهل أخطاء التخزين المحلي إن وجدت
-    }
-    return false;
-  })();
-
-  const isAuthenticated = Boolean(user) || hasStoredAuth;
-  const userInitial = user?.email ? user.email.trim().charAt(0).toUpperCase() : 'U';
-
+export function renderLandingPage(container, _options = {}) {
   // فرض الثيم الداكن حصرياً داخل صفحة الهبوط مع حفظ الثيم السابق للاستعادة
   const prevTheme = document.documentElement.getAttribute('data-theme');
   document.documentElement.setAttribute('data-theme', 'dark');
@@ -46,32 +34,32 @@ export function renderLandingPage(container, { user = null } = {}) {
         <div class="spotlight-dots"></div>
       </div>
 
-      <!-- شريط الترويسة (Precision Navbar) -->
+      <!-- شريط الترويسة (Precision Pre-Launch Navbar) -->
       <header class="landing-navbar">
         <div class="landing-container landing-navbar-inner">
           <a href="#/" class="landing-brand" aria-label="مِحْوَر | Mihwar">
+            ${officialMihwarLogoSvg}
             <span class="brand-name-ar">مِحْوَر</span>
             <span class="brand-divider">|</span>
             <span class="brand-name-en">Mihwar</span>
           </a>
 
+          <!-- روابط أقسام الصفحة الانسيابية -->
+          <nav class="landing-nav-links" aria-label="أقسام الصفحة">
+            <a href="#capacity-section" class="landing-nav-link">المصفوفة الأسبوعية</a>
+            <a href="#checkpoint-section" class="landing-nav-link">شجرة الاستئناف</a>
+            <a href="#crunch-section" class="landing-nav-link">ميزان الامتحانات</a>
+            <a href="#audit-section" class="landing-nav-link">المقارنة الهندسية</a>
+            <a href="#faq-section" class="landing-nav-link">الأسئلة الشائعة</a>
+          </nav>
+
+          <!-- إجراء الحجز المباشر (Single Conversion CTA) -->
           <div class="landing-nav-actions">
-            ${
-              isAuthenticated
-                ? `
-                  <a href="#/dashboard" class="landing-nav-dashboard-btn">
-                    <span class="pilot-lamp" aria-hidden="true"></span>
-                    <span>لوحة التحكم</span>
-                    ${user?.email ? `<span class="landing-user-badge" title="${escapeHtml(user.email)}">${escapeHtml(userInitial)}</span>` : ''}
-                  </a>
-                `
-                : `
-                  <button type="button" class="landing-nav-login-glass" data-action="google-login">
-                    ${icons.google(15)}
-                    <span>تسجيل الدخول</span>
-                  </button>
-                `
-            }
+            <button type="button" class="landing-nav-pill-btn" data-action="open-waitlist">
+              <span class="pill-sparkle">${icons.sparkles(14)}</span>
+              <span>احجز مقعدك</span>
+              <span class="pill-arrow" aria-hidden="true">&larr;</span>
+            </button>
           </div>
         </div>
       </header>
@@ -100,34 +88,16 @@ export function renderLandingPage(container, { user = null } = {}) {
               محرك إدارة جامعية يحوّل ساعات تفرغك إلى إحداثيات مدروسة، يحفظ نقطة توقفك في كل مساق حتى الثانية، ويضاعف وتيرة الدراسة تلقائياً قبل الامتحانات بنسبة صفر تعارض زمني.
             </p>
 
-            <!-- حاوية أخطاء الدخول (تظهر فقط عند حدوث خطأ) -->
-            <div class="landing-auth-error" style="display: none;" role="alert"></div>
-
-            <!-- أزرار البدء السريع -->
+            <!-- زر الدعوة الرئيسي الأوحد لقائمة الانتظار -->
             <div class="hero-ctas">
-              ${
-                isAuthenticated
-                  ? `
-                    <a href="#/dashboard" class="saas-btn-primary">
-                      ${icons.layoutDashboard(16)}
-                      <span>الدخول إلى بيئة العمل (Dashboard)</span>
-                    </a>
-                    <a href="#/planner" class="saas-btn-secondary">
-                      ${icons.calendar(15)}
-                      <span>الجدول الأسبوعي</span>
-                    </a>
-                  `
-                  : `
-                    <button type="button" class="saas-btn-primary" data-action="google-login">
-                      ${icons.google(18)}
-                      <span>البدء الفوري مجاناً عبر Google</span>
-                    </button>
-                    <a href="#/login" class="saas-btn-secondary">
-                      <span>الدخول بالبريد الأكاديمي</span>
-                      ${icons.arrowLeft(14)}
-                    </a>
-                  `
-              }
+              <button type="button" class="landing-waitlist-pill-btn" data-action="open-waitlist">
+                <span class="pill-sparkle">${icons.sparkles(16)}</span>
+                <span>احجز مقعدك في التجربة الأولى</span>
+                <span class="pill-arrow" aria-hidden="true">&larr;</span>
+              </button>
+              <div class="hero-cta-subnote bidi-plaintext" dir="ltr">
+                BATCH-01 ACCESS &bull; LIMITED EARLY SEATS
+              </div>
             </div>
 
             <!-- Micro-UI Widget: واجهة الجلسة الحية والمؤقت المتصاعد (Floating HUD Card) -->
@@ -230,7 +200,7 @@ export function renderLandingPage(container, { user = null } = {}) {
         </section>
 
         <!-- القسم 2: مصفوفة توزيع التفرغ (Hellotime-Style Capacity Matrix Widget) -->
-        <section class="section-wrapper landing-reveal">
+        <section id="capacity-section" class="section-wrapper landing-reveal">
           <div class="landing-container">
             <div class="section-header">
               <span class="section-eyebrow bidi-plaintext" dir="ltr">[CAPACITY ALLOCATION MATRIX]</span>
@@ -350,7 +320,7 @@ export function renderLandingPage(container, { user = null } = {}) {
         </section>
 
         <!-- القسم 3: شجرة نقطة التوقف النشطة (Linear/Mintlify Checkpoint Tree Widget) -->
-        <section class="section-wrapper landing-reveal">
+        <section id="checkpoint-section" class="section-wrapper landing-reveal">
           <div class="landing-container">
             <div class="section-header">
               <span class="section-eyebrow bidi-plaintext" dir="ltr">[STATE PERSISTENCE TREE]</span>
@@ -439,9 +409,9 @@ export function renderLandingPage(container, { user = null } = {}) {
                         </div>
                       </div>
                     </div>
-                    <a href="#/semesters" class="tree-resume-pill bidi-plaintext" dir="ltr" style="text-decoration: none;">
-                      RESUME @ 18:40 &rarr;
-                    </a>
+                    <span class="tree-resume-pill bidi-plaintext" dir="ltr">
+                      SAVED CHECKPOINT &bull; 18:40
+                    </span>
                   </div>
 
                   <div class="tree-lecture-node">
@@ -460,7 +430,7 @@ export function renderLandingPage(container, { user = null } = {}) {
         </section>
 
         <!-- القسم 4: ميزان ضغط الامتحانات (Auto-Crunch Weight Widget) -->
-        <section class="section-wrapper landing-reveal">
+        <section id="crunch-section" class="section-wrapper landing-reveal">
           <div class="landing-container">
             <div class="section-header">
               <span class="section-eyebrow bidi-plaintext" dir="ltr">[DYNAMIC CRUNCH ENGINE]</span>
@@ -537,7 +507,7 @@ export function renderLandingPage(container, { user = null } = {}) {
         </section>
 
         <!-- القسم 5: سجل التدقيق والمقارنة (The Precision Audit Ledger) -->
-        <section class="section-wrapper landing-reveal">
+        <section id="audit-section" class="section-wrapper landing-reveal">
           <div class="landing-container">
             <div class="section-header">
               <span class="section-eyebrow bidi-plaintext" dir="ltr">[ARCHITECTURAL AUDIT LEDGER]</span>
@@ -596,7 +566,7 @@ export function renderLandingPage(container, { user = null } = {}) {
         </section>
 
         <!-- القسم 6: الأسئلة الشائعة الهندسية والنداء الأخير (Technical FAQ & Master CTA) -->
-        <section class="section-wrapper landing-reveal" style="border-bottom: none;">
+        <section id="faq-section" class="section-wrapper landing-reveal" style="border-bottom: none;">
           <div class="landing-container">
             <div class="section-header">
               <span class="section-eyebrow bidi-plaintext" dir="ltr">[TECHNICAL SPECIFICATIONS &amp; FAQ]</span>
@@ -672,28 +642,15 @@ export function renderLandingPage(container, { user = null } = {}) {
                 حوّل دراستك الجامعية إلى مسار انضباطي فائق الدقة.
               </h3>
               <p style="font-size: 15px; color: var(--saas-text-secondary); max-width: 580px; margin: 0 auto; line-height: 1.7;">
-                انضم الآن مجاناً وابدأ ضبط فصولك الدراسية وفق حسابات وقت قطعية تلغي التشتت للأبد.
+                انضم الآن لمجتمع الدفعة الأولى واحجز مقعدك بتذكرة رقمية رسمية فورية.
               </p>
 
               <div class="final-cta-actions">
-                ${
-                  isAuthenticated
-                    ? `
-                      <a href="#/dashboard" class="saas-btn-primary">
-                        ${icons.layoutDashboard(16)}
-                        <span>الانتقال للوحة التحكم</span>
-                      </a>
-                    `
-                    : `
-                      <button type="button" class="saas-btn-primary" data-action="google-login">
-                        ${icons.google(18)}
-                        <span>تسجيل الدخول الفوري عبر Google</span>
-                      </button>
-                      <a href="#/login" class="saas-btn-secondary">
-                        <span>الدخول بالبريد الأكاديمي</span>
-                      </a>
-                    `
-                }
+                <button type="button" class="landing-waitlist-pill-btn" data-action="open-waitlist">
+                  <span class="pill-sparkle">${icons.sparkles(16)}</span>
+                  <span>احجز مقعدك في التجربة الأولى</span>
+                  <span class="pill-arrow" aria-hidden="true">&larr;</span>
+                </button>
               </div>
             </div>
 
@@ -710,7 +667,9 @@ export function renderLandingPage(container, { user = null } = {}) {
           </div>
 
           <div class="landing-footer-links">
-            <a href="#/login" class="landing-footer-link">تسجيل الدخول</a>
+            <button type="button" class="landing-footer-waitlist-link" data-action="open-waitlist">احجز مقعدك</button>
+            <span style="color: var(--saas-border-strong);">&bull;</span>
+            <a href="#faq-section" class="landing-footer-link">الأسئلة الشائعة</a>
             <span style="color: var(--saas-border-strong);">&bull;</span>
             <span class="landing-footer-link" style="cursor: default;">مِحْوَر &copy; 2026</span>
           </div>
@@ -727,7 +686,6 @@ export function renderLandingPage(container, { user = null } = {}) {
   const timerEl = container.querySelector('#landing-mockup-timer');
 
   const timerInterval = setInterval(() => {
-    // تحقق دفاعي: لو خرج العنصر من DOM يتم إيقاف المؤقت فوراً
     if (!timerEl || !document.body.contains(timerEl)) {
       clearInterval(timerInterval);
       return;
@@ -749,7 +707,6 @@ export function renderLandingPage(container, { user = null } = {}) {
     if (trigger) {
       trigger.addEventListener('click', () => {
         const isOpen = card.classList.contains('is-open');
-        // إغلاق باقي الكروت لفتح كرت واحد فقط بأناقة
         faqCards.forEach((c) => {
           c.classList.remove('is-open');
           const t = c.querySelector('.faq-trigger');
@@ -765,22 +722,14 @@ export function renderLandingPage(container, { user = null } = {}) {
   });
 
   // ---------------------------------------------------------
-  // 3. ربط أزرار تسجيل الدخول عبر Google
+  // 3. ربط أزرار حجز المقعد وقائمة الانتظار (Waitlist Modal Trigger)
   // ---------------------------------------------------------
-  const googleBtns = container.querySelectorAll('[data-action="google-login"]');
-  googleBtns.forEach((btn) => {
-    btn.addEventListener('click', async () => {
-      try {
-        btn.disabled = true;
-        const originalContent = btn.innerHTML;
-        btn.innerHTML = `${icons.clock(15)} <span>جاري تهيئة الجلسة...</span>`;
-        await signInWithGoogle();
-      } catch (err) {
-        console.error('Google Sign-In Error:', err);
-        btn.disabled = false;
-        btn.innerHTML = `${icons.google(15)} <span>تسجيل الدخول</span>`;
-        showAuthError(container, err.message || 'تعذر بدء الجلسة عبر Google. يرجى إعادة المحاولة.');
-      }
+  let activeWaitlistCleanup = null;
+  const waitlistBtns = container.querySelectorAll('[data-action="open-waitlist"]');
+  waitlistBtns.forEach((btn) => {
+    btn.addEventListener('click', () => {
+      if (activeWaitlistCleanup) activeWaitlistCleanup();
+      activeWaitlistCleanup = openWaitlistModal();
     });
   });
 
@@ -827,6 +776,7 @@ export function renderLandingPage(container, { user = null } = {}) {
   // 6. دالة التنظيف الصارمة لمنع تسريب الذاكرة (Memory Cleanup Contract)
   // ---------------------------------------------------------
   return function cleanupLandingPage() {
+    if (activeWaitlistCleanup) activeWaitlistCleanup();
     clearInterval(timerInterval);
     revealObserver.disconnect();
     if (rafId) cancelAnimationFrame(rafId);
@@ -834,22 +784,10 @@ export function renderLandingPage(container, { user = null } = {}) {
       landingContainer.removeEventListener('pointermove', onPointerMove);
     }
 
-    // استعادة حالة السمة السابقة عند مغادرة الصفحة
     if (prevTheme) {
       document.documentElement.setAttribute('data-theme', prevTheme);
     } else {
       document.documentElement.removeAttribute('data-theme');
     }
   };
-}
-
-/**
- * دالة مساعدة لعرض رسائل الخطأ الخاصة بالمصادقة
- */
-function showAuthError(container, message) {
-  const errorEl = container.querySelector('.landing-auth-error');
-  if (errorEl) {
-    errorEl.textContent = message;
-    errorEl.style.display = 'block';
-  }
 }
