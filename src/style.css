@@ -3359,17 +3359,20 @@ html[data-theme="light"] .planner-session-card.completed {
 }
 
 .waitlist-error-banner {
-  background: rgba(255, 77, 77, 0.1);
-  border: 1px solid #ff4d4d;
-  color: #ff6b6b;
-  padding: 10px 14px;
-  border-radius: 8px;
+  background: rgba(255, 107, 94, 0.12);
+  border: 1px solid rgba(255, 107, 94, 0.35);
+  color: #FF6B5E;
+  padding: 11px 14px;
+  border-radius: 10px;
   font-size: 13px;
+  font-weight: 500;
   display: flex;
   align-items: center;
   gap: 10px;
   margin-bottom: 18px;
+  animation: waitlistFadeIn 0.2s cubic-bezier(0.16, 1, 0.3, 1);
 }
+
 
 /* نموذج الحقول الفاخرة */
 .waitlist-form {

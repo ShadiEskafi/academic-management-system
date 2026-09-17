@@ -3,7 +3,7 @@
 
 import { joinOrGetWaitlist } from '../api/waitlist.js';
 import { icons } from '../utils/icons.js';
-import { escapeHtml } from '../utils/sanitize.js';
+import { escapeHtml, sanitizeInput, isValidEmail } from '../utils/sanitize.js';
 
 const TICKET_STUB_URL = 'STUDENT-CENTRIC OS';
 
@@ -92,6 +92,17 @@ export function openWaitlistModal({ initialEmail = '' } = {}) {
           }
 
           <form id="waitlist-form" class="waitlist-form" novalidate>
+            <!-- فخ مكافحة الروبوتات والسبام (Honeypot Trap) -->
+            <input 
+              type="text" 
+              name="company_website" 
+              id="waitlist-hp" 
+              tabindex="-1" 
+              autocomplete="off" 
+              aria-hidden="true" 
+              style="position: absolute; left: -9999px; opacity: 0; pointer-events: none;" 
+            />
+
             <div class="waitlist-field-group">
               <label class="waitlist-label" for="waitlist-name">الاسم الكامل *</label>
               <input 
@@ -101,6 +112,7 @@ export function openWaitlistModal({ initialEmail = '' } = {}) {
                 class="waitlist-input" 
                 placeholder="مثال: أحمد عبد الله" 
                 value="${escapeHtml(formData.name)}" 
+                maxlength="60" 
                 required 
                 autocomplete="name"
               />
@@ -116,6 +128,7 @@ export function openWaitlistModal({ initialEmail = '' } = {}) {
                   class="waitlist-input" 
                   placeholder="مثال: هندسة برمجيات" 
                   value="${escapeHtml(formData.major)}" 
+                  maxlength="70" 
                   required 
                 />
               </div>
@@ -129,6 +142,7 @@ export function openWaitlistModal({ initialEmail = '' } = {}) {
                   class="waitlist-input" 
                   placeholder="مثال: جامعة الملك سعود" 
                   value="${escapeHtml(formData.university)}" 
+                  maxlength="70" 
                   required 
                 />
               </div>
@@ -144,6 +158,7 @@ export function openWaitlistModal({ initialEmail = '' } = {}) {
                 dir="ltr" 
                 placeholder="name@university.edu" 
                 value="${escapeHtml(formData.email)}" 
+                maxlength="254" 
                 required 
                 autocomplete="email"
               />
@@ -172,41 +187,100 @@ export function openWaitlistModal({ initialEmail = '' } = {}) {
       if (form) {
         form.addEventListener('submit', async (e) => {
           e.preventDefault();
+
+          // 1. منع تكرار النقر إذا كان الطلب قيد المعالجة
+          if (isSubmitting) return;
+
           const formElements = form.elements;
-          formData.name = formElements.name.value.trim();
-          formData.major = formElements.major.value.trim();
-          formData.university = formElements.university.value.trim();
-          formData.email = formElements.email.value.trim();
 
-          if (!formData.name || !formData.major || !formData.university || !formData.email) {
-            errorMessage = 'يرجى إكمال جميع الحقول المطلوبة.';
+          // 2. فحص فخ السبام والروبوتات (Honeypot Trap)
+          const honeypotVal = formElements.company_website ? formElements.company_website.value.trim() : '';
+          if (honeypotVal !== '') {
+            console.warn('Bot submission blocked by honeypot trap.');
+            return; // إحباط صامت فوري دون استدعاء أي خادم
+          }
+
+          // 3. الاحتفاظ بالمدخلات في formData كي لا تُمسح عند إعادة التصيير
+          formData.name = formElements.name ? formElements.name.value : '';
+          formData.major = formElements.major ? formElements.major.value : '';
+          formData.university = formElements.university ? formElements.university.value : '';
+          formData.email = formElements.email ? formElements.email.value : '';
+
+          // 4. فحص فترة التبريد (Rate Limiting: 60s cooldown)
+          const lastAttempt = parseInt(localStorage.getItem('last_waitlist_attempt') || '0', 10);
+          const now = Date.now();
+          const COOLDOWN_MS = 60000;
+          if (lastAttempt && (now - lastAttempt) < COOLDOWN_MS) {
+            errorMessage = 'يرجى الانتظار دقيقة واحدة قبل المحاولة مجدداً.';
             render();
             return;
           }
 
-          if (!formData.email.includes('@') || !formData.email.includes('.')) {
-            errorMessage = 'يرجى إدخال عنوان بريد إلكتروني صحيح.';
+          // 5. تطهير الحقول وفحص الشروط والقيود
+          const cleanName = sanitizeInput(formData.name);
+          const cleanMajor = sanitizeInput(formData.major);
+          const cleanUni = sanitizeInput(formData.university);
+          const cleanEmail = sanitizeInput(formData.email);
+
+          if (cleanName.length < 2 || cleanName.length > 60) {
+            errorMessage = 'يرجى إدخال اسم صحيح يتراوح بين 2 و 60 حرفاً.';
             render();
             return;
           }
 
+          if (cleanMajor.length < 2 || cleanMajor.length > 70) {
+            errorMessage = 'يرجى إدخال التخصص الجامعي (بين 2 و 70 حرفاً).';
+            render();
+            return;
+          }
+
+          if (cleanUni.length < 2 || cleanUni.length > 70) {
+            errorMessage = 'يرجى إدخال اسم الجامعة (بين 2 و 70 حرفاً).';
+            render();
+            return;
+          }
+
+          if (!isValidEmail(cleanEmail)) {
+            errorMessage = 'يرجى إدخال بريد إلكتروني صالح.';
+            render();
+            return;
+          }
+
+          // 6. تفعيل حالة المعالجة والتحديث البصري
           isSubmitting = true;
           errorMessage = '';
           render();
 
           try {
-            const res = await joinOrGetWaitlist(formData);
+            const res = await joinOrGetWaitlist({
+              name: cleanName,
+              major: cleanMajor,
+              university: cleanUni,
+              email: cleanEmail,
+            });
+
+            // تسجيل وقت المحاولة فقط بعد نجاح العملية (حسب التوجيه الصارم)
+            try {
+              localStorage.setItem('last_waitlist_attempt', Date.now().toString());
+            } catch (_) {}
+
             ticketData = res;
             state = 'ticket';
             isSubmitting = false;
             render();
           } catch (err) {
+            // في حال حدوث خطأ أو انقطاع في الشبكة، ضمان عدم قفل المستخدم
+            try {
+              localStorage.removeItem('last_waitlist_attempt');
+            } catch (_) {}
+
             isSubmitting = false;
             errorMessage = err.message || 'حدث خطأ أثناء حجز المقعد. يرجى المحاولة لاحقاً.';
             render();
           }
         });
       }
+
     } else if (state === 'ticket' && ticketData) {
       const isExisting = Boolean(ticketData.is_existing);
       const seatPadded = String(ticketData.seat_number || 1).padStart(3, '0');
