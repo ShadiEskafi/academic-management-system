@@ -1733,35 +1733,108 @@ html[data-theme="light"] .planner-session-card.completed {
   gap: 12px;
 }
 
-/* زر الحجز المدمج في الترويسة */
+/* 3. رابط تسجيل الدخول الخافت (Low Weight Ghost Link) */
+.landing-page .landing-nav-ghost-link {
+  color: var(--mihwar-text-secondary, rgba(250, 247, 242, 0.65));
+  font-weight: 500;
+  font-size: 13px;
+  padding: 7px 12px;
+  text-decoration: none;
+  background: transparent;
+  border-radius: 9999px;
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  white-space: nowrap;
+}
+
+.landing-page .landing-nav-ghost-link:hover {
+  color: var(--mihwar-cream, #FAF7F2);
+  background: rgba(250, 247, 242, 0.05);
+}
+
+.landing-page .landing-nav-ghost-link:active {
+  transform: scale(0.97);
+}
+
+/* 2. زر تفعيل المقعد الثانوي (Medium Weight Outline Button) */
+.landing-page .landing-nav-secondary-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  background: rgba(250, 247, 242, 0.04);
+  color: var(--mihwar-cream, #FAF7F2);
+  border: 1px solid rgba(250, 247, 242, 0.16);
+  border-radius: 9999px;
+  padding: 7px 16px;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+  font-family: inherit;
+  text-decoration: none;
+  white-space: nowrap;
+}
+
+.landing-page .landing-nav-secondary-btn:hover {
+  background: rgba(250, 247, 242, 0.08);
+  border-color: rgba(250, 247, 242, 0.3);
+  color: #ffffff;
+  transform: translateY(-1px);
+}
+
+.landing-page .landing-nav-secondary-btn:active {
+  transform: translateY(0) scale(0.98);
+}
+
+/* 1. زر الحجز الرئيسي البارز (High Weight Filled Amber Button) */
 .landing-page .landing-nav-pill-btn {
   display: inline-flex;
   align-items: center;
+  justify-content: center;
   gap: 8px;
-  background: rgba(245, 166, 34, 0.1);
-  color: var(--mihwar-amber);
-  border: 1px solid rgba(245, 166, 34, 0.35);
+  background: var(--mihwar-amber, #F5A622);
+  color: #14151F;
+  border: 1px solid var(--mihwar-amber, #F5A622);
   border-radius: 9999px;
   padding: 7px 18px;
   font-size: 13px;
   font-weight: 700;
   cursor: pointer;
-  box-shadow: 0 0 16px rgba(245, 166, 34, 0.12);
+  box-shadow: 0 0 20px rgba(245, 166, 34, 0.28);
   transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
   font-family: inherit;
   text-decoration: none;
+  white-space: nowrap;
 }
 
 .landing-page .landing-nav-pill-btn:hover {
-  background: var(--mihwar-amber);
+  background: #ffb438;
+  border-color: #ffb438;
   color: #14151F;
   transform: translateY(-1px);
-  box-shadow: 0 0 24px rgba(245, 166, 34, 0.35);
+  box-shadow: 0 0 28px rgba(245, 166, 34, 0.45);
 }
 
 .landing-page .landing-nav-pill-btn:active {
   transform: translateY(0) scale(0.98);
 }
+
+/* تبديل النصوص التجاوبي لشريط الترويسة */
+.landing-nav-actions .nav-ghost-compact,
+.landing-nav-actions .nav-secondary-compact,
+.landing-nav-actions .nav-pill-compact {
+  display: none;
+}
+
+.landing-nav-actions .nav-ghost-full,
+.landing-nav-actions .nav-secondary-full,
+.landing-nav-actions .nav-pill-full {
+  display: inline;
+}
+
 
 /* ---------------------------------------------------------
    Hero Section & Floating HUD Mockup
@@ -2637,6 +2710,8 @@ html[data-theme="light"] .planner-session-card.completed {
 }
 
 /* Accessible Focus States */
+.landing-page .landing-nav-ghost-link:focus-visible,
+.landing-page .landing-nav-secondary-btn:focus-visible,
 .landing-page .landing-nav-pill-btn:focus-visible,
 .landing-page .landing-waitlist-pill-btn:focus-visible,
 .landing-page .landing-nav-link:focus-visible,
@@ -3367,11 +3442,48 @@ html[data-theme="light"] .planner-session-card.completed {
   font-size: 13px;
   font-weight: 500;
   display: flex;
-  align-items: center;
+  align-items: flex-start;
   gap: 10px;
   margin-bottom: 18px;
   animation: waitlistFadeIn 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+  text-align: right;
 }
+
+.waitlist-error-banner .error-banner-icon {
+  flex-shrink: 0;
+  margin-top: 2px;
+  display: inline-flex;
+}
+
+.waitlist-error-banner .error-banner-content {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  flex: 1;
+}
+
+.waitlist-quick-login-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: 4px;
+  background: transparent;
+  border: none;
+  color: #F5A622;
+  font-weight: 700;
+  font-size: 12px;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+  cursor: pointer;
+  padding: 0;
+  font-family: inherit;
+  transition: color 0.2s ease;
+}
+
+.waitlist-quick-login-link:hover {
+  color: #ffb438;
+}
+
 
 
 /* نموذج الحقول الفاخرة */
@@ -3463,6 +3575,36 @@ html[data-theme="light"] .planner-session-card.completed {
 .waitlist-submit-btn:disabled {
   opacity: 0.6;
   cursor: not-allowed;
+}
+
+.activation-footer-hint {
+  margin-top: 14px;
+  text-align: center;
+  font-size: 12px;
+  color: #8c96a5;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+
+.activation-switch-btn {
+  background: none;
+  border: none;
+  color: #F5A622;
+  font-weight: 700;
+  font-size: 12px;
+  cursor: pointer;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+  font-family: inherit;
+  padding: 0;
+  transition: color 0.2s ease;
+}
+
+.activation-switch-btn:hover {
+  color: #ffb438;
 }
 
 /* شارات وشاشة التذكرة (Ticket View) */
@@ -3582,3 +3724,153 @@ html[data-theme="light"] .planner-session-card.completed {
     justify-content: center;
   }
 }
+
+@media (max-width: 480px) {
+  .landing-page .landing-nav-actions {
+    gap: 6px;
+  }
+  .landing-page .landing-nav-ghost-link {
+    padding: 6px 8px;
+    font-size: 12px;
+  }
+  .landing-page .landing-nav-secondary-btn {
+    padding: 6px 11px;
+    font-size: 12px;
+  }
+  .landing-page .landing-nav-pill-btn {
+    padding: 6px 13px;
+    font-size: 12px;
+    gap: 5px;
+  }
+}
+
+@media (max-width: 390px) {
+  .landing-page .landing-nav-actions {
+    gap: 4px;
+  }
+  .landing-nav-actions .nav-ghost-full,
+  .landing-nav-actions .nav-secondary-full,
+  .landing-nav-actions .nav-pill-full {
+    display: none;
+  }
+  .landing-nav-actions .nav-ghost-compact,
+  .landing-nav-actions .nav-secondary-compact,
+  .landing-nav-actions .nav-pill-compact {
+    display: inline;
+  }
+  .landing-page .landing-nav-ghost-link {
+    padding: 5px 6px;
+    font-size: 11px;
+  }
+  .landing-page .landing-nav-secondary-btn {
+    padding: 5px 8px;
+    font-size: 11px;
+  }
+  .landing-page .landing-nav-pill-btn {
+    padding: 5px 9px;
+    font-size: 11px;
+    gap: 4px;
+  }
+  .landing-page .landing-nav-pill-btn .pill-arrow {
+    display: none;
+  }
+}
+
+/* ---------------------------------------------------------
+   Closed-Beta Login Screen Styles
+   --------------------------------------------------------- */
+.closed-beta-login-wrapper {
+  min-height: 100svh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px 16px;
+  background: #14151F;
+  box-sizing: border-box;
+}
+
+.closed-beta-login-card {
+  width: 100%;
+  max-width: 440px;
+  background: #0e0f17;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 20px;
+  padding: 36px 30px;
+  box-shadow: 0 28px 72px rgba(0, 0, 0, 0.8), 0 0 0 1px rgba(255, 255, 255, 0.04);
+  box-sizing: border-box;
+  text-align: right;
+  animation: waitlistScaleUp 0.28s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.auth-brand-header {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  margin-bottom: 22px;
+}
+
+.auth-brand-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  text-decoration: none;
+  margin-bottom: 14px;
+}
+
+.auth-brand-link .brand-name-ar {
+  font-size: 19px;
+  font-weight: 800;
+  color: #FAF7F2;
+}
+
+.auth-brand-link .brand-divider {
+  font-size: 14px;
+  color: rgba(250, 247, 242, 0.25);
+}
+
+.auth-brand-link .brand-name-en {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 13px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  color: #F5A622;
+}
+
+.auth-closed-beta-footer {
+  margin-top: 24px;
+  padding-top: 20px;
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  align-items: center;
+  text-align: center;
+}
+
+.beta-footer-route {
+  font-size: 12px;
+  color: #8c96a5;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+
+.auth-back-landing-link {
+  margin-top: 6px;
+  font-size: 12px;
+  color: #8c96a5;
+  text-decoration: none;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  transition: color 0.2s ease;
+}
+
+.auth-back-landing-link:hover {
+  color: #FAF7F2;
+}
+
+

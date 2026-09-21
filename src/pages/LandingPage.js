@@ -6,6 +6,7 @@
 import { icons } from '../utils/icons.js';
 import { escapeHtml } from '../utils/sanitize.js';
 import { openWaitlistModal } from '../components/WaitlistModal.js';
+import { openActivationModal } from '../components/ActivationModal.js';
 
 // شعار مِحْوَر الفيكتوري الرسمي المعتمد (Official Mihwar Vector Logo)
 const officialMihwarLogoSvg = `
@@ -53,14 +54,25 @@ export function renderLandingPage(container, _options = {}) {
             <a href="#faq-section" class="landing-nav-link">الأسئلة الشائعة</a>
           </nav>
 
-          <!-- إجراء الحجز المباشر (Single Conversion CTA) -->
+          <!-- إجراءات الحجز والتفعيل في الترويسة (3-Tier Hierarchy) -->
           <div class="landing-nav-actions">
+            <a href="#/login" class="landing-nav-ghost-link">
+              <span class="nav-ghost-full">تسجيل الدخول</span>
+              <span class="nav-ghost-compact">دخول</span>
+            </a>
+            <button type="button" class="landing-nav-secondary-btn" data-action="open-activation">
+              <span class="nav-secondary-full">تفعيل مقعدك</span>
+              <span class="nav-secondary-compact">تفعيل</span>
+            </button>
             <button type="button" class="landing-nav-pill-btn" data-action="open-waitlist">
               <span class="pill-sparkle">${icons.sparkles(14)}</span>
-              <span>احجز مقعدك</span>
+              <span class="nav-pill-full">احجز مقعدك</span>
+              <span class="nav-pill-compact">احجز</span>
               <span class="pill-arrow" aria-hidden="true">&larr;</span>
             </button>
           </div>
+
+
         </div>
       </header>
 
@@ -722,16 +734,35 @@ export function renderLandingPage(container, _options = {}) {
   });
 
   // ---------------------------------------------------------
-  // 3. ربط أزرار حجز المقعد وقائمة الانتظار (Waitlist Modal Trigger)
+  // 3. ربط أزرار حجز المقعد وتفعيل الحساب (Modals Trigger)
   // ---------------------------------------------------------
   let activeWaitlistCleanup = null;
+  let activeActivationCleanup = null;
+
   const waitlistBtns = container.querySelectorAll('[data-action="open-waitlist"]');
   waitlistBtns.forEach((btn) => {
     btn.addEventListener('click', () => {
+      if (activeActivationCleanup) {
+        activeActivationCleanup();
+        activeActivationCleanup = null;
+      }
       if (activeWaitlistCleanup) activeWaitlistCleanup();
       activeWaitlistCleanup = openWaitlistModal();
     });
   });
+
+  const activationBtns = container.querySelectorAll('[data-action="open-activation"]');
+  activationBtns.forEach((btn) => {
+    btn.addEventListener('click', () => {
+      if (activeWaitlistCleanup) {
+        activeWaitlistCleanup();
+        activeWaitlistCleanup = null;
+      }
+      if (activeActivationCleanup) activeActivationCleanup();
+      activeActivationCleanup = openActivationModal();
+    });
+  });
+
 
   // ---------------------------------------------------------
   // 4. مراقب ظهور الأقسام بالسكرول (Scroll Reveal Motion)
@@ -777,6 +808,7 @@ export function renderLandingPage(container, _options = {}) {
   // ---------------------------------------------------------
   return function cleanupLandingPage() {
     if (activeWaitlistCleanup) activeWaitlistCleanup();
+    if (activeActivationCleanup) activeActivationCleanup();
     clearInterval(timerInterval);
     revealObserver.disconnect();
     if (rafId) cancelAnimationFrame(rafId);

@@ -4,6 +4,7 @@
 import { joinOrGetWaitlist } from '../api/waitlist.js';
 import { icons } from '../utils/icons.js';
 import { escapeHtml, sanitizeInput, isValidEmail } from '../utils/sanitize.js';
+import { openActivationModal } from './ActivationModal.js';
 
 const TICKET_STUB_URL = 'STUDENT-CENTRIC OS';
 
@@ -171,6 +172,18 @@ export function openWaitlistModal({ initialEmail = '' } = {}) {
                 <span>${isSubmitting ? 'جاري التحقق وتأكيد المقعد...' : 'تأكيد حجز المقعد واستخراج التذكرة'}</span>
               </button>
             </div>
+            <div class="activation-footer-hint">
+              <span>هل تم اعتماد مقعدك؟</span>
+              <button type="button" class="activation-switch-btn" id="btn-switch-to-activation">
+                تفعيل المقعد والدخول
+              </button>
+            </div>
+            <div class="activation-footer-hint">
+              <span>لديك حساب مفعّل بالفعل؟</span>
+              <button type="button" class="activation-switch-btn" id="btn-switch-to-login">
+                تسجيل الدخول
+              </button>
+            </div>
           </form>
         </div>
       `;
@@ -182,6 +195,25 @@ export function openWaitlistModal({ initialEmail = '' } = {}) {
       modalRoot.addEventListener('click', (e) => {
         if (e.target === modalRoot) closeModal();
       });
+
+      const switchToActivationBtn = modalRoot.querySelector('#btn-switch-to-activation');
+      if (switchToActivationBtn) {
+        switchToActivationBtn.addEventListener('click', () => {
+          const emailVal = formData.email ? formData.email.trim() : '';
+          closeModal();
+          openActivationModal({ initialEmail: emailVal });
+        });
+      }
+
+      const switchToLoginBtn = modalRoot.querySelector('#btn-switch-to-login');
+      if (switchToLoginBtn) {
+        switchToLoginBtn.addEventListener('click', () => {
+          closeModal();
+          window.location.hash = '#/login';
+        });
+      }
+
+
 
       const form = modalRoot.querySelector('#waitlist-form');
       if (form) {
