@@ -2,16 +2,79 @@
 <html lang="ar" dir="rtl">
   <head>
     <meta charset="UTF-8" />
-    <link rel="icon" type="image/svg+xml" href="/favicon.ico" />
+    <link rel="icon" type="image/x-icon" href="/favicon.ico" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>مِحْوَر | Mihwar</title>
 
+    <!-- Native Theme Configuration: Matches Mihwar Surface Color -->
+    <meta name="theme-color" content="#14151F" />
+    <meta name="color-scheme" content="dark" />
+
+    <!-- Basic SEO & Content Definition -->
+    <title>مِحْوَر | النظام الذكي لإدارة المواد وتوزيع الضغط الدراسي الجامعي</title>
+    <meta name="title" content="مِحْوَر | النظام الذكي لإدارة المواد وتوزيع الضغط الدراسي الجامعي" />
+    <meta
+      name="description"
+      content="منصة مِحْوَر (Mihwar OS) تساعد طلاب الجامعات على تنظيم الخطة الدراسية، متابعة تقدم الموضوعات، وتوزيع الجهد الأكاديمي وضغط الامتحانات بذكاء."
+    />
+    <meta
+      name="keywords"
+      content="محور, منصة محور, mihwar, mihwar tech, تنظيم المواد الجامعية, الخطة الدراسية, حساب المعدل, إدارة الضغط الدراسي, طلاب الجامعات"
+    />
+    <meta name="author" content="شادي حسونة - مِحْوَر" />
+    <link rel="canonical" href="https://www.mih-war.tech/" />
+
+    <!-- Open Graph / Social Preview (WhatsApp, Telegram, Facebook) -->
+    <meta property="og:type" content="website" />
+    <meta property="og:url" content="https://www.mih-war.tech/" />
+    <meta property="og:title" content="مِحْوَر | رفيقك الأكاديمي لإدارة موادك وضغطك الدراسي 🎓" />
+    <meta
+      property="og:description"
+      content="تخلص من عشوائية الفصل الجامعي؛ نظّم موادك، تابع تقدم الموضوعات، وزّع أوزان الامتحانات بخطوات واضحة."
+    />
+    <!-- Standardizing on public/og-image.png for standard social crawlers -->
+    <meta property="og:image" content="https://www.mih-war.tech/og-image.png" />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="630" />
+    <meta property="og:locale" content="ar_AR" />
+
+    <!-- Twitter / X Cards -->
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:url" content="https://www.mih-war.tech/" />
+    <meta name="twitter:title" content="مِحْوَر | النظام الذكي لإدارة المواد وتوزيع الضغط الدراسي" />
+    <meta
+      name="twitter:description"
+      content="النظام الأكاديمي الأول المصمم هندسياً لتنظيم أعباء الطالب الجامعي وتوزيع الجهد الدراسي بذكاء."
+    />
+    <meta name="twitter:image" content="https://www.mih-war.tech/og-image.png" />
+
+    <!-- Verified Google Fonts for the Design System -->
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link
-      href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Arabic:wght@400;500;600;700&family=Inter:wght@400;500;600;700&display=swap"
+      href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Arabic:wght@400;500;600;700;800&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@500;700;800&display=swap"
       rel="stylesheet"
     />
+
+    <!-- Schema.org Structured Data: Defines as Academic Web Application -->
+    <script type="application/ld+json">
+      {
+        "@context": "https://schema.org",
+        "@type": "WebApplication",
+        "name": "مِحْوَر - Mihwar OS",
+        "url": "https://www.mih-war.tech",
+        "applicationCategory": "EducationalApplication",
+        "operatingSystem": "All",
+        "description": "نظام ويب لإدارة الحياة الجامعية، تنظيم المواد الأكاديمية، متابعة تقدم شجرة الموضوعات، توزيع أوزان الامتحانات، وتوزيع أوقات الدراسة أسبوعياً.",
+        "inLanguage": "ar",
+        "offers": {
+          "@type": "Offer",
+          "price": "0",
+          "priceCurrency": "USD"
+        }
+      }
+    </script>
+
+    <!-- Theme Initialization: Prevents Flash of Unstyled Theme -->
     <script>
       (function () {
         const savedTheme = localStorage.getItem('theme');
@@ -22,6 +85,12 @@
     </script>
   </head>
   <body>
+    <noscript>
+      <div style="padding: 2rem; text-align: center; color: #FAF7F2; background: #14151F; font-family: sans-serif;">
+        <h1>منصة مِحْوَر (Mihwar OS)</h1>
+        <p>المنصة الذكية لإدارة المواد والضغط الدراسي لطلاب الجامعات. يتطلب تشغيل جافاسكريبت للوصول للنظام.</p>
+      </div>
+    </noscript>
     <div id="app"></div>
     <script type="module" src="/src/main.js"></script>
   </body>
