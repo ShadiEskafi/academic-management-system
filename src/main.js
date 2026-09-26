@@ -12,6 +12,7 @@ import { renderSemestersPage } from './pages/SemestersPage.js';
 import { renderCoursesPage } from './pages/CoursesPage.js';
 import { renderCourseDetailPage } from './pages/CourseDetailPage.js';
 import { renderAvailabilityPage } from './pages/AvailabilityPage.js';
+import { renderAdminPage } from './pages/AdminPage.js';
 import { renderAppShell } from './components/AppShell.js';
 import { initGlobalSessionTracker } from './utils/sessionManager.js';
 import { escapeHtml } from './utils/sanitize.js';
@@ -32,7 +33,9 @@ let contentContainer = null;
 let isShellMounted = false;
 let landingCleanup = null;
 let onboardingCleanup = null;
+let adminCleanup = null;
 let isOnboardedCache = null;
+let userRoleCache = null;
 
 // =========================================================
 // دالة مساعدة موحدة لعرض حالات الخطأ وفق الـ Design System
@@ -170,8 +173,12 @@ registerRoute('/semesters', async ({ container }) => {
   });
 });
 
-// مسار احتياطي (404 داخلي) — توجيه للوحة التحكم
-setNotFoundHandler(async () => {
+// مسار احتياطي (404 داخلي) — توجيه للوحة التحكم فقط لمسارات AppShell المجهولة
+setNotFoundHandler(async ({ path } = {}) => {
+  const clean = path || getCleanPath();
+  if (clean === '/admin' || clean === '/' || clean === '/login' || clean === '/onboarding') {
+    return null;
+  }
   navigate('/dashboard');
   return null;
 });
@@ -188,6 +195,7 @@ function getCleanPath() {
 function isProtectedRoute(path) {
   return (
     path === '/dashboard' ||
+    path === '/admin' ||
     path === '/planner' ||
     path === '/availability' ||
     path === '/semesters' ||
@@ -214,6 +222,17 @@ function clearOnboardingPage() {
       console.error('Error cleaning up onboarding page:', err);
     }
     onboardingCleanup = null;
+  }
+}
+
+function clearAdminPage() {
+  if (adminCleanup) {
+    try {
+      adminCleanup();
+    } catch (err) {
+      console.error('Error cleaning up admin page:', err);
+    }
+    adminCleanup = null;
   }
 }
 
@@ -266,6 +285,32 @@ async function checkIsOnboarded(user) {
 }
 
 /**
+ * فحص رتبة المستخدم الحالي مع نظام تخزين مؤقت محلي (Cache)
+ */
+async function getUserRole(user) {
+  if (!user) return 'student';
+  if (userRoleCache !== null) return userRoleCache;
+
+  try {
+    const { data, error } = await supabase
+      .from('profiles')
+      .select('role')
+      .eq('id', user.id)
+      .maybeSingle();
+
+    if (!error && data?.role) {
+      userRoleCache = data.role;
+      return userRoleCache;
+    }
+  } catch (err) {
+    console.warn('Profiles role check skipped:', err);
+  }
+
+  userRoleCache = 'student';
+  return userRoleCache;
+}
+
+/**
  * معالج تبديل المشهد الرئيسي بين صفحة الهبوط، صفحة الدخول، معالج التهيئة، وهيكل التطبيق
  */
 async function renderRouteView() {
@@ -280,6 +325,7 @@ async function renderRouteView() {
       contentContainer = null;
     }
     clearOnboardingPage();
+    clearAdminPage();
 
     if (path === '/login') {
       clearLandingPage();
@@ -307,9 +353,68 @@ async function renderRouteView() {
   }
 
   // 2. المستخدم المسجل (Authenticated User)
+  // معالجة مسار لوحة الأدمن المستقلة (#/admin)
+  if (path === '/admin') {
+    clearLandingPage();
+    clearOnboardingPage();
+
+    const role = await getUserRole(currentUser);
+    if (role !== 'admin') {
+      // ليس أدمن -> عرض كارت 403 Forbidden بشكل مستقل
+      clearAdminPage();
+      if (isShellMounted) {
+        stopRouter();
+        isShellMounted = false;
+        contentContainer = null;
+      }
+      rootEl.innerHTML = `
+        <div class="page-container" style="display:flex;align-items:center;justify-content:center;min-height:80vh;">
+          <div class="card error-state" style="max-width:520px;text-align:center;padding:var(--space-8);">
+            <div class="error-state-icon" style="color:var(--color-danger);margin-bottom:var(--space-4);" aria-hidden="true">${icons.shield(36)}</div>
+            <h2 style="margin:0 0 var(--space-2);color:var(--color-danger);font-size:22px;">غير مصرح بالدخول (403 Forbidden)</h2>
+            <p style="color:var(--color-text-secondary);font-size:14px;margin-bottom:var(--space-6);line-height:1.6;">
+              هذه الصفحة مخصصة لمشرفي منصة «مِحْوَر» فقط. ليس لدى حسابك الصلاحيات الكافية للوصول إليها.
+            </p>
+            <button type="button" class="btn-primary" id="forbidden-go-dashboard">العودة إلى منصة الطالب</button>
+          </div>
+        </div>
+      `;
+      rootEl.querySelector('#forbidden-go-dashboard')?.addEventListener('click', () => {
+        navigate('/dashboard');
+      });
+      return;
+    }
+
+    // المستخدم أدمن مصرح له -> حقن مباشر في rootEl كـ Standalone Cockpit مع استثناء Onboarding
+    if (isShellMounted) {
+      stopRouter();
+      isShellMounted = false;
+      contentContainer = null;
+    }
+    clearAdminPage();
+    rootEl.innerHTML = '';
+    adminCleanup = await renderAdminPage(rootEl, {
+      user: currentUser,
+      onSignOut: async () => {
+        isOnboardedCache = null;
+        userRoleCache = null;
+        await supabase.auth.signOut();
+        navigate('/');
+      },
+      onGoToStudent: () => {
+        navigate('/dashboard');
+      },
+    });
+    return;
+  }
+
+  // تنظيف صفحة الأدمن عند الانتقال لأي شاشة أخرى
+  clearAdminPage();
+
+  // فحص حالة التهيئة لمسارات الطالب
   const isUserOnboarded = await checkIsOnboarded(currentUser);
 
-  // حارس التهيئة: إذا لم يكمل المستخدم التهيئة يتم توجيهه إجبارياً إلى #/onboarding
+  // حارس التهيئة: إذا لم يكمل الطالب التهيئة يتم توجيهه إجبارياً إلى #/onboarding
   if (!isUserOnboarded) {
     if (path !== '/onboarding') {
       navigate('/onboarding');
@@ -335,7 +440,7 @@ async function renderRouteView() {
     return;
   }
 
-  // المستخدم مكتمل التهيئة بالفعل
+  // الطالب مكتمل التهيئة بالفعل
   clearOnboardingPage();
 
   if (path === '/onboarding') {
@@ -362,7 +467,7 @@ async function renderRouteView() {
     return;
   }
 
-  // مسارات التطبيق الداخلية المحمية
+  // مسارات الطالب المحمية داخل هيكل التطبيق (AppShell)
   clearLandingPage();
   if (!isShellMounted || !contentContainer) {
     rootEl.innerHTML = '';
@@ -370,6 +475,7 @@ async function renderRouteView() {
       userEmail: currentUser.email,
       onSignOut: async () => {
         isOnboardedCache = null;
+        userRoleCache = null;
         await supabase.auth.signOut();
         navigate('/');
       },
@@ -405,20 +511,24 @@ async function bootstrapApp() {
   const session = !error && data?.session ? data.session : null;
   currentUser = session?.user ?? null;
 
-  // توجيه تلقائي فور تسجيل الدخول أو عودة Google OAuth مع فحص التهيئة
+  // توجيه تلقائي مع مراعاة استثناء مسار الأدمن من فحص التهيئة الإجباري
   if (currentUser) {
-    const isUserOnboarded = await checkIsOnboarded(currentUser);
-    if (!isUserOnboarded) {
-      window.location.hash = '#/onboarding';
-    } else {
-      const isAtAuthOrToken =
-        currentHash.startsWith('#access_token') ||
-        currentHash.startsWith('#error') ||
-        currentHash === '#/login' ||
-        currentPath === '/login';
+    const cleanPath = getCleanPath();
+    const isAtAdmin = cleanPath === '/admin';
+    if (!isAtAdmin) {
+      const isUserOnboarded = await checkIsOnboarded(currentUser);
+      if (!isUserOnboarded) {
+        window.location.hash = '#/onboarding';
+      } else {
+        const isAtAuthOrToken =
+          currentHash.startsWith('#access_token') ||
+          currentHash.startsWith('#error') ||
+          cleanPath === '/login' ||
+          currentPath === '/login';
 
-      if (isAtAuthOrToken) {
-        window.location.hash = '#/dashboard';
+        if (isAtAuthOrToken) {
+          window.location.hash = '#/dashboard';
+        }
       }
     }
   }
@@ -438,27 +548,36 @@ supabase.auth.onAuthStateChange(async (event, session) => {
 
   if (session) {
     isOnboardedCache = null;
-    const isUserOnboarded = await checkIsOnboarded(session.user);
     const currentHash = window.location.hash;
     const currentPath = window.location.pathname;
-    const isAtAuthOrToken =
-      currentHash === '#/login' ||
-      currentHash.startsWith('#access_token') ||
-      currentHash.startsWith('#error') ||
-      currentPath === '/login';
+    const cleanPath = getCleanPath();
+    const isAtAdmin = cleanPath === '/admin';
 
-    if (!isUserOnboarded) {
-      window.location.hash = '#/onboarding';
-    } else if (isAtAuthOrToken) {
-      window.location.hash = '#/dashboard';
+    if (!isAtAdmin) {
+      const isUserOnboarded = await checkIsOnboarded(session.user);
+      const isAtAuthOrToken =
+        cleanPath === '/login' ||
+        currentHash.startsWith('#access_token') ||
+        currentHash.startsWith('#error') ||
+        currentPath === '/login';
+
+      if (!isUserOnboarded) {
+        window.location.hash = '#/onboarding';
+      } else if (isAtAuthOrToken) {
+        window.location.hash = '#/dashboard';
+      }
     }
   } else if (event === 'SIGNED_OUT') {
+    clearAdminPage();
     isOnboardedCache = null;
+    userRoleCache = null;
     window.location.hash = '#/';
   }
 
   // إذا تغيرت هوية المستخدم، نعيد بناء المشهد
   if (currentUser?.id !== prevUserId || !currentUser) {
+    userRoleCache = null;
+    clearAdminPage();
     if (!currentUser && isShellMounted) {
       stopRouter();
       isShellMounted = false;

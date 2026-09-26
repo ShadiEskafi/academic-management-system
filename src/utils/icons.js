@@ -198,6 +198,44 @@ shieldCheck: (size = 18) => `
       `<path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/>`,
       size
     ),
+
+  // أيقونات لوحة الإدارة
+  shield: (size = 18) =>
+    createSvg(
+      `<path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>`,
+      size
+    ),
+
+  search: (size = 18) =>
+    createSvg(
+      `<circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>`,
+      size
+    ),
+
+  refresh: (size = 18) =>
+    createSvg(
+      `<polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/>`,
+      size
+    ),
+
+  users: (size = 18) =>
+    createSvg(
+      `<path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/>`,
+      size
+    ),
+
+  mail: (size = 18) =>
+    createSvg(
+      `<path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/>`,
+      size
+    ),
+
+  copy: (size = 18) =>
+    createSvg(
+      `<rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/>`,
+      size
+    ),
 };
+
 
 

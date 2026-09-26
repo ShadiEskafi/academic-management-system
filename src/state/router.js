@@ -62,13 +62,18 @@ export function getCurrentPath() {
 }
 
 async function handleRouteChange() {
+  const { path, query } = parseHash();
+
+  // حارس المسارات المستقلة: لا يتدخل راوتر الطالب إذا كان المسار مستقلاً خارج AppShell
+  if (path === '/admin' || path === '/login' || path === '/onboarding' || path === '/' || path === '') {
+    return;
+  }
+
   const container = containerProvider?.();
   if (!container) return; // Guard: بدون Container جاهز، ما منكمل
 
   const requestId = ++currentRequestId;
   const isCurrentRequest = () => requestId === currentRequestId;
-
-  const { path, query } = parseHash();
 
   let matched = null;
   let params = {};
@@ -93,7 +98,7 @@ async function handleRouteChange() {
   const handler = matched?.handler ?? notFoundHandler;
   if (!handler) return;
 
-  const cleanup = await handler({ params, query, container, isCurrentRequest });
+  const cleanup = await handler({ path, params, query, container, isCurrentRequest });
 
   // فحص الـ Race Condition: لو تنقّلنا لمكان تاني أثناء ما كان الـ handler
   // شغّال (fetch بطيء مثلاً)، نتجاهل نتيجته وننضّف أي اشتراك فتحه
@@ -113,11 +118,12 @@ export function startRouter() {
   handleRouteChange();
 }
 
-/** يوقف الاستماع وينظّف الصفحة الحالية — يُستدعى عند تسجيل الخروج */
+/** يوقف الاستماع وينظّف الصفحة الحالية — يُستدعى عند تسجيل الخروج أو التنقل لمسار مستقل */
 export function stopRouter() {
   if (!isListening) return;
   isListening = false;
   window.removeEventListener('hashchange', handleRouteChange);
+  containerProvider = null; // تفريغ مزود الحاوية
   if (currentCleanup) {
     currentCleanup();
     currentCleanup = null;

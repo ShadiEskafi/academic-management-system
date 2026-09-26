@@ -1,4 +1,6 @@
 // src/components/AppShell.js
+// هيكل تطبيق الطالب الأكاديمي (Pure Student AppShell)
+// خالٍ تماماً من أي عناصر أو شروط تخص الإدارة، ومخصص 100% لتجربة الطالب
 import { icons } from '../utils/icons.js';
 import { escapeHtml } from '../utils/sanitize.js';
 import { getTheme, toggleTheme } from '../utils/theme.js';
