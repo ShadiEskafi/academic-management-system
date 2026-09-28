@@ -45,13 +45,13 @@ export function renderLandingPage(container, _options = {}) {
             <span class="brand-name-en">Mihwar</span>
           </a>
 
-          <!-- روابط أقسام الصفحة الانسيابية -->
+          <!-- روابط أقسام الصفحة الانسيابية (Desktop Navigation) -->
           <nav class="landing-nav-links" aria-label="أقسام الصفحة">
-            <a href="#capacity-section" class="landing-nav-link">المصفوفة الأسبوعية</a>
-            <a href="#checkpoint-section" class="landing-nav-link">شجرة الاستئناف</a>
-            <a href="#crunch-section" class="landing-nav-link">ميزان الامتحانات</a>
-            <a href="#audit-section" class="landing-nav-link">المقارنة الهندسية</a>
-            <a href="#faq-section" class="landing-nav-link">الأسئلة الشائعة</a>
+            <a href="#capacity-section" class="landing-nav-link" data-scroll-to="capacity-section">تنظيم الأسبوع</a>
+            <a href="#checkpoint-section" class="landing-nav-link" data-scroll-to="checkpoint-section">تقسيم المواد</a>
+            <a href="#crunch-section" class="landing-nav-link" data-scroll-to="crunch-section">ميزان الامتحانات</a>
+            <a href="#audit-section" class="landing-nav-link" data-scroll-to="audit-section">ليش مِحْوَر؟</a>
+            <a href="#faq-section" class="landing-nav-link" data-scroll-to="faq-section">الأسئلة الشائعة</a>
           </nav>
 
           <!-- إجراءات الحجز والتفعيل في الترويسة (3-Tier Hierarchy) -->
@@ -70,9 +70,46 @@ export function renderLandingPage(container, _options = {}) {
               <span class="nav-pill-compact">احجز</span>
               <span class="pill-arrow" aria-hidden="true">&larr;</span>
             </button>
+            <!-- زر قائمة الموبايل -->
+            <button class="landing-menu-toggle" id="landing-menu-toggle" type="button" aria-label="تبديل القائمة" aria-expanded="false">
+              <svg class="hamburger-icon" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+                <line x1="3" y1="6" x2="21" y2="6"></line>
+                <line x1="3" y1="12" x2="21" y2="12"></line>
+                <line x1="3" y1="18" x2="21" y2="18"></line>
+              </svg>
+              <svg class="close-icon" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" style="display:none;">
+                <line x1="18" y1="6" x2="6" y2="18"></line>
+                <line x1="6" y1="6" x2="18" y2="18"></line>
+              </svg>
+            </button>
           </div>
 
+        </div>
 
+        <!-- الدرج التفاعلي لشاشات الموبايل (Mobile Responsive Drawer) -->
+        <div id="landing-mobile-drawer" class="landing-mobile-drawer" aria-hidden="true">
+          <nav class="landing-drawer-nav" aria-label="روابط الموبايل">
+            <a href="#capacity-section" class="landing-drawer-link" data-scroll-to="capacity-section">تنظيم الأسبوع</a>
+            <a href="#checkpoint-section" class="landing-drawer-link" data-scroll-to="checkpoint-section">تقسيم المواد</a>
+            <a href="#crunch-section" class="landing-drawer-link" data-scroll-to="crunch-section">ميزان الامتحانات</a>
+            <a href="#audit-section" class="landing-drawer-link" data-scroll-to="audit-section">ليش مِحْوَر؟</a>
+            <a href="#faq-section" class="landing-drawer-link" data-scroll-to="faq-section">الأسئلة الشائعة</a>
+          </nav>
+          <div class="landing-drawer-divider"></div>
+          <div class="landing-drawer-actions">
+            <a href="#/login" class="landing-drawer-ghost-link">
+              ${icons.user(16)}
+              <span>تسجيل الدخول</span>
+            </a>
+            <button type="button" class="landing-drawer-secondary-btn" data-action="open-activation">
+              <span>تفعيل مقعدك</span>
+            </button>
+            <button type="button" class="landing-drawer-pill-btn" data-action="open-waitlist">
+              <span class="pill-sparkle">${icons.sparkles(16)}</span>
+              <span>احجز مقعدك وابدأ مجاناً</span>
+              <span class="pill-arrow" aria-hidden="true">&larr;</span>
+            </button>
+          </div>
         </div>
       </header>
 
@@ -83,30 +120,33 @@ export function renderLandingPage(container, _options = {}) {
         <section class="landing-hero">
           <div class="landing-container">
             
-            <!-- شارة الحالة الصارمة -->
-            <div class="hero-badge bidi-plaintext" dir="ltr">
+            <!-- شارة الحالة الذكية للطلاب -->
+            <div class="hero-badge">
               <span class="pilot-lamp" aria-hidden="true"></span>
-              <span>SYSTEM: DETERMINISTIC ENGINE &bull; ZERO-DRIFT</span>
+              <span>النظام الأكاديمي الأذكى لطلاب الجامعات</span>
             </div>
 
             <!-- العنوان الرئيسي الأنيق المتدرج -->
             <h1 class="hero-title">
-              إلغاء التشتت الأكاديمي.<br>
-              <span class="hero-title-gradient">ضبط الإيقاع الزمني بحسابات قطعية.</span>
+              ادرس بذكاء..<br>
+              <span class="hero-title-gradient">وخلّص موادك بدون زنقة الامتحانات.</span>
             </h1>
 
-            <!-- الوصف الفني الواضح -->
+            <!-- الوصف المباشر والواضح -->
             <p class="hero-desc">
-              محرك إدارة جامعية يحوّل ساعات تفرغك إلى إحداثيات مدروسة، يحفظ نقطة توقفك في كل مساق حتى الثانية، ويضاعف وتيرة الدراسة تلقائياً قبل الامتحانات بنسبة صفر تعارض زمني.
+              بدل ما تضل تايه بين سلايدات الـ 400 صفحة وتتفاجأ ليلة الامتحان.. مِحْوَر بفككلك موادك لمحطات صغيرة، بحسبلك علامات كل درس، وبوزع دراستك ع الأسبوع بروقان.
             </p>
 
-            <!-- زر الدعوة الرئيسي الأوحد لقائمة الانتظار -->
+            <!-- أزرار الدعوة للإجراء -->
             <div class="hero-ctas">
               <button type="button" class="landing-waitlist-pill-btn" data-action="open-waitlist">
                 <span class="pill-sparkle">${icons.sparkles(16)}</span>
-                <span>احجز مقعدك في التجربة الأولى</span>
+                <span>بلّش نظّم فصلك هلقيت (مجاناً)</span>
                 <span class="pill-arrow" aria-hidden="true">&larr;</span>
               </button>
+              <a href="#checkpoint-section" class="saas-btn-secondary" data-scroll-to="checkpoint-section">
+                <span>استكشف ميزات النظام</span>
+              </a>
               <div class="hero-cta-subnote bidi-plaintext" dir="ltr">
                 BATCH-01 ACCESS &bull; LIMITED EARLY SEATS
               </div>
@@ -119,8 +159,8 @@ export function renderLandingPage(container, _options = {}) {
                   <div class="hud-dots" aria-hidden="true">
                     <span></span><span></span><span></span>
                   </div>
-                  <div class="hud-title-text bidi-plaintext" dir="ltr">
-                    RUNTIME: ACTIVE_SESSION [ID: S-9842 &bull; AVL_ROTATION]
+                  <div class="hud-title-text">
+                    جلسة تركيز جارية
                   </div>
                 </div>
 
@@ -130,7 +170,7 @@ export function renderLandingPage(container, _options = {}) {
                       <span class="hud-course-tag bidi-plaintext" dir="ltr">CS-301: DATA_STRUCTURES</span>
                       <span class="hud-crunch-badge">
                         ${icons.zap(13)}
-                        <span>مقياس الضغط: 2.1x (امتحان وشيك بعد 9 أيام)</span>
+                        <span>امتحان وشيك بعد 9 أيام (تركيز مضاعف)</span>
                       </span>
                     </div>
 
@@ -142,8 +182,8 @@ export function renderLandingPage(container, _options = {}) {
                         <div class="hud-progress-track">
                           <div class="hud-progress-fill" style="width: 68%;"></div>
                         </div>
-                        <div class="hud-progress-label bidi-plaintext" dir="ltr">
-                          PROGRESS: 68% &bull; REMAINING: 18m
+                        <div class="hud-progress-label">
+                          <span>إنجاز الدرس: 68%</span> &bull; <span>المتبقي: 18 دقيقة</span>
                         </div>
                       </div>
 
@@ -152,7 +192,7 @@ export function renderLandingPage(container, _options = {}) {
                         <div id="landing-mockup-timer" class="mockup-timer-clock bidi-plaintext" dir="ltr">00:42:18</div>
                         <div class="hud-chrono-status">
                           <span class="pilot-lamp" aria-hidden="true"></span>
-                          <span>مؤقت حي متصاعد</span>
+                          <span>مؤقت تركيز فعّال</span>
                         </div>
                       </div>
                     </div>
@@ -163,8 +203,8 @@ export function renderLandingPage(container, _options = {}) {
                       ${icons.calendar(14)}
                       <span>الجلسة القادمة: أنظمة التشغيل (OS) - اليوم 06:30 م</span>
                     </div>
-                    <div class="bidi-plaintext" dir="ltr" style="font-family: var(--saas-font-mono); font-size: 11px; color: var(--saas-emerald);">
-                      CHECKPOINT INTEGRITY: 100% PERSISTED
+                    <div style="font-family: var(--saas-font-mono); font-size: 11px; color: var(--saas-emerald);">
+                      مكان وقوفك محفوظ بالثانية
                     </div>
                   </div>
                 </div>
@@ -174,51 +214,39 @@ export function renderLandingPage(container, _options = {}) {
           </div>
         </section>
 
-        <!-- القسم 1: شريط الإثبات المصغر فائق النحافة (Minimal Proof Strip 44px) -->
-        <section class="minimal-proof-strip landing-reveal" aria-label="مؤشرات أداء مِحْوَر">
+        <!-- القسم 1: شريط الإثبات والمؤشرات (Student Outcomes Stats Bar) -->
+        <section class="minimal-proof-strip landing-reveal" aria-label="مؤشرات أداء مِحْوَر للطلاب">
           <div class="landing-container">
-            <div class="proof-strip-inner bidi-plaintext" dir="ltr">
+            <div class="proof-strip-inner" style="justify-content: space-around;">
               <div class="proof-item">
-                <span class="pilot-lamp"></span>
-                <span>SIGNAL: LOCKED</span>
-                <span style="color: var(--saas-text-muted);">(صفر تعارض زمني)</span>
+                <span class="pilot-lamp" aria-hidden="true"></span>
+                <strong style="color: var(--saas-amber); font-weight: 700; margin-inline-end: 4px;">+8 ساعات</strong>
+                <span>توفير من السهر العشوائي أسبوعياً</span>
               </div>
-              <span class="proof-sep">/</span>
+              <span class="proof-sep" aria-hidden="true">/</span>
               <div class="proof-item">
-                <span style="color: var(--saas-cyan);">&bull;</span>
-                <span>ENGINE: ROUND-ROBIN BALANCED</span>
-                <span style="color: var(--saas-text-muted);">(توزيع متكافئ للمواد)</span>
+                <span style="color: var(--saas-cyan);" aria-hidden="true">&bull;</span>
+                <strong style="color: var(--saas-cyan); font-weight: 700; margin-inline-end: 4px;">100%</strong>
+                <span>مصمم للمواد الجامعية المضغوطة</span>
               </div>
-              <span class="proof-sep">/</span>
+              <span class="proof-sep" aria-hidden="true">/</span>
               <div class="proof-item">
-                <span style="color: var(--saas-emerald);">&bull;</span>
-                <span>STATE: 1-MIN CHECKPOINT SYNC</span>
-                <span style="color: var(--saas-text-muted);">(حفظ نقطة التوقف)</span>
-              </div>
-              <span class="proof-sep">/</span>
-              <div class="proof-item">
-                <span style="color: var(--saas-amber);">&bull;</span>
-                <span>AUTO-CRUNCH: T-MINUS MULTIPLIER</span>
-                <span style="color: var(--saas-text-muted);">(مضاعفة الساعات للامتحانات)</span>
-              </div>
-              <span class="proof-sep">/</span>
-              <div class="proof-item">
-                <span style="color: var(--saas-emerald);">&bull;</span>
-                <span>DRIFT: 0.00%</span>
-                <span style="color: var(--saas-text-muted);">(تزامن تام)</span>
+                <span style="color: var(--saas-emerald);" aria-hidden="true">&bull;</span>
+                <strong style="color: var(--saas-emerald); font-weight: 700; margin-inline-end: 4px;">Batch-01</strong>
+                <span>تفعيل فوري لمقاعد الدفعة الأولى</span>
               </div>
             </div>
           </div>
         </section>
 
-        <!-- القسم 2: مصفوفة توزيع التفرغ (Hellotime-Style Capacity Matrix Widget) -->
+        <!-- القسم 2: مصفوفة توزيع التفرغ الأسبوعي (Weekly Load Balancing) -->
         <section id="capacity-section" class="section-wrapper landing-reveal">
           <div class="landing-container">
             <div class="section-header">
-              <span class="section-eyebrow bidi-plaintext" dir="ltr">[CAPACITY ALLOCATION MATRIX]</span>
-              <h2 class="section-title">تخطيط أسبوعي ذري يلغي الصدفة والعشوائية</h2>
+              <span class="section-eyebrow">[توزيع متوازن]</span>
+              <h2 class="section-title">رتّب أسبوعك بدون وهم: «ملحوق وبدرس بكرة»</h2>
               <p class="section-subtext">
-                توزيع ساعات المذاكرة تلقائياً في فترات فراغك الحقيقية بين المحاضرات مع قفل تلقائي للحصص الجامعية وحجز فترات راحة حتمية لمنع الإرهاق.
+                كل يوم بنحكي "معي وقت بالويكند"، وفجأة بيجي الخميس وبنلاقي 4 كويزات وبروجكت نزلوا فوق راسنا! مِحْوَر بشوف أوقات فراغك الحقيقية وبوزع دراستك عليها بهدوء.. ساعتين باليوم بروقان، أحسن من سهرة رعب 14 ساعة قبل الامتحان.
               </p>
             </div>
 
@@ -231,15 +259,15 @@ export function renderLandingPage(container, _options = {}) {
                   <div class="capacity-block capacity-block-locked">
                     <strong class="bidi-plaintext" dir="ltr">08:00 - 10:00</strong>
                     <span>محاضرة جامعية: فيزياء</span>
-                    <span class="bidi-plaintext" dir="ltr" style="font-size: 9px; opacity: 0.7;">[SLOT: LOCKED]</span>
+                    <span style="font-size: 9px; opacity: 0.7;">[محاضرة جامعية مقفلة]</span>
                   </div>
                   <div class="capacity-block capacity-block-buffer">
-                    <span>استراحة إلزامية (30 دقيقة)</span>
+                    <span>استراحة وتفريغ ذهني (30 دقيقة)</span>
                   </div>
                   <div class="capacity-block capacity-block-mihwar">
                     <strong class="bidi-plaintext" dir="ltr">10:30 - 12:30</strong>
                     <span>مِحْوَر: هياكل بيانات</span>
-                    <span class="bidi-plaintext" dir="ltr" style="font-size: 9px; font-weight: 700;">[AUTO-SCHEDULED]</span>
+                    <span style="font-size: 9px; font-weight: 700;">[موزعة تلقائياً بروقان]</span>
                   </div>
                   <div class="capacity-block capacity-block-buffer">
                     <span>فراغ جامعي</span>
@@ -252,12 +280,12 @@ export function renderLandingPage(container, _options = {}) {
                   <div class="capacity-block capacity-block-mihwar">
                     <strong class="bidi-plaintext" dir="ltr">09:00 - 11:00</strong>
                     <span>مِحْوَر: نظم تشغيل</span>
-                    <span class="bidi-plaintext" dir="ltr" style="font-size: 9px; font-weight: 700;">[CRUNCH 2.5x]</span>
+                    <span style="font-size: 9px; font-weight: 700;">[تركيز مكثف 2.5x]</span>
                   </div>
                   <div class="capacity-block capacity-block-locked">
                     <strong class="bidi-plaintext" dir="ltr">11:30 - 01:30</strong>
                     <span>مختبر برمجيات</span>
-                    <span class="bidi-plaintext" dir="ltr" style="font-size: 9px; opacity: 0.7;">[SLOT: LOCKED]</span>
+                    <span style="font-size: 9px; opacity: 0.7;">[مختبر مقفل]</span>
                   </div>
                   <div class="capacity-block capacity-block-buffer">
                     <span>استراحة غداء</span>
@@ -270,17 +298,17 @@ export function renderLandingPage(container, _options = {}) {
                   <div class="capacity-block capacity-block-locked">
                     <strong class="bidi-plaintext" dir="ltr">08:00 - 10:00</strong>
                     <span>محاضرة جامعية: فيزياء</span>
-                    <span class="bidi-plaintext" dir="ltr" style="font-size: 9px; opacity: 0.7;">[SLOT: LOCKED]</span>
+                    <span style="font-size: 9px; opacity: 0.7;">[محاضرة مقفلة]</span>
                   </div>
                   <div class="capacity-block capacity-block-mihwar">
                     <strong class="bidi-plaintext" dir="ltr">10:30 - 12:00</strong>
                     <span>مِحْوَر: هندسة برمجيات</span>
-                    <span class="bidi-plaintext" dir="ltr" style="font-size: 9px; font-weight: 700;">[ROUND-ROBIN]</span>
+                    <span style="font-size: 9px; font-weight: 700;">[توزيع متكافئ]</span>
                   </div>
                   <div class="capacity-block capacity-block-mihwar">
                     <strong class="bidi-plaintext" dir="ltr">02:00 - 03:30</strong>
                     <span>مِحْوَر: احتمالات وإحصاء</span>
-                    <span class="bidi-plaintext" dir="ltr" style="font-size: 9px; font-weight: 700;">[AUTO-SCHEDULED]</span>
+                    <span style="font-size: 9px; font-weight: 700;">[موزعة تلقائياً]</span>
                   </div>
                 </div>
 
@@ -293,12 +321,12 @@ export function renderLandingPage(container, _options = {}) {
                   <div class="capacity-block capacity-block-mihwar">
                     <strong class="bidi-plaintext" dir="ltr">10:00 - 12:30</strong>
                     <span>مِحْوَر: نظم تشغيل مكثف</span>
-                    <span class="bidi-plaintext" dir="ltr" style="font-size: 9px; font-weight: 700;">[CRUNCH WEIGHT]</span>
+                    <span style="font-size: 9px; font-weight: 700;">[أولوية امتحان]</span>
                   </div>
                   <div class="capacity-block capacity-block-locked">
                     <strong class="bidi-plaintext" dir="ltr">01:00 - 03:00</strong>
                     <span>مشروع تخرج / تدريب</span>
-                    <span class="bidi-plaintext" dir="ltr" style="font-size: 9px; opacity: 0.7;">[SLOT: LOCKED]</span>
+                    <span style="font-size: 9px; opacity: 0.7;">[التزام مقفل]</span>
                   </div>
                 </div>
 
@@ -308,10 +336,10 @@ export function renderLandingPage(container, _options = {}) {
                   <div class="capacity-block capacity-block-mihwar">
                     <strong class="bidi-plaintext" dir="ltr">09:00 - 11:30</strong>
                     <span>مِحْوَر: مراجعة أسبوعية</span>
-                    <span class="bidi-plaintext" dir="ltr" style="font-size: 9px; font-weight: 700;">[CONSOLIDATION]</span>
+                    <span style="font-size: 9px; font-weight: 700;">[تثبيت وإنجاز]</span>
                   </div>
                   <div class="capacity-block capacity-block-buffer">
-                    <span>نهاية الأسبوع الأكاديمي</span>
+                    <span>نهاية الأسبوع الأكاديمي بروقان</span>
                   </div>
                 </div>
 
@@ -319,11 +347,11 @@ export function renderLandingPage(container, _options = {}) {
 
               <div class="capacity-footer-bar">
                 <div style="display: flex; align-items: center; gap: 8px;">
-                  <span class="pilot-lamp"></span>
-                  <span>ساعات التفرغ المخصصة للدراسة: <strong>16.5 ساعة أسبوعياً</strong> موزعة رياضياً.</span>
+                  <span class="pilot-lamp" aria-hidden="true"></span>
+                  <span>ساعات التفرغ المخصصة للدراسة: <strong>16.5 ساعة أسبوعياً</strong> موزعة بهدوء ومرونة.</span>
                 </div>
-                <div class="bidi-plaintext" dir="ltr" style="font-family: var(--saas-font-mono); font-size: 11px; color: var(--saas-emerald);">
-                  COLLISION PROBABILITY: 0.000% [MATHEMATICALLY IMPOSSIBLE]
+                <div style="font-family: var(--saas-font-mono); font-size: 11px; color: var(--saas-emerald);">
+                  توزيع ذكي بدون أي تصادم مع محاضراتك الجامعية
                 </div>
               </div>
             </div>
@@ -331,14 +359,14 @@ export function renderLandingPage(container, _options = {}) {
           </div>
         </section>
 
-        <!-- القسم 3: شجرة نقطة التوقف النشطة (Linear/Mintlify Checkpoint Tree Widget) -->
+        <!-- القسم 3: شجرة تقسيم المواد واستئناف الدروس (Course Breakdown) -->
         <section id="checkpoint-section" class="section-wrapper landing-reveal">
           <div class="landing-container">
             <div class="section-header">
-              <span class="section-eyebrow bidi-plaintext" dir="ltr">[STATE PERSISTENCE TREE]</span>
-              <h2 class="section-title">استئناف فوري من حيث توقفت بدون ضياع ثانية</h2>
+              <span class="section-eyebrow">[تقسيم مريح]</span>
+              <h2 class="section-title">المادة مش جبل مسكّر.. قسّمها لمحطات صغيرة</h2>
               <p class="section-subtext">
-                تدرج شجري هيكلي لكل وحدة ومحاضرة في كل مساق، مع رصد ذكي لنقطة التوقف وحفظها فورياً حتى عند إغلاق التبويب فجأة.
+                أكبر سبب بخليك تأجل دراستك إنك بتفتح الملف وبتلاقيه 300 صفحة ورا بعض بتسد النفس! بمِحْوَر، المادة بتتقسم قدامك لدروس واضحة: بتعرف شو عليك اليوم، بتخلصه وبتشطبه، وبترفع نسبة إنجازك خطوة خطوة.
               </p>
             </div>
 
@@ -352,8 +380,8 @@ export function renderLandingPage(container, _options = {}) {
                     الفصل الدراسي الحالي &bull; 4 ساعات معتمدة
                   </span>
                 </div>
-                <div class="bidi-plaintext" dir="ltr" style="font-family: var(--saas-font-mono); font-size: 12px; color: var(--saas-emerald); background: var(--saas-emerald-soft); padding: 4px 10px; border-radius: var(--saas-radius-sm); border: 1px solid var(--saas-border-emerald);">
-                  TOTAL PROGRESS: 74%
+                <div style="font-family: var(--saas-font-mono); font-size: 12px; color: var(--saas-emerald); background: var(--saas-emerald-soft); padding: 4px 10px; border-radius: var(--saas-radius-sm); border: 1px solid var(--saas-border-emerald);">
+                  نسبة الإنجاز: 74%
                 </div>
               </div>
 
@@ -363,10 +391,10 @@ export function renderLandingPage(container, _options = {}) {
                 <div class="tree-unit-row is-completed">
                   <div style="display: flex; align-items: center; gap: 8px;">
                     <span style="color: var(--saas-emerald);">${icons.check(15)}</span>
-                    <span>الوحدة 1: تحليل تعقيد الخوارزميات والتدوين الرياضي (Asymptotic Notation)</span>
+                    <span>الوحدة 1: تحليل تعقيد الخوارزميات (Asymptotic Notation)</span>
                   </div>
-                  <span class="bidi-plaintext" dir="ltr" style="font-size: 11px; font-family: var(--saas-font-mono);">
-                    [4/4 LECTURES DONE]
+                  <span style="font-size: 11px; font-family: var(--saas-font-mono);">
+                    [تم إنجاز 4/4 محاضرات]
                   </span>
                 </div>
 
@@ -376,8 +404,8 @@ export function renderLandingPage(container, _options = {}) {
                     <span style="color: var(--saas-emerald);">${icons.check(15)}</span>
                     <span>الوحدة 2: هياكل البيانات المترابطة والقوائم والمكدسات (Stacks &amp; Queues)</span>
                   </div>
-                  <span class="bidi-plaintext" dir="ltr" style="font-size: 11px; font-family: var(--saas-font-mono);">
-                    [6/6 LECTURES DONE]
+                  <span style="font-size: 11px; font-family: var(--saas-font-mono);">
+                    [تم إنجاز 6/6 محاضرات]
                   </span>
                 </div>
 
@@ -387,8 +415,8 @@ export function renderLandingPage(container, _options = {}) {
                     <span style="color: var(--saas-emerald);">${icons.folderTree(15)}</span>
                     <strong>الوحدة 3: الأشجار المتوازنة وأشجار البحث الثنائية (Balanced Trees)</strong>
                   </div>
-                  <span class="bidi-plaintext" dir="ltr" style="font-size: 11px; font-family: var(--saas-font-mono); color: var(--saas-emerald);">
-                    [CURRENT BRANCH &bull; 3/5]
+                  <span style="font-size: 11px; font-family: var(--saas-font-mono); color: var(--saas-emerald);">
+                    [المحطة الحالية &bull; 3 من 5]
                   </span>
                 </div>
 
@@ -399,7 +427,7 @@ export function renderLandingPage(container, _options = {}) {
                       <span style="color: var(--saas-emerald);">${icons.check(14)}</span>
                       <span>محاضرة 1: خصائص Binary Search Trees والمطابقة الخطية</span>
                     </div>
-                    <span class="bidi-plaintext" dir="ltr">COMPLETED</span>
+                    <span style="color: var(--saas-emerald);">مكتملة</span>
                   </div>
 
                   <div class="tree-lecture-node">
@@ -407,13 +435,13 @@ export function renderLandingPage(container, _options = {}) {
                       <span style="color: var(--saas-emerald);">${icons.check(14)}</span>
                       <span>محاضرة 2: شجرة AVL وحساب معامل التوازن (Balance Factor)</span>
                     </div>
-                    <span class="bidi-plaintext" dir="ltr">COMPLETED</span>
+                    <span style="color: var(--saas-emerald);">مكتملة</span>
                   </div>
 
                   <!-- العقدة النشطة (Active Checkpoint) -->
                   <div class="tree-lecture-node is-active-checkpoint">
                     <div style="display: flex; align-items: center; gap: 10px;">
-                      <span class="pilot-lamp"></span>
+                      <span class="pilot-lamp" aria-hidden="true"></span>
                       <div>
                         <strong style="color: #ffffff;">محاضرة 3: الدوران الأحادي والمزدوج (Left/Right Rotations)</strong>
                         <div style="font-size: 11px; color: var(--saas-emerald); margin-top: 2px;">
@@ -421,8 +449,8 @@ export function renderLandingPage(container, _options = {}) {
                         </div>
                       </div>
                     </div>
-                    <span class="tree-resume-pill bidi-plaintext" dir="ltr">
-                      SAVED CHECKPOINT &bull; 18:40
+                    <span class="tree-resume-pill">
+                      مكان وقوفك محفوظ &bull; 18:40
                     </span>
                   </div>
 
@@ -431,7 +459,7 @@ export function renderLandingPage(container, _options = {}) {
                       <span style="color: var(--saas-text-dim);">&bull;</span>
                       <span>محاضرة 4: أشجار Red-Black Trees ومقارنة التعقيد الزمني</span>
                     </div>
-                    <span class="bidi-plaintext" dir="ltr" style="opacity: 0.5;">UPCOMING</span>
+                    <span style="opacity: 0.5;">المحطة القادمة</span>
                   </div>
                 </div>
 
@@ -441,14 +469,14 @@ export function renderLandingPage(container, _options = {}) {
           </div>
         </section>
 
-        <!-- القسم 4: ميزان ضغط الامتحانات (Auto-Crunch Weight Widget) -->
+        <!-- القسم 4: ميزان ضغط الامتحانات والأولويات (Exam Priorities & Weights) -->
         <section id="crunch-section" class="section-wrapper landing-reveal">
           <div class="landing-container">
             <div class="section-header">
-              <span class="section-eyebrow bidi-plaintext" dir="ltr">[DYNAMIC CRUNCH ENGINE]</span>
-              <h2 class="section-title">إعادة موازنة الساعات تلقائياً حسب قرب موعد الامتحان</h2>
+              <span class="section-eyebrow">[دراسة بذكاء]</span>
+              <h2 class="section-title">ما تضيّع ليلتك ع درس ما عليه غير علامتين!</h2>
               <p class="section-subtext">
-                ترفع خوارزمية مِحْوَر تلقائياً وزن وأولوية المساق الأقرب للاختبارات النهائية، لتركز جهدك حيث تكون الحاجة ملحة دون الحاجة لإعادة التخطيط يدوياً.
+                مش شطارة تسهر ليلة كاملة ع أصعب شابتر بالكتاب، وتروح ع الامتحان تلاقي الدكتور جايب عليه سؤال بـ 3 علامات، والدرس اللي طنشته عليه نص الامتحان! مِحْوَر بورجيك ثقل كل درس بالامتحان وكم ساعة محتاج لتركيزه عشان تضمن معدلك.
               </p>
             </div>
 
@@ -461,8 +489,8 @@ export function renderLandingPage(container, _options = {}) {
                     <span class="bidi-plaintext" dir="ltr" style="font-family: var(--saas-font-mono); font-size: 12px; color: var(--saas-amber); font-weight: 700;">
                       CS-311: OPERATING_SYSTEMS
                     </span>
-                    <span class="crunch-status-badge crunch-high bidi-plaintext" dir="ltr">
-                      T-9 DAYS [CRUNCH: 2.5x]
+                    <span class="crunch-status-badge crunch-high">
+                      باقي 9 أيام [تركيز مكثف 2.5x]
                     </span>
                   </div>
 
@@ -470,7 +498,7 @@ export function renderLandingPage(container, _options = {}) {
                     نظم التشغيل والعمليات المتزامنة (OS)
                   </h4>
                   <p style="font-size: 13px; color: var(--saas-text-secondary); line-height: 1.6; margin: 0;">
-                    موعد الاختبار النهائي بعد 9 أيام فقط. قامت الخوارزمية بمضاعفة الساعات المقترحة أسبوعياً من 4 ساعات إلى 10 ساعات وحجز حصص ذات تركيز مرتفع.
+                    موعد الاختبار النهائي بعد 9 أيام فقط. مِحْوَر ضاعف الساعات المقترحة أسبوعياً تلقائياً من 4 ساعات إلى 10 ساعات وحجز حصص تركيز عالية عشان تراجع مادتك بدون سهر رعب.
                   </p>
 
                   <div class="crunch-scale-meter">
@@ -479,8 +507,8 @@ export function renderLandingPage(container, _options = {}) {
                 </div>
 
                 <div style="display: flex; align-items: center; justify-content: space-between; font-size: 12px; color: var(--saas-text-muted); border-top: 1px solid var(--saas-border-subtle); padding-top: 12px; margin-top: 16px;">
-                  <span>الحصص الأسبوعية: <strong>5 جلسات / أسبوع</strong></span>
-                  <span class="bidi-plaintext" dir="ltr" style="color: var(--saas-amber); font-weight: 700;">WEIGHT: 2.50x</span>
+                  <span>الحصص المقترحة: <strong>5 جلسات / أسبوع</strong></span>
+                  <span style="color: var(--saas-amber); font-weight: 700;">وزن الامتحان: 2.50x</span>
                 </div>
               </div>
 
@@ -491,8 +519,8 @@ export function renderLandingPage(container, _options = {}) {
                     <span class="bidi-plaintext" dir="ltr" style="font-family: var(--saas-font-mono); font-size: 12px; color: var(--saas-cyan); font-weight: 700;">
                       SWE-201: SOFTWARE_ENGINEERING
                     </span>
-                    <span class="crunch-status-badge crunch-normal bidi-plaintext" dir="ltr">
-                      T-34 DAYS [BASELINE: 1.0x]
+                    <span class="crunch-status-badge crunch-normal">
+                      باقي 34 يوماً [وتيرة مستقرة 1.0x]
                     </span>
                   </div>
 
@@ -500,7 +528,7 @@ export function renderLandingPage(container, _options = {}) {
                     هندسة البرمجيات ودورة حياة النظم (SWE)
                   </h4>
                   <p style="font-size: 13px; color: var(--saas-text-secondary); line-height: 1.6; margin: 0;">
-                    موعد الاختبار بعد 34 يوماً. يعمل المساق بوتيرة تراكمية هادئة بمعدل جلستين أسبوعياً لمنع تراكم المحاضرات دون استنزاف طاقتك الذهنية.
+                    موعد الاختبار بعد شهر تقريباً. وتيرة دراسة تراكمية هادئة بمعدل جلستين أسبوعياً لمنع تراكم المحاضرات براحة بال ودون استنزاف طاقتك الذهنية.
                   </p>
 
                   <div class="crunch-scale-meter">
@@ -509,8 +537,8 @@ export function renderLandingPage(container, _options = {}) {
                 </div>
 
                 <div style="display: flex; align-items: center; justify-content: space-between; font-size: 12px; color: var(--saas-text-muted); border-top: 1px solid var(--saas-border-subtle); padding-top: 12px; margin-top: 16px;">
-                  <span>الحصص الأسبوعية: <strong>جلستان / أسبوع</strong></span>
-                  <span class="bidi-plaintext" dir="ltr" style="color: var(--saas-cyan); font-weight: 700;">WEIGHT: 1.00x</span>
+                  <span>الحصص المقترحة: <strong>جلستان / أسبوع</strong></span>
+                  <span style="color: var(--saas-cyan); font-weight: 700;">وزن الامتحان: 1.00x</span>
                 </div>
               </div>
 
@@ -518,14 +546,14 @@ export function renderLandingPage(container, _options = {}) {
           </div>
         </section>
 
-        <!-- القسم 5: سجل التدقيق والمقارنة (The Precision Audit Ledger) -->
+        <!-- القسم 5: المقارنة الصريحة (The Real Comparison) -->
         <section id="audit-section" class="section-wrapper landing-reveal">
           <div class="landing-container">
             <div class="section-header">
-              <span class="section-eyebrow bidi-plaintext" dir="ltr">[ARCHITECTURAL AUDIT LEDGER]</span>
-              <h2 class="section-title">الفارق الجذري بين الفوضى ودقة محرك مِحْوَر</h2>
+              <span class="section-eyebrow">[مقارنة حقيقية]</span>
+              <h2 class="section-title">الفرق بين التشتت الجامعي المعتاد.. وراحة البال مع مِحْوَر</h2>
               <p class="section-subtext">
-                مقارنة مباشرة تثبت كيف تحل المعمارية الحسابية مشاكل التشتت الأكاديمي التي تعجز عنها الجداول الورقية والتطبيقات العامة.
+                شوف الفرق بين الفوضى اللي بتعيشها كل فصل، وبين النظام اللي بريّح راسك وبرفع معدلك.
               </p>
             </div>
 
@@ -533,43 +561,43 @@ export function renderLandingPage(container, _options = {}) {
               
               <!-- المقارنة 1: التفرغ والتعارض -->
               <div class="audit-row audit-row-chaos">
-                <span class="audit-tag bidi-plaintext" dir="ltr">[CHAOS_MODE]</span>
+                <span class="audit-tag">[ بدون مِحْوَر ]</span>
                 <div class="audit-text">
-                  تحديد أوقات دراسة عشوائية تتصادم مع المحاضرات الجامعية الفعلية، مما يسبب تأجيلاً متكرراً وفقدان الانضباط بنهاية الأسبوع.
+                  تحديد أوقات دراسة عشوائية بتتعارض مع محاضراتك، والنتيجة: تسويف دائم وتأجيل لآخر الأسبوع وإحباط.
                 </div>
               </div>
               <div class="audit-row audit-row-calibrated">
-                <span class="audit-tag bidi-plaintext" dir="ltr">[MIHWAR_CALIBRATED]</span>
+                <span class="audit-tag">[ مع مِحْوَر ]</span>
                 <div class="audit-text">
-                  قفل صارم لساعات محاضراتك مع حجز أوقات الدراسة في فترات التفرغ الحقيقية فقط، بنسبة تصادم تبلغ 0.00% رياضياً.
+                  قفل مواعيد محاضراتك الجامعية وتوزيع دراستك فقط في أوقات فراغك الحقيقية بروقان وبدون أي تعارض.
                 </div>
               </div>
 
               <!-- المقارنة 2: نقطة التوقف -->
               <div class="audit-row audit-row-chaos">
-                <span class="audit-tag bidi-plaintext" dir="ltr">[CHAOS_MODE]</span>
+                <span class="audit-tag">[ بدون مِحْوَر ]</span>
                 <div class="audit-text">
-                  البدء في كل جلسة بسؤال مهدِر للطاقة: "أين توقفت في المرة السابقة؟ وماذا يجب أن أدرس الآن؟" وضياع 20 دقيقة في التردد.
+                  تبدأ قعدتك ع المكتب بسؤال بضيّع نص ساعة: "وين كنت واصل وشو أدرس هلقيت؟" وتتشتت بالتلفون.
                 </div>
               </div>
               <div class="audit-row audit-row-calibrated">
-                <span class="audit-tag bidi-plaintext" dir="ltr">[MIHWAR_CALIBRATED]</span>
+                <span class="audit-tag">[ مع مِحْوَر ]</span>
                 <div class="audit-text">
-                  استئناف فوري بنقرة زر واحدة (Resume Button) من الدقيقة والثانية المحددة التي توقفت عندها بالضبط عبر Checkpoint Engine.
+                  كبسة زر وحدة بترجعك فوراً للدرس والدقيقة اللي وقفت عندها بآخر جلسة، وبتدخل بصلب الموضوع علطول.
                 </div>
               </div>
 
               <!-- المقارنة 3: ضغط الامتحانات -->
               <div class="audit-row audit-row-chaos">
-                <span class="audit-tag bidi-plaintext" dir="ltr">[CHAOS_MODE]</span>
+                <span class="audit-tag">[ بدون مِحْوَر ]</span>
                 <div class="audit-text">
-                  توزيع الساعات بالتساوي على جميع المواد حتى ليلة الامتحان، مما يفاجئ الطالب بكثافة المادة التي اقترب اختبارها.
+                  تسهر ليلة كاملة ع أصعب شابتر ما عليه غير علامتين، وتتفاجأ بنص الامتحان ع الدرس اللي طنشته.
                 </div>
               </div>
               <div class="audit-row audit-row-calibrated">
-                <span class="audit-tag bidi-plaintext" dir="ltr">[MIHWAR_CALIBRATED]</span>
+                <span class="audit-tag">[ مع مِحْوَر ]</span>
                 <div class="audit-text">
-                  خوارزمية Auto-Crunch ترصد العد التنازلي للاختبارات وتعيد توجيه ساعات الأسبوع تلقائياً للمساق الأكثر إلحاحاً.
+                  توزيع وقتك حسب ثقل علامات الامتحان وموعده، عشان تضمن أعلى معدل بأقل مجهود وتوتر.
                 </div>
               </div>
 
@@ -577,14 +605,14 @@ export function renderLandingPage(container, _options = {}) {
           </div>
         </section>
 
-        <!-- القسم 6: الأسئلة الشائعة الهندسية والنداء الأخير (Technical FAQ & Master CTA) -->
+        <!-- القسم 6: الأسئلة الشائعة والنداء الأخير (Technical FAQ & Master CTA) -->
         <section id="faq-section" class="section-wrapper landing-reveal" style="border-bottom: none;">
           <div class="landing-container">
             <div class="section-header">
-              <span class="section-eyebrow bidi-plaintext" dir="ltr">[TECHNICAL SPECIFICATIONS &amp; FAQ]</span>
-              <h2 class="section-title">تساؤلات معمارية وإجابات قطعية</h2>
+              <span class="section-eyebrow">[الأسئلة الشائعة]</span>
+              <h2 class="section-title">كل اللي ببالك عن مِحْوَر وكيف بفيدك</h2>
               <p class="section-subtext">
-                كل ما تحتاج معرفته عن فلسفة النظام، حماية البيانات، وآلية التشغيل الفورية.
+                إجابات سريعة وواضحة على أهم استفسارات الطلبة عن النظام والتجربة الأولى.
               </p>
             </div>
 
@@ -594,52 +622,52 @@ export function renderLandingPage(container, _options = {}) {
               <div class="faq-card is-open">
                 <button type="button" class="faq-trigger" aria-expanded="true">
                   <div class="faq-code-wrap">
-                    <span class="faq-code-tag bidi-plaintext" dir="ltr">[FAQ-01: ENGINE]</span>
-                    <strong>كيف تضمن الخوارزمية انعدام أي تعارض زمني بنسبة 0.00%؟</strong>
+                    <span class="faq-code-tag">[سؤال 01]</span>
+                    <strong>كيف مِحْوَر بضمن إنه مواعيد دراستي ما تتعارض مع محاضراتي الجامعية؟</strong>
                   </div>
                   <span class="faq-chevron bidi-plaintext" dir="ltr">&#9662;</span>
                 </button>
                 <div class="faq-content-pane">
-                  يقوم المحرك بفرز فترات التفرغ المحددة وتطبيق خوارزمية الفحص الصارم (Non-Overlapping Interval Scheduler). يتم استبعاد أي دقيقة محجوزة لمحاضرة جامعية أو التزام مسبق قبل تخصيص أي جلسة مذاكرة، مع حجز هوامش راحة (Buffer Time) إجبارية.
+                  مِحْوَر بياخد جدولك الجامعي وبقفله تماماً، وبوزع ساعات دراستك فقط في أوقات الفراغ الحقيقية بين المحاضرات مع فترات راحة كافية عشان تدرس بنشاط وما ترهق حالك.
                 </div>
               </div>
 
               <div class="faq-card">
                 <button type="button" class="faq-trigger" aria-expanded="false">
                   <div class="faq-code-wrap">
-                    <span class="faq-code-tag bidi-plaintext" dir="ltr">[FAQ-02: STORAGE]</span>
-                    <strong>هل تضيع نقاط التوقف (Checkpoints) عند إغلاق المتصفح فجأة؟</strong>
+                    <span class="faq-code-tag">[سؤال 02]</span>
+                    <strong>لو سكرت اللابتوب أو المتصفح فجأة.. هل بضيع وين كنت واصل؟</strong>
                   </div>
                   <span class="faq-chevron bidi-plaintext" dir="ltr">&#9662;</span>
                 </button>
                 <div class="faq-content-pane">
-                  كلا، النظام مزود بمحرك مزامنة لحظي (Realtime Persistence) يحفظ موضعك الدقيق عند كل انتقال ومحاضرة، بالإضافة إلى مؤقت محلي يرسل حالة التقدم تلقائياً لقاعدة البيانات المشفرة السحابية.
+                  أبداً! مِحْوَر بحفظ مكان وقوفك وإنجازك بالدرس لحظة بلحظة سحابياً، وأول ما تفتح بترجع بنفس المكان والدقيقة بنقرة وحدة بدون أي ضياع لوقتك.
                 </div>
               </div>
 
               <div class="faq-card">
                 <button type="button" class="faq-trigger" aria-expanded="false">
                   <div class="faq-code-wrap">
-                    <span class="faq-code-tag bidi-plaintext" dir="ltr">[FAQ-03: ALGORITHM]</span>
-                    <strong>كيف يتم تفعيل مضاعف الامتحان (Auto-Crunch Weight)؟</strong>
+                    <span class="faq-code-tag">[سؤال 03]</span>
+                    <strong>كيف النظام بعرف إني مضغوط قبل الامتحان وبساعدني؟</strong>
                   </div>
                   <span class="faq-chevron bidi-plaintext" dir="ltr">&#9662;</span>
                 </button>
                 <div class="faq-content-pane">
-                  بمجرد إدخال تاريخ الاختبار النهائي لأي مساق، يبدأ العداد التنازلي (T-Minus Days). عندما يقترب الموعد لما دون 14 يوماً، يتصاعد وزن المساق رياضياً من 1.0x تدريجياً حتى 2.5x، ليعيد توزيع حصص الأسبوع تلقائياً لصالحه.
+                  بمجرد ما تسجل موعد الاختبار، مِحْوَر ببلش يحسب الأيام المتبقية تلقائياً. وكل ما يقرب الامتحان، برفع أولوية المادة وساعاتها تدريجياً عشان تخلص وتراجع قبل ليلة الامتحان بدون سهر رعب.
                 </div>
               </div>
 
               <div class="faq-card">
                 <button type="button" class="faq-trigger" aria-expanded="false">
                   <div class="faq-code-wrap">
-                    <span class="faq-code-tag bidi-plaintext" dir="ltr">[FAQ-04: PREREQUISITES]</span>
-                    <strong>هل أحتاج لتثبيت أي برامج أو إضافات على جهازي؟</strong>
+                    <span class="faq-code-tag">[سؤال 04]</span>
+                    <strong>هل بحتاج أنزل برامج أو إضافات معقدة ع اللابتوب؟</strong>
                   </div>
                   <span class="faq-chevron bidi-plaintext" dir="ltr">&#9662;</span>
                 </button>
                 <div class="faq-content-pane">
-                  يعمل "مِحْوَر" بالكامل داخل المتصفح (Web-Native Application) بتقنيات متقدمة خفيفة تضمن العمل بسرعة 60 إطاراً في الثانية دون استهلاك موارد المعالج أو الحاجة لتثبيت برمجيات خارجية.
+                  لا نهائياً، مِحْوَر بشتغل مباشرة وسريعاً من أي متصفح عندك على اللابتوب أو الآيباد، بدون تحميل برامج ثقيلة أو استهلاك لموارد جهازك.
                 </div>
               </div>
 
@@ -647,20 +675,20 @@ export function renderLandingPage(container, _options = {}) {
 
             <!-- الكارت الختامي الماستر (Final Master CTA Card) -->
             <div class="final-cta-card">
-              <div class="bidi-plaintext" dir="ltr" style="font-family: var(--saas-font-mono); font-size: 11px; color: var(--saas-emerald); margin-bottom: 12px;">
-                [ZERO-DRIFT WORKSPACE]
+              <div style="font-family: var(--saas-font-mono); font-size: 11px; color: var(--saas-emerald); margin-bottom: 12px;">
+                [ انضم للدفعة الأولى ]
               </div>
               <h3 style="font-size: clamp(24px, 3.5vw, 36px); font-weight: 800; color: var(--saas-text); margin: 0 0 12px;">
-                حوّل دراستك الجامعية إلى مسار انضباطي فائق الدقة.
+                فصلك بلّش.. ادرسه بروقان مش برعب
               </h3>
               <p style="font-size: 15px; color: var(--saas-text-secondary); max-width: 580px; margin: 0 auto; line-height: 1.7;">
-                انضم الآن لمجتمع الدفعة الأولى واحجز مقعدك بتذكرة رقمية رسمية فورية.
+                جرّب مِحْوَر هلقيت، رتّب موادك من أول أسبوع، وشوف الفرق الحقيقي براحة بالك ومعدلك.
               </p>
 
               <div class="final-cta-actions">
                 <button type="button" class="landing-waitlist-pill-btn" data-action="open-waitlist">
                   <span class="pill-sparkle">${icons.sparkles(16)}</span>
-                  <span>احجز مقعدك في التجربة الأولى</span>
+                  <span>احجز مقعدك وابدأ مجاناً</span>
                   <span class="pill-arrow" aria-hidden="true">&larr;</span>
                 </button>
               </div>
@@ -674,14 +702,14 @@ export function renderLandingPage(container, _options = {}) {
       <!-- التذييل الفني المصغر (Precision Footer) -->
       <footer class="landing-footer">
         <div class="landing-container landing-footer-inner">
-          <div class="landing-footer-telemetry bidi-plaintext" dir="ltr">
-            [SYS: OK] &bull; ME-CENTRAL &bull; LATENCY: 12ms &bull; DRIFT: 0.00%
+          <div class="landing-footer-telemetry">
+            [SYS: OK] &bull; الدفعة الأولى متاحة الآن &bull; تفعيل المقاعد فوري
           </div>
 
           <div class="landing-footer-links">
             <button type="button" class="landing-footer-waitlist-link" data-action="open-waitlist">احجز مقعدك</button>
             <span style="color: var(--saas-border-strong);">&bull;</span>
-            <a href="#faq-section" class="landing-footer-link">الأسئلة الشائعة</a>
+            <a href="#faq-section" class="landing-footer-link" data-scroll-to="faq-section">الأسئلة الشائعة</a>
             <span style="color: var(--saas-border-strong);">&bull;</span>
             <span class="landing-footer-link" style="cursor: default;">مِحْوَر &copy; 2026</span>
           </div>
@@ -711,7 +739,93 @@ export function renderLandingPage(container, _options = {}) {
   }, 1000);
 
   // ---------------------------------------------------------
-  // 2. منطق الأكورديون التفاعلي للأسئلة الشائعة (دوران 180 درجة)
+  // 2. منطق الدرج المتنقل لشاشات الموبايل (Mobile Drawer Logic)
+  // ---------------------------------------------------------
+  const navbarEl = container.querySelector('.landing-navbar');
+  const menuToggleBtn = container.querySelector('#landing-menu-toggle');
+  const mobileDrawer = container.querySelector('#landing-mobile-drawer');
+  const hamburgerIcon = menuToggleBtn?.querySelector('.hamburger-icon');
+  const closeIcon = menuToggleBtn?.querySelector('.close-icon');
+
+  function openDrawer() {
+    if (!mobileDrawer || !menuToggleBtn) return;
+    mobileDrawer.classList.add('is-open');
+    mobileDrawer.setAttribute('aria-hidden', 'false');
+    menuToggleBtn.setAttribute('aria-expanded', 'true');
+    if (hamburgerIcon) hamburgerIcon.style.display = 'none';
+    if (closeIcon) closeIcon.style.display = 'inline-block';
+  }
+
+  function closeDrawer() {
+    if (!mobileDrawer || !menuToggleBtn) return;
+    mobileDrawer.classList.remove('is-open');
+    mobileDrawer.setAttribute('aria-hidden', 'true');
+    menuToggleBtn.setAttribute('aria-expanded', 'false');
+    if (hamburgerIcon) hamburgerIcon.style.display = 'inline-block';
+    if (closeIcon) closeIcon.style.display = 'none';
+  }
+
+  function toggleDrawer() {
+    if (!mobileDrawer) return;
+    if (mobileDrawer.classList.contains('is-open')) {
+      closeDrawer();
+    } else {
+      openDrawer();
+    }
+  }
+
+  if (menuToggleBtn) {
+    menuToggleBtn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      toggleDrawer();
+    });
+  }
+
+  // ---------------------------------------------------------
+  // 3. التمرير الانسيابي واعتراض الهاش راوتر (Smooth Scroll Router Guard)
+  // ---------------------------------------------------------
+  const scrollLinks = container.querySelectorAll('[data-scroll-to]');
+  const handleScrollClick = (e) => {
+    e.preventDefault();
+    closeDrawer();
+    const link = e.currentTarget;
+    const targetId = link.getAttribute('data-scroll-to');
+    if (targetId) {
+      const targetEl = container.querySelector(`#${targetId}`);
+      if (targetEl) {
+        targetEl.scrollIntoView({ behavior: 'smooth' });
+      }
+    }
+  };
+  scrollLinks.forEach((link) => {
+    link.addEventListener('click', handleScrollClick);
+  });
+
+  // إغلاق الدرج عند النقر بالخارج أو الضغط على مفتاح Escape أو تكبير الشاشة
+  const onDocClick = (e) => {
+    if (!mobileDrawer || !mobileDrawer.classList.contains('is-open')) return;
+    if (navbarEl && !navbarEl.contains(e.target)) {
+      closeDrawer();
+    }
+  };
+  document.addEventListener('click', onDocClick);
+
+  const onKeyDown = (e) => {
+    if (e.key === 'Escape' && mobileDrawer && mobileDrawer.classList.contains('is-open')) {
+      closeDrawer();
+    }
+  };
+  document.addEventListener('keydown', onKeyDown);
+
+  const onWindowResize = () => {
+    if (window.innerWidth > 860 && mobileDrawer && mobileDrawer.classList.contains('is-open')) {
+      closeDrawer();
+    }
+  };
+  window.addEventListener('resize', onWindowResize, { passive: true });
+
+  // ---------------------------------------------------------
+  // 4. منطق الأكورديون التفاعلي للأسئلة الشائعة (دوران 180 درجة)
   // ---------------------------------------------------------
   const faqCards = container.querySelectorAll('.faq-card');
   faqCards.forEach((card) => {
@@ -734,7 +848,7 @@ export function renderLandingPage(container, _options = {}) {
   });
 
   // ---------------------------------------------------------
-  // 3. ربط أزرار حجز المقعد وتفعيل الحساب (Modals Trigger)
+  // 5. ربط أزرار حجز المقعد وتفعيل الحساب (Modals Trigger)
   // ---------------------------------------------------------
   let activeWaitlistCleanup = null;
   let activeActivationCleanup = null;
@@ -742,6 +856,7 @@ export function renderLandingPage(container, _options = {}) {
   const waitlistBtns = container.querySelectorAll('[data-action="open-waitlist"]');
   waitlistBtns.forEach((btn) => {
     btn.addEventListener('click', () => {
+      closeDrawer();
       if (activeActivationCleanup) {
         activeActivationCleanup();
         activeActivationCleanup = null;
@@ -754,6 +869,7 @@ export function renderLandingPage(container, _options = {}) {
   const activationBtns = container.querySelectorAll('[data-action="open-activation"]');
   activationBtns.forEach((btn) => {
     btn.addEventListener('click', () => {
+      closeDrawer();
       if (activeWaitlistCleanup) {
         activeWaitlistCleanup();
         activeWaitlistCleanup = null;
@@ -765,7 +881,7 @@ export function renderLandingPage(container, _options = {}) {
 
 
   // ---------------------------------------------------------
-  // 4. مراقب ظهور الأقسام بالسكرول (Scroll Reveal Motion)
+  // 6. مراقب ظهور الأقسام بالسكرول (Scroll Reveal Motion)
   // ---------------------------------------------------------
   const revealElements = container.querySelectorAll('.landing-reveal');
   const revealObserver = new IntersectionObserver(
@@ -782,7 +898,7 @@ export function renderLandingPage(container, _options = {}) {
   revealElements.forEach((el) => revealObserver.observe(el));
 
   // ---------------------------------------------------------
-  // 5. متابعة حركة الماوس لتأثير الإضاءة التفاعلية (Interactive Spotlight)
+  // 7. متابعة حركة الماوس لتأثير الإضاءة التفاعلية (Interactive Spotlight)
   // ---------------------------------------------------------
   const landingContainer = container.querySelector('.landing-page');
   let rafId = null;
@@ -804,7 +920,7 @@ export function renderLandingPage(container, _options = {}) {
   }
 
   // ---------------------------------------------------------
-  // 6. دالة التنظيف الصارمة لمنع تسريب الذاكرة (Memory Cleanup Contract)
+  // 8. دالة التنظيف الصارمة لمنع تسريب الذاكرة (Memory Cleanup Contract)
   // ---------------------------------------------------------
   return function cleanupLandingPage() {
     if (activeWaitlistCleanup) activeWaitlistCleanup();
@@ -815,6 +931,13 @@ export function renderLandingPage(container, _options = {}) {
     if (landingContainer) {
       landingContainer.removeEventListener('pointermove', onPointerMove);
     }
+
+    document.removeEventListener('click', onDocClick);
+    document.removeEventListener('keydown', onKeyDown);
+    window.removeEventListener('resize', onWindowResize);
+    scrollLinks.forEach((link) => {
+      link.removeEventListener('click', handleScrollClick);
+    });
 
     if (prevTheme) {
       document.documentElement.setAttribute('data-theme', prevTheme);
