@@ -1861,6 +1861,215 @@ html[data-theme="light"] .planner-session-card.completed {
   display: inline;
 }
 
+/* ---------------------------------------------------------
+   Desktop Defaults: Mobile Toggle & Drawer Hidden (> 860px)
+   --------------------------------------------------------- */
+.landing-page .landing-menu-toggle {
+  display: none !important;
+  align-items: center;
+  justify-content: center;
+  width: 42px;
+  height: 42px;
+  padding: 0;
+  background: rgba(250, 247, 242, 0.05);
+  border: 1px solid var(--mihwar-border);
+  border-radius: var(--saas-radius-md, 8px);
+  color: var(--mihwar-cream, #FAF7F2);
+  cursor: pointer;
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.landing-page .landing-menu-toggle:hover {
+  background: rgba(250, 247, 242, 0.1);
+  border-color: var(--mihwar-border-strong);
+  color: #ffffff;
+}
+
+.landing-page .landing-menu-toggle:focus-visible {
+  outline: 2px solid var(--mihwar-amber);
+  outline-offset: 2px;
+}
+
+.landing-page .landing-mobile-drawer {
+  display: none !important;
+}
+
+/* ---------------------------------------------------------
+   Mobile Responsive Navbar & Drawer (<= 860px)
+   --------------------------------------------------------- */
+@media (max-width: 860px) {
+  .landing-page .landing-nav-links {
+    display: none !important;
+  }
+
+  .landing-page .landing-nav-ghost-link,
+  .landing-page .landing-nav-secondary-btn {
+    display: none !important;
+  }
+
+  .landing-page .landing-nav-actions {
+    gap: 8px;
+  }
+
+  .landing-page .landing-nav-pill-btn {
+    padding: 6px 14px;
+    font-size: 12px;
+  }
+
+  .landing-page .landing-nav-pill-btn .nav-pill-full {
+    display: none !important;
+  }
+
+  .landing-page .landing-nav-pill-btn .nav-pill-compact {
+    display: inline !important;
+  }
+
+  .landing-page .landing-menu-toggle {
+    display: inline-flex !important;
+  }
+
+  .landing-page .landing-mobile-drawer {
+    display: block !important;
+    position: absolute;
+    top: 100%;
+    left: 0;
+    right: 0;
+    width: 100%;
+    background: var(--color-surface, #141522);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    border-bottom: 1px solid var(--color-border, var(--mihwar-border));
+    box-shadow: 0 24px 48px -12px rgba(0, 0, 0, 0.75);
+    padding: 16px 20px 24px;
+    z-index: 100;
+    max-height: calc(100dvh - var(--header-height, 70px));
+    overflow-y: auto;
+    opacity: 0;
+    visibility: hidden;
+    transform: translateY(-8px);
+    transition: opacity 0.25s cubic-bezier(0.16, 1, 0.3, 1),
+                transform 0.25s cubic-bezier(0.16, 1, 0.3, 1),
+                visibility 0.25s;
+    pointer-events: none;
+    box-sizing: border-box;
+  }
+
+  .landing-page .landing-mobile-drawer.is-open {
+    opacity: 1;
+    visibility: visible;
+    transform: translateY(0);
+    pointer-events: auto;
+  }
+
+  .landing-page .landing-drawer-nav {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    margin-bottom: 14px;
+  }
+
+  .landing-page .landing-drawer-link {
+    display: flex;
+    align-items: center;
+    min-height: 44px;
+    padding: 10px 14px;
+    color: var(--mihwar-text-secondary);
+    text-decoration: none;
+    font-size: 15px;
+    font-weight: 500;
+    border-radius: var(--saas-radius-md, 8px);
+    transition: all 0.2s ease;
+  }
+
+  .landing-page .landing-drawer-link:hover,
+  .landing-page .landing-drawer-link:active {
+    background: rgba(250, 247, 242, 0.06);
+    color: var(--mihwar-amber);
+    padding-inline-start: 18px;
+  }
+
+  .landing-page .landing-drawer-divider {
+    height: 1px;
+    background: var(--mihwar-border);
+    margin-bottom: 14px;
+  }
+
+  .landing-page .landing-drawer-actions {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+  }
+
+  .landing-page .landing-drawer-ghost-link {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    min-height: 44px;
+    padding: 10px 16px;
+    color: var(--mihwar-text-secondary);
+    text-decoration: none;
+    font-size: 14px;
+    font-weight: 500;
+    border-radius: var(--saas-radius-md, 8px);
+    background: rgba(250, 247, 242, 0.04);
+    border: 1px solid var(--mihwar-border);
+    transition: all 0.2s ease;
+  }
+
+  .landing-page .landing-drawer-ghost-link:hover {
+    background: rgba(250, 247, 242, 0.08);
+    color: var(--mihwar-cream);
+  }
+
+  .landing-page .landing-drawer-secondary-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    min-height: 44px;
+    padding: 10px 16px;
+    color: var(--mihwar-cream);
+    background: rgba(250, 247, 242, 0.06);
+    border: 1px solid var(--mihwar-border);
+    border-radius: var(--saas-radius-md, 8px);
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    font-family: inherit;
+    transition: all 0.2s ease;
+  }
+
+  .landing-page .landing-drawer-secondary-btn:hover {
+    background: rgba(250, 247, 242, 0.1);
+    border-color: var(--mihwar-border-strong);
+  }
+
+  .landing-page .landing-drawer-pill-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    min-height: 46px;
+    padding: 12px 18px;
+    background: var(--mihwar-amber);
+    color: #14151F;
+    border: 1px solid var(--mihwar-amber);
+    border-radius: var(--saas-radius-md, 8px);
+    font-size: 14px;
+    font-weight: 700;
+    cursor: pointer;
+    font-family: inherit;
+    box-shadow: 0 4px 16px rgba(245, 166, 34, 0.3);
+    transition: all 0.2s ease;
+  }
+
+  .landing-page .landing-drawer-pill-btn:hover {
+    background: #ffb438;
+    box-shadow: 0 6px 20px rgba(245, 166, 34, 0.45);
+  }
+}
+
 
 /* ---------------------------------------------------------
    Hero Section & Floating HUD Mockup
