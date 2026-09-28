@@ -26,7 +26,7 @@
     <!-- Open Graph / Social Preview (WhatsApp, Telegram, Facebook) -->
     <meta property="og:type" content="website" />
     <meta property="og:url" content="https://www.mih-war.tech/" />
-    <meta property="og:title" content="مِحْوَر | رفيقك الأكاديمي لإدارة موادك وضغطك الدراسي 🎓" />
+    <meta property="og:title" content="مِحْوَر | رفيقك الأكاديمي لإدارة موادك وضغطك الدراسي" />
     <meta
       property="og:description"
       content="تخلص من عشوائية الفصل الجامعي؛ نظّم موادك، تابع تقدم الموضوعات، وزّع أوزان الامتحانات بخطوات واضحة."
@@ -55,22 +55,66 @@
       rel="stylesheet"
     />
 
-    <!-- Schema.org Structured Data: Defines as Academic Web Application -->
+    <!-- Schema.org Structured Data: Defines as Academic Web Application & FAQ Knowledge Graph -->
     <script type="application/ld+json">
       {
         "@context": "https://schema.org",
-        "@type": "WebApplication",
-        "name": "مِحْوَر - Mihwar OS",
-        "url": "https://www.mih-war.tech",
-        "applicationCategory": "EducationalApplication",
-        "operatingSystem": "All",
-        "description": "نظام ويب لإدارة الحياة الجامعية، تنظيم المواد الأكاديمية، متابعة تقدم شجرة الموضوعات، توزيع أوزان الامتحانات، وتوزيع أوقات الدراسة أسبوعياً.",
-        "inLanguage": "ar",
-        "offers": {
-          "@type": "Offer",
-          "price": "0",
-          "priceCurrency": "USD"
-        }
+        "@graph": [
+          {
+            "@type": "WebApplication",
+            "name": "مِحْوَر | Mihwar",
+            "url": "https://www.mih-war.tech",
+            "applicationCategory": [
+              "EducationalApplication",
+              "Productivity"
+            ],
+            "operatingSystem": "All (Web Browser)",
+            "description": "النظام الأكاديمي الأذكى لطلاب الجامعات لإدارة المواد، تفكيك السلايدات، وموازنة الحمل الأسبوعي.",
+            "inLanguage": "ar",
+            "offers": {
+              "@type": "Offer",
+              "price": "0",
+              "priceCurrency": "USD"
+            }
+          },
+          {
+            "@type": "FAQPage",
+            "mainEntity": [
+              {
+                "@type": "Question",
+                "name": "هل النظام يتعارض مع مواعيد محاضراتي في الجامعة؟",
+                "acceptedAnswer": {
+                  "@type": "Answer",
+                  "text": "لا، مِحْوَر يطلب جدول محاضراتك أولاً ويحدد أوقات فراغك الحقيقية، ثم يوزع ساعات المذاكرة في الفراغات فقط بدون أي تصادم."
+                }
+              },
+              {
+                "@type": "Question",
+                "name": "هل يتم حفظ إنجازي ومكان توقفي سحابياً؟",
+                "acceptedAnswer": {
+                  "@type": "Answer",
+                  "text": "نعم، يتم مزامنة كل درس يتم إنجازه ومؤقت التركيز فورياً عبر قاعدة بيانات سحابية لحظية ومحمية (Supabase)."
+                }
+              },
+              {
+                "@type": "Question",
+                "name": "كيف يضمن النظام عدم تراكم المواد ليلة الامتحان؟",
+                "acceptedAnswer": {
+                  "@type": "Answer",
+                  "text": "من خلال ميزة مقياس ضغط الامتحان التي تراقب العد التنازلي؛ كلما اقترب موعد الامتحان، يعيد النظام موازنة الساعات تلقائياً لإنهاء المقرر بروقان."
+                }
+              },
+              {
+                "@type": "Question",
+                "name": "هل يحتاج مِحْوَر إلى تحميل برامج أو تثبيت على جهازي؟",
+                "acceptedAnswer": {
+                  "@type": "Answer",
+                  "text": "النظام يعمل مباشرة عبر المتصفح ومتوافق تماماً مع الحواسيب والهواتف الذكية دون أي تثبيت مسبق."
+                }
+              }
+            ]
+          }
+        ]
       }
     </script>
 
@@ -86,9 +130,17 @@
   </head>
   <body>
     <noscript>
-      <div style="padding: 2rem; text-align: center; color: #FAF7F2; background: #14151F; font-family: sans-serif;">
-        <h1>منصة مِحْوَر (Mihwar OS)</h1>
-        <p>المنصة الذكية لإدارة المواد والضغط الدراسي لطلاب الجامعات. يتطلب تشغيل جافاسكريبت للوصول للنظام.</p>
+      <div style="padding: 2rem; max-width: 800px; margin: 0 auto; font-family: sans-serif; direction: rtl; text-align: right;">
+        <h1>مِحْوَر | النظام الأكاديمي الأذكى لطلاب الجامعات</h1>
+        <p>ادرس بذكاء.. وخلّص موادك بدون زنقة الامتحانات. النظام المتكامل لتفكيك سلايدات الـ 400 صفحة، موازنة ساعات الفراغ الأسبوعية، وحساب أوزان الامتحانات بدقة.</p>
+        <h2>أبرز الميزات الأكاديمية:</h2>
+        <ul>
+          <li><strong>تقسيم المادة لمحطات صغيرة:</strong> تفتيت المناهج الضخمة لدروس واضحة مع تتبع الإنجاز خطوة بخطوة.</li>
+          <li><strong>ميزان علامات الامتحان:</strong> تركيز الجهد على الفصول الأعلى وزناً في درجات الاختبار.</li>
+          <li><strong>توزيع الأسبوع المتوازن:</strong> موازنة ساعتين يومياً بدون تعارض مع مواعيد المحاضرات الجامعية.</li>
+          <li><strong>جلسات التركيز الحية:</strong> مؤقت مخصص للدروس وحفظ سحابي لحظي للإنجاز.</li>
+        </ul>
+        <p>لتجربة النظام بالكامل، يرجى تفعيل جافاسكريبت في متصفحك.</p>
       </div>
     </noscript>
     <div id="app"></div>

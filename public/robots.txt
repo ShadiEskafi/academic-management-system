@@ -1,5 +1,29 @@
+# Robots.txt for mih-war.tech (Mihwar OS)
 User-agent: *
 Allow: /
 
-Sitemap: https://www.mih-war.tech/sitemap.xml
+# Explicit AI Search & Retrieval Crawlers
+User-agent: GPTBot
+Allow: /
 
+User-agent: ChatGPT-User
+Allow: /
+
+User-agent: PerplexityBot
+Allow: /
+
+User-agent: ClaudeBot
+Allow: /
+
+User-agent: anthropic-ai
+Allow: /
+
+User-agent: Google-Extended
+Allow: /
+
+User-agent: Applebot-Extended
+Allow: /
+
+# Direct AI Context Map
+Sitemap: https://www.mih-war.tech/sitemap.xml
+Disallow: /api/
