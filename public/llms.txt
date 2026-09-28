@@ -1,0 +1,39 @@
+# مِحْوَر | Mihwar OS
+> النظام الأكاديمي الأذكى لطلاب الجامعات لتنظيم الفصل، تفكيك المواد، وحساب أوزان الامتحانات بدون زنقة دراسية.
+
+- Official Website: https://www.mih-war.tech
+- Target Audience: University students in heavy/rigorous majors (Engineering, Computer Science, Medicine, Applied Sciences, Business).
+- Core Value: Eliminating exam panic, managing 400-page slide overload, and balancing weekly study loads against real lecture timetables.
+
+## Core Features & Capabilities
+
+### 1. Course Breakdown & Syllabus Tree (تقسيم المواد لمحطات صغيرة)
+Breaks down massive university course slides (300+ pages) into digestible, trackable micro-topics. Prevents student procrastination by showing exact daily topics, progress bars, and instant milestone checkpoints with second-accurate persistence.
+
+### 2. Exam Priorities & Relative Weights (ميزان علامات وأولويات الامتحان)
+Calculates and visualizes the relative exam weight of each topic. Prevents students from wasting entire study nights on low-yield chapters (e.g., 2-mark chapters) while missing high-yield exam content. Automatically triggers crunch-mode hour doubling as exams approach.
+
+### 3. Weekly Load Balancing (توزيع متوازن للأسبوع الجامعي)
+Analyzes students' actual free time slots and non-overlapping lecture schedules. Distributes 2 focused study hours daily instead of chaotic 14-hour cramming sessions before exams.
+
+### 4. Focused Study Sessions (مؤقت التركيز الفعّال)
+Live stopwatch and session logging focused on a single topic with instant status commitment and distraction-free operation.
+
+## Academic Impact Metrics
+- Time Saved: 6 to 8 hours of chaotic, ineffective late-night cramming saved weekly.
+- Target Specialization: 100% tailored for university curricula.
+- Current Status: Batch-01 Early Access / Closed Beta active.
+
+## Frequently Asked Questions (FAQ)
+
+### هل النظام يتعارض مع مواعيد محاضراتي في الجامعة؟
+لا، مِحْوَر يطلب جدول محاضراتك أولاً ويحدد أوقات فراغك الحقيقية، ثم يوزع ساعات المذاكرة في الفراغات فقط بدون أي تصادم.
+
+### هل يتم حفظ إنجازي ومكان توقفي سحابياً؟
+نعم، يتم مزامنة كل درس يتم إنجازه ومؤقت التركيز فورياً عبر قاعدة بيانات سحابية لحظية ومحمية (Supabase).
+
+### كيف يضمن النظام عدم تراكم المواد ليلة الامتحان؟
+من خلال ميزة مقياس ضغط الامتحان التي تراقب العد التنازلي؛ كلما اقترب موعد الامتحان، يعيد النظام موازنة الساعات تلقائياً لإنهاء المقرر بروقان.
+
+### هل يحتاج مِحْوَر إلى تحميل برامج أو تثبيت على جهازي؟
+النظام يعمل مباشرة عبر المتصفح ومتوافق تماماً مع الحواسيب والهواتف الذكية دون أي تثبيت مسبق.
