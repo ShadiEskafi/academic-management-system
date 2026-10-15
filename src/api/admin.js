@@ -37,17 +37,21 @@ export async function checkCurrentUserRole() {
 
 /**
  * جلب بيانات وإحصائيات لوحة تحكم الأدمن بطلب مجمّع موحد O(1)
- * @returns {Promise<{ waitlist: Array, profiles: Array, metrics: Object }>}
+ * @returns {Promise<{ waitlist: Array, profiles: Array, inviteCodes: Array, metrics: Object }>}
  */
 export async function getAdminDashboardData() {
-  const [waitlistRes, profilesRes] = await Promise.all([
+  const [waitlistRes, profilesRes, inviteCodesRes] = await Promise.all([
     supabase
       .from('waitlist')
-      .select('*')
+      .select('*, invite_codes(id, code, name)')
       .order('seat_number', { ascending: true }),
     supabase
       .from('profiles')
       .select('id, full_name, major, university, role, seat_number, created_at')
+      .order('created_at', { ascending: false }),
+    supabase
+      .from('invite_codes')
+      .select('*')
       .order('created_at', { ascending: false }),
   ]);
 
@@ -57,9 +61,13 @@ export async function getAdminDashboardData() {
   if (profilesRes.error) {
     throw new Error(`تعذر جلب بيانات الطلاب: ${profilesRes.error.message}`);
   }
+  if (inviteCodesRes.error) {
+    throw new Error(`تعذر جلب بيانات أكواد الدعوة: ${inviteCodesRes.error.message}`);
+  }
 
   const waitlist = waitlistRes.data || [];
   const profiles = profilesRes.data || [];
+  const inviteCodes = inviteCodesRes.data || [];
 
   const totalWaitlist = waitlist.length;
   const totalProfiles = profiles.length;
@@ -74,6 +82,7 @@ export async function getAdminDashboardData() {
 
   const uniMap = {};
   const majorMap = {};
+  const codeUsageMap = {}; // codeId -> count
 
   waitlist.forEach((item) => {
     const s = item.status || 'pending';
@@ -85,14 +94,22 @@ export async function getAdminDashboardData() {
     if (item.major) {
       majorMap[item.major] = (majorMap[item.major] || 0) + 1;
     }
+    if (item.invite_code_id) {
+      codeUsageMap[item.invite_code_id] = (codeUsageMap[item.invite_code_id] || 0) + 1;
+    }
   });
 
   const approvedCount = statusCounts.approved || 0;
   const conversionRate = totalWaitlist > 0 ? ((approvedCount / totalWaitlist) * 100).toFixed(1) : '0.0';
 
+  const totalCodes = inviteCodes.length;
+  const activeCodes = inviteCodes.filter((c) => c.is_active).length;
+  const totalStudentsWithCodes = waitlist.filter((w) => Boolean(w.invite_code_id)).length;
+
   return {
     waitlist,
     profiles,
+    inviteCodes,
     metrics: {
       totalWaitlist,
       totalProfiles,
@@ -101,6 +118,10 @@ export async function getAdminDashboardData() {
       conversionRate,
       uniMap,
       majorMap,
+      codeUsageMap,
+      totalCodes,
+      activeCodes,
+      totalStudentsWithCodes,
     },
   };
 }
@@ -148,6 +169,110 @@ export async function deleteWaitlistEntry(id) {
 
   if (error) {
     throw new Error(`تعذر حذف السجل: ${error.message}`);
+  }
+
+  return true;
+}
+
+/**
+ * إنشاء كود دعوة جديد
+ * @param {Object} params
+ * @param {string} params.code - الكود
+ * @param {string} params.name - اسم الجهة / الشريك
+ * @param {string} [params.notes] - ملاحظات
+ * @param {number|null} [params.max_uses] - الحد الأقصى للاستخدام
+ * @returns {Promise<Object>}
+ */
+export async function createInviteCode({ code, name, notes = '', max_uses = null }) {
+  const cleanCode = String(code || '').trim().toUpperCase();
+  const cleanName = String(name || '').trim();
+  const cleanNotes = String(notes || '').trim();
+
+  if (!cleanCode || !cleanName) {
+    throw new Error('يرجى إدخال الكود واسم الجهة أو الشريك.');
+  }
+
+  const { data, error } = await supabase
+    .from('invite_codes')
+    .insert([
+      {
+        code: cleanCode,
+        name: cleanName,
+        notes: cleanNotes,
+        is_active: true,
+        max_uses: max_uses ? Number(max_uses) : null,
+      },
+    ])
+    .select()
+    .single();
+
+  if (error) {
+    if (error.code === '23505') {
+      throw new Error(`كود الدعوة (${cleanCode}) موجود بالفعل مسبقاً.`);
+    }
+    throw new Error(`تعذر إنشاء كود الدعوة: ${error.message}`);
+  }
+
+  return data;
+}
+
+/**
+ * تحديث بيانات كود دعوة
+ * @param {number|string} id - معرّف الكود
+ * @param {Object} params
+ * @returns {Promise<Object>}
+ */
+export async function updateInviteCode(id, { code, name, notes, is_active, max_uses }) {
+  const cleanId = Number(id);
+  const updates = {};
+
+  if (code !== undefined) updates.code = String(code || '').trim().toUpperCase();
+  if (name !== undefined) updates.name = String(name || '').trim();
+  if (notes !== undefined) updates.notes = String(notes || '').trim();
+  if (is_active !== undefined) updates.is_active = Boolean(is_active);
+  if (max_uses !== undefined) updates.max_uses = max_uses ? Number(max_uses) : null;
+
+  const { data, error } = await supabase
+    .from('invite_codes')
+    .update(updates)
+    .eq('id', cleanId)
+    .select()
+    .single();
+
+  if (error) {
+    if (error.code === '23505') {
+      throw new Error('هذا الكود مستخدم بالفعل من قبل كود آخر.');
+    }
+    throw new Error(`تعذر تحديث كود الدعوة: ${error.message}`);
+  }
+
+  return data;
+}
+
+/**
+ * تبديل حالة كود الدعوة (نشط / محظور)
+ * @param {number|string} id - معرّف الكود
+ * @param {boolean} isActive - الحالة الجديدة
+ * @returns {Promise<Object>}
+ */
+export async function toggleInviteCodeStatus(id, isActive) {
+  return updateInviteCode(id, { is_active: isActive });
+}
+
+/**
+ * حذف كود دعوة
+ * @param {number|string} id - معرّف الكود
+ * @returns {Promise<boolean>}
+ */
+export async function deleteInviteCode(id) {
+  const cleanId = Number(id);
+  const { error } = await supabase
+    .from('invite_codes')
+    .delete()
+    .eq('id', cleanId);
+
+  if (error) {
+    throw new Error(`تعذر حذف كود الدعوة: ${error.message}`);
   }
 
   return true;

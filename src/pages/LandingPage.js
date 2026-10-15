@@ -123,32 +123,33 @@ export function renderLandingPage(container, _options = {}) {
             <!-- شارة الحالة الذكية للطلاب -->
             <div class="hero-badge">
               <span class="pilot-lamp" aria-hidden="true"></span>
-              <span>النظام الأكاديمي الأذكى لطلاب الجامعات</span>
+              <span>دفعة الفصل الأول · انضم للطلاب المنظمين الآن</span>
             </div>
 
             <!-- العنوان الرئيسي الأنيق المتدرج -->
             <h1 class="hero-title">
-              ادرس بذكاء..<br>
-              <span class="hero-title-gradient">وخلّص موادك بدون زنقة الامتحانات.</span>
+              ليكن لفصلك
+              <span class="hero-title-gradient">مِحْوَر</span><br>
+              لا ألـــف اتجـــاه
             </h1>
 
             <!-- الوصف المباشر والواضح -->
             <p class="hero-desc">
-              بدل ما تضل تايه بين سلايدات الـ 400 صفحة وتتفاجأ ليلة الامتحان.. مِحْوَر بفككلك موادك لمحطات صغيرة، بحسبلك علامات كل درس، وبوزع دراستك ع الأسبوع بروقان.
+              جدولك، سلايداتك، ومواعيدك في مساحة واحدة. بدل ما تضيع بين مئات الصفحات.. رتّب اللي عليك وابدأ كل يوم بخطوة واضحة بروقان.
             </p>
 
             <!-- أزرار الدعوة للإجراء -->
             <div class="hero-ctas">
               <button type="button" class="landing-waitlist-pill-btn" data-action="open-waitlist">
                 <span class="pill-sparkle">${icons.sparkles(16)}</span>
-                <span>بلّش نظّم فصلك هلقيت (مجاناً)</span>
+                <span>ابدأ نظّم فصلك هلقيت (مجاناً)</span>
                 <span class="pill-arrow" aria-hidden="true">&larr;</span>
               </button>
-              <a href="#checkpoint-section" class="saas-btn-secondary" data-scroll-to="checkpoint-section">
-                <span>استكشف ميزات النظام</span>
-              </a>
+              <button type="button" class="saas-btn-secondary" data-action="open-waitlist">
+                <span>احجز مقعدك</span>
+              </button>
               <div class="hero-cta-subnote bidi-plaintext" dir="ltr">
-                BATCH-01 ACCESS &bull; LIMITED EARLY SEATS
+                مقاعد الدفعة الأولى محدودة &bull; انضمام مجاني وسريع
               </div>
             </div>
 
@@ -244,9 +245,9 @@ export function renderLandingPage(container, _options = {}) {
           <div class="landing-container">
             <div class="section-header">
               <span class="section-eyebrow">[توزيع متوازن]</span>
-              <h2 class="section-title">رتّب أسبوعك بدون وهم: «ملحوق وبدرس بكرة»</h2>
+              <h2 class="section-title">رتّب أسبوعك بدون زنقة: ساعتين باليوم بتكفي</h2>
               <p class="section-subtext">
-                كل يوم بنحكي "معي وقت بالويكند"، وفجأة بيجي الخميس وبنلاقي 4 كويزات وبروجكت نزلوا فوق راسنا! مِحْوَر بشوف أوقات فراغك الحقيقية وبوزع دراستك عليها بهدوء.. ساعتين باليوم بروقان، أحسن من سهرة رعب 14 ساعة قبل الامتحان.
+                من المحاضرة القادمة إلى أقرب تسليم: لوحة تجمع التفاصيل، وتترك لك مساحة لاتخاذ القرار. النظام بشوف أوقات فراغك الحقيقية وبوزع ساعات دراستك فيها بروقان وبصفر تعارض.
               </p>
             </div>
 
@@ -364,9 +365,9 @@ export function renderLandingPage(container, _options = {}) {
           <div class="landing-container">
             <div class="section-header">
               <span class="section-eyebrow">[تقسيم مريح]</span>
-              <h2 class="section-title">المادة مش جبل مسكّر.. قسّمها لمحطات صغيرة</h2>
+              <h2 class="section-title">المادة مش جبل مسكّر.. قسّمها لمحطات صغيرة وخلّصها بروقان.</h2>
               <p class="section-subtext">
-                أكبر سبب بخليك تأجل دراستك إنك بتفتح الملف وبتلاقيه 300 صفحة ورا بعض بتسد النفس! بمِحْوَر، المادة بتتقسم قدامك لدروس واضحة: بتعرف شو عليك اليوم، بتخلصه وبتشطبه، وبترفع نسبة إنجازك خطوة خطوة.
+                بدل ما تنصدم بملف 400 صفحة يسد نفسك وتأجل للدقيقة 90.. مِحْوَر بفككلك المقرر لدروس واضحة: بتخلّص درسك، بتشطبه، وبتشوف نسبة إنجازك بتكبر قدامك خطوة بخطوة.
               </p>
             </div>
 
@@ -474,9 +475,9 @@ export function renderLandingPage(container, _options = {}) {
           <div class="landing-container">
             <div class="section-header">
               <span class="section-eyebrow">[دراسة بذكاء]</span>
-              <h2 class="section-title">ما تضيّع ليلتك ع درس ما عليه غير علامتين!</h2>
+              <h2 class="section-title">اعرف وزن كل درس بالامتحان.. ولا تضيّع ليلتك ع الفاضي!</h2>
               <p class="section-subtext">
-                مش شطارة تسهر ليلة كاملة ع أصعب شابتر بالكتاب، وتروح ع الامتحان تلاقي الدكتور جايب عليه سؤال بـ 3 علامات، والدرس اللي طنشته عليه نص الامتحان! مِحْوَر بورجيك ثقل كل درس بالامتحان وكم ساعة محتاج لتركيزه عشان تضمن معدلك.
+                مش شطارة تسهر ليلة كاملة ع أصعب شابتر، وتتفاجأ بنص الامتحان ع الدرس اللي طنشته! مِحْوَر بحسبلك وزن كل درس بدرجات الفاينل والميدتيرم لتركز جهدك ع اللي بجيب معدل.
               </p>
             </div>
 
@@ -551,53 +552,53 @@ export function renderLandingPage(container, _options = {}) {
           <div class="landing-container">
             <div class="section-header">
               <span class="section-eyebrow">[مقارنة حقيقية]</span>
-              <h2 class="section-title">الفرق بين التشتت الجامعي المعتاد.. وراحة البال مع مِحْوَر</h2>
+              <h2 class="section-title">الجامعة مليانة تفاصيل.. وعقلك مش مخزن سلايدات.</h2>
               <p class="section-subtext">
-                شوف الفرق بين الفوضى اللي بتعيشها كل فصل، وبين النظام اللي بريّح راسك وبرفع معدلك.
+                شوف الفرق بين فوضى السلايدات اللي بتعيشها كل فصل، وبين النظام اللي بريّح راسك وبرفع معدلك.
               </p>
             </div>
 
             <div class="audit-ledger-box">
               
-              <!-- المقارنة 1: التفرغ والتعارض -->
+              <!-- المقارنة 1: الفهم وأوزان الامتحانات -->
               <div class="audit-row audit-row-chaos">
                 <span class="audit-tag">[ بدون مِحْوَر ]</span>
                 <div class="audit-text">
-                  تحديد أوقات دراسة عشوائية بتتعارض مع محاضراتك، والنتيجة: تسويف دائم وتأجيل لآخر الأسبوع وإحباط.
+                  <strong>بقرأ كتييير.. بس هل فاهم؟</strong> المذاكرة مش بعدد السلايدات والـ 400 صفحة. بتسهر ليلة كاملة ع أصعب شابتر ما عليه غير علامتين، وتتفاجأ بنص الامتحان ع الدرس اللي طنشته!
                 </div>
               </div>
               <div class="audit-row audit-row-calibrated">
                 <span class="audit-tag">[ مع مِحْوَر ]</span>
                 <div class="audit-text">
-                  قفل مواعيد محاضراتك الجامعية وتوزيع دراستك فقط في أوقات فراغك الحقيقية بروقان وبدون أي تعارض.
+                  <strong>من قراءة صامتة إلى فهم حقيقي:</strong> توزيع وقتك حسب ثقل علامات الامتحان وموعده، عشان تضمن أعلى معدل بأقل مجهود وتوتر وتضمن ما تسترجعه وتكتبه بالامتحان.
                 </div>
               </div>
 
-              <!-- المقارنة 2: نقطة التوقف -->
+              <!-- المقارنة 2: نقطة التوقف والأولويات -->
               <div class="audit-row audit-row-chaos">
                 <span class="audit-tag">[ بدون مِحْوَر ]</span>
                 <div class="audit-text">
-                  تبدأ قعدتك ع المكتب بسؤال بضيّع نص ساعة: "وين كنت واصل وشو أدرس هلقيت؟" وتتشتت بالتلفون.
+                  <strong>شو أدرس هلقيت؟</strong> لما تتراكم الواجبات والكويزات، بتبدأ قعدتك ع المكتب بسؤال بضيّع نص ساعة: "وين كنت واصل ومن وين أبلش؟" وبتتشتت بالتلفون وتأجل.
                 </div>
               </div>
               <div class="audit-row audit-row-calibrated">
                 <span class="audit-tag">[ مع مِحْوَر ]</span>
                 <div class="audit-text">
-                  كبسة زر وحدة بترجعك فوراً للدرس والدقيقة اللي وقفت عندها بآخر جلسة، وبتدخل بصلب الموضوع علطول.
+                  <strong>مكان وقوفك محفوظ:</strong> كبسة زر وحدة بترجعك فوراً للدرس والدقيقة اللي وقفت عندها بآخر جلسة، وبتدخل بصلب الموضوع علطول بيوم مرتب حوالين أولوياتك.
                 </div>
               </div>
 
-              <!-- المقارنة 3: ضغط الامتحانات -->
+              <!-- المقارنة 3: تشتت المصادر والجدول -->
               <div class="audit-row audit-row-chaos">
                 <span class="audit-tag">[ بدون مِحْوَر ]</span>
                 <div class="audit-text">
-                  تسهر ليلة كاملة ع أصعب شابتر ما عليه غير علامتين، وتتفاجأ بنص الامتحان ع الدرس اللي طنشته.
+                  <strong>ملفات ومحاضرات بكل مكان:</strong> بين قروبات الواتساب والتيلجرام وسلايدات المودل، بتضيع التواريخ والمواعيد المهمة، وبتحدد أوقات دراسة عشوائية بتتعارض مع محاضراتك.
                 </div>
               </div>
               <div class="audit-row audit-row-calibrated">
                 <span class="audit-tag">[ مع مِحْوَر ]</span>
                 <div class="audit-text">
-                  توزيع وقتك حسب ثقل علامات الامتحان وموعده، عشان تضمن أعلى معدل بأقل مجهود وتوتر.
+                  <strong>مكان واحد يلم شتات فصلك:</strong> قفل مواعيد محاضراتك الجامعية وتوزيع دراستك فقط في أوقات فراغك الحقيقية بروقان وبدون أي تعارض أو تشتيت.
                 </div>
               </div>
 
@@ -623,12 +624,12 @@ export function renderLandingPage(container, _options = {}) {
                 <button type="button" class="faq-trigger" aria-expanded="true">
                   <div class="faq-code-wrap">
                     <span class="faq-code-tag">[سؤال 01]</span>
-                    <strong>كيف مِحْوَر بضمن إنه مواعيد دراستي ما تتعارض مع محاضراتي الجامعية؟</strong>
+                    <strong>هل النظام يتعارض مع جدول محاضراتي بالجامعة؟</strong>
                   </div>
                   <span class="faq-chevron bidi-plaintext" dir="ltr">&#9662;</span>
                 </button>
                 <div class="faq-content-pane">
-                  مِحْوَر بياخد جدولك الجامعي وبقفله تماماً، وبوزع ساعات دراستك فقط في أوقات الفراغ الحقيقية بين المحاضرات مع فترات راحة كافية عشان تدرس بنشاط وما ترهق حالك.
+                  لا، النظام بقفل مواعيد محاضراتك أولاً وبوزع المذاكرة فقط في الفراغات الحقيقية مع فترات راحة كافية عشان تدرس بنشاط وما ترهق حالك.
                 </div>
               </div>
 
@@ -636,12 +637,12 @@ export function renderLandingPage(container, _options = {}) {
                 <button type="button" class="faq-trigger" aria-expanded="false">
                   <div class="faq-code-wrap">
                     <span class="faq-code-tag">[سؤال 02]</span>
-                    <strong>لو سكرت اللابتوب أو المتصفح فجأة.. هل بضيع وين كنت واصل؟</strong>
+                    <strong>هل يتم حفظ إنجازي ومكان وقوفي سحابياً؟</strong>
                   </div>
                   <span class="faq-chevron bidi-plaintext" dir="ltr">&#9662;</span>
                 </button>
                 <div class="faq-content-pane">
-                  أبداً! مِحْوَر بحفظ مكان وقوفك وإنجازك بالدرس لحظة بلحظة سحابياً، وأول ما تفتح بترجع بنفس المكان والدقيقة بنقرة وحدة بدون أي ضياع لوقتك.
+                  نعم، كل درس وكل ثانية بالمؤقت تُحفظ لحظياً عبر السحابة وتقدر ترجع من أي جهاز بنقرة وحدة وبدون أي ضياع لوقتك.
                 </div>
               </div>
 
@@ -649,12 +650,12 @@ export function renderLandingPage(container, _options = {}) {
                 <button type="button" class="faq-trigger" aria-expanded="false">
                   <div class="faq-code-wrap">
                     <span class="faq-code-tag">[سؤال 03]</span>
-                    <strong>كيف النظام بعرف إني مضغوط قبل الامتحان وبساعدني؟</strong>
+                    <strong>كيف بضمن النظام إني أخلّص المادة بدون زنقة الفاينل؟</strong>
                   </div>
                   <span class="faq-chevron bidi-plaintext" dir="ltr">&#9662;</span>
                 </button>
                 <div class="faq-content-pane">
-                  بمجرد ما تسجل موعد الاختبار، مِحْوَر ببلش يحسب الأيام المتبقية تلقائياً. وكل ما يقرب الامتحان، برفع أولوية المادة وساعاتها تدريجياً عشان تخلص وتراجع قبل ليلة الامتحان بدون سهر رعب.
+                  بمجرد تسجيل موعد الاختبار، مِحْوَر بحسب الأيام المتبقية تلقائياً وبراقب أوزان المواد وبرفع ساعاتها تدريجياً عشان تخلّص وتراجع قبل ليلة الامتحان بروقان وبدون سهر رعب.
                 </div>
               </div>
 
@@ -662,12 +663,12 @@ export function renderLandingPage(container, _options = {}) {
                 <button type="button" class="faq-trigger" aria-expanded="false">
                   <div class="faq-code-wrap">
                     <span class="faq-code-tag">[سؤال 04]</span>
-                    <strong>هل بحتاج أنزل برامج أو إضافات معقدة ع اللابتوب؟</strong>
+                    <strong>هل يحتاج مِحْوَر إلى تنزيل برامج أو تطبيقات خارجية؟</strong>
                   </div>
                   <span class="faq-chevron bidi-plaintext" dir="ltr">&#9662;</span>
                 </button>
                 <div class="faq-content-pane">
-                  لا نهائياً، مِحْوَر بشتغل مباشرة وسريعاً من أي متصفح عندك على اللابتوب أو الآيباد، بدون تحميل برامج ثقيلة أو استهلاك لموارد جهازك.
+                  لا، يعمل مباشرة وسريعاً عبر أي متصفح على اللابتوب والموبايل والآيباد بدون تحميل أي برامج ثقيلة أو استهلاك لموارد جهازك.
                 </div>
               </div>
 
@@ -679,10 +680,10 @@ export function renderLandingPage(container, _options = {}) {
                 [ انضم للدفعة الأولى ]
               </div>
               <h3 style="font-size: clamp(24px, 3.5vw, 36px); font-weight: 800; color: var(--saas-text); margin: 0 0 12px;">
-                فصلك بلّش.. ادرسه بروقان مش برعب
+                الفصل بمر بسرعة..<br>ليكن لفصلك مِحْوَر.
               </h3>
               <p style="font-size: 15px; color: var(--saas-text-secondary); max-width: 580px; margin: 0 auto; line-height: 1.7;">
-                جرّب مِحْوَر هلقيت، رتّب موادك من أول أسبوع، وشوف الفرق الحقيقي براحة بالك ومعدلك.
+                انضم لطلاب الدفعة الأولى وخلّص موادك أول بأول بصفاء ذهن وراحة بال.
               </p>
 
               <div class="final-cta-actions">
@@ -703,7 +704,7 @@ export function renderLandingPage(container, _options = {}) {
       <footer class="landing-footer">
         <div class="landing-container landing-footer-inner">
           <div class="landing-footer-telemetry">
-            [SYS: OK] &bull; الدفعة الأولى متاحة الآن &bull; تفعيل المقاعد فوري
+            مِحْوَر — مساحة تجمع دراستك، وتترك لك مجالًا للحياة.
           </div>
 
           <div class="landing-footer-links">

@@ -47,6 +47,7 @@ export function openWaitlistModal({ initialEmail = '' } = {}) {
     major: '',
     university: '',
     email: initialEmail,
+    inviteCode: '',
   };
 
   function closeModal() {
@@ -141,7 +142,7 @@ export function openWaitlistModal({ initialEmail = '' } = {}) {
                   id="waitlist-university" 
                   name="university" 
                   class="waitlist-input" 
-                  placeholder="مثال: جامعة الملك سعود" 
+                  placeholder="مثال: الجامعة الإسلامية " 
                   value="${escapeHtml(formData.university)}" 
                   maxlength="70" 
                   required 
@@ -164,6 +165,25 @@ export function openWaitlistModal({ initialEmail = '' } = {}) {
                 autocomplete="email"
               />
               <span class="waitlist-help-text">إذا كنت مسجلاً مسبقاً، سيتم استرجاع تذكرتك الأصلية تلقائياً دون أي تكرار.</span>
+            </div>
+
+            <div class="waitlist-field-group">
+              <label class="waitlist-label" for="waitlist-invite-code">
+                <span>كود الدعوة أو الشراكة</span>
+                <span class="waitlist-optional-tag">(اختياري)</span>
+              </label>
+              <input 
+                type="text" 
+                id="waitlist-invite-code" 
+                name="inviteCode" 
+                class="waitlist-input bidi-plaintext" 
+                dir="ltr" 
+                placeholder="مثال: INVENET-CODE" 
+                value="${escapeHtml(formData.inviteCode)}" 
+                maxlength="50" 
+                autocomplete="off"
+              />
+              <span class="waitlist-help-text">إذا كنت من رواد حاضنة Island Heaven أو أي مجتمع شريك، أدخل الكود لتخطي الانتظار والاعتماد الفوري.</span>
             </div>
 
             <div class="waitlist-actions">
@@ -237,6 +257,7 @@ export function openWaitlistModal({ initialEmail = '' } = {}) {
           formData.major = formElements.major ? formElements.major.value : '';
           formData.university = formElements.university ? formElements.university.value : '';
           formData.email = formElements.email ? formElements.email.value : '';
+          formData.inviteCode = formElements.inviteCode ? formElements.inviteCode.value : '';
 
           // 4. فحص فترة التبريد (Rate Limiting: 60s cooldown)
           const lastAttempt = parseInt(localStorage.getItem('last_waitlist_attempt') || '0', 10);
@@ -248,11 +269,42 @@ export function openWaitlistModal({ initialEmail = '' } = {}) {
             return;
           }
 
-          // 5. تطهير الحقول وفحص الشروط والقيود
+          // 5. فحص صارم لمنع وضع صيغة البريد الإلكتروني في غير حقل البريد
+          const containsEmailPattern = (str) => {
+            if (!str) return false;
+            return /@/.test(str) || /[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}/.test(str);
+          };
+
+          if (containsEmailPattern(formData.name)) {
+            errorMessage = 'لا يمكن إدخال بريد إلكتروني في حقل الاسم الكامل. يرجى إدخال اسمك فقط، وكتابة البريد في الحقل المخصص له.';
+            render();
+            return;
+          }
+
+          if (containsEmailPattern(formData.major)) {
+            errorMessage = 'لا يمكن إدخال بريد إلكتروني في حقل التخصص الجامعي. يرجى إدخال اسم التخصص فقط.';
+            render();
+            return;
+          }
+
+          if (containsEmailPattern(formData.university)) {
+            errorMessage = 'لا يمكن إدخال بريد إلكتروني في حقل الجامعة. يرجى إدخال اسم الجامعة فقط.';
+            render();
+            return;
+          }
+
+          if (containsEmailPattern(formData.inviteCode)) {
+            errorMessage = 'لا يمكن إدخال بريد إلكتروني في حقل كود الدعوة. يرجى إدخال الكود المخصص (مثال: ISLAND-HEAVEN).';
+            render();
+            return;
+          }
+
+          // 6. تطهير الحقول وفحص الشروط والقيود
           const cleanName = sanitizeInput(formData.name);
           const cleanMajor = sanitizeInput(formData.major);
           const cleanUni = sanitizeInput(formData.university);
           const cleanEmail = sanitizeInput(formData.email);
+          const cleanInviteCode = sanitizeInput(formData.inviteCode).toUpperCase();
 
           if (cleanName.length < 2 || cleanName.length > 60) {
             errorMessage = 'يرجى إدخال اسم صحيح يتراوح بين 2 و 60 حرفاً.';
@@ -278,7 +330,7 @@ export function openWaitlistModal({ initialEmail = '' } = {}) {
             return;
           }
 
-          // 6. تفعيل حالة المعالجة والتحديث البصري
+          // 7. تفعيل حالة المعالجة والتحديث البصري
           isSubmitting = true;
           errorMessage = '';
           render();
@@ -289,6 +341,7 @@ export function openWaitlistModal({ initialEmail = '' } = {}) {
               major: cleanMajor,
               university: cleanUni,
               email: cleanEmail,
+              inviteCode: cleanInviteCode || null,
             });
 
             // تسجيل وقت المحاولة فقط بعد نجاح العملية (حسب التوجيه الصارم)
@@ -315,6 +368,7 @@ export function openWaitlistModal({ initialEmail = '' } = {}) {
 
     } else if (state === 'ticket' && ticketData) {
       const isExisting = Boolean(ticketData.is_existing);
+      const isInstantApproved = Boolean(ticketData.instant_approved);
       const seatPadded = String(ticketData.seat_number || 1).padStart(3, '0');
 
       modalRoot.innerHTML = `
@@ -324,16 +378,30 @@ export function openWaitlistModal({ initialEmail = '' } = {}) {
           </button>
 
           <!-- شارة حالة التذكرة الذكية -->
-          <div class="waitlist-ticket-banner ${isExisting ? 'is-returning' : 'is-success'}">
-            ${isExisting ? icons.shieldCheck(18) : icons.sparkles(18)}
-            <span>
-              ${
-                isExisting
-                  ? 'مرحباً بعودتك! تم استرجاع تذكرتك السابقة بنجاح.'
-                  : 'تم حجز مقعدك بنجاح! 🎉 أهلاً بك في مِحْوَر.'
-              }
-            </span>
-          </div>
+          ${
+            isInstantApproved
+              ? `
+                <div class="waitlist-ticket-banner is-vip">
+                  <div class="vip-banner-icon">${icons.sparkles(22)}</div>
+                  <div class="vip-banner-content">
+                    <div class="vip-banner-title">تم اعتماد مقعدك رسمياً وفورياً! 🎉</div>
+                    <div class="vip-banner-desc">أهلاً بك كعضو في <strong>${escapeHtml(ticketData.community_name || 'Island Heaven')}</strong>. تم تخطي طابور الانتظار وبإمكانك الآن تفعيل حسابك والبدء في استخدام مِحْوَر فوراً!</div>
+                  </div>
+                </div>
+              `
+              : `
+                <div class="waitlist-ticket-banner ${isExisting ? 'is-returning' : 'is-success'}">
+                  ${isExisting ? icons.shieldCheck(18) : icons.sparkles(18)}
+                  <span>
+                    ${
+                      isExisting
+                        ? 'مرحباً بعودتك! تم استرجاع تذكرتك السابقة بنجاح.'
+                        : 'تم حجز مقعدك بنجاح! 🎉 أهلاً بك في مِحْوَر.'
+                    }
+                  </span>
+                </div>
+              `
+          }
 
           <!-- حاوية التذكرة Canvas -->
           <div class="waitlist-canvas-container">
@@ -342,6 +410,16 @@ export function openWaitlistModal({ initialEmail = '' } = {}) {
 
           <!-- أزرار الإجراءات -->
           <div class="waitlist-ticket-actions">
+            ${
+              isInstantApproved
+                ? `
+                  <button type="button" id="btn-instant-activate" class="waitlist-submit-btn waitlist-activate-vip-btn">
+                    ${icons.shieldCheck(18)}
+                    <span>تفعيل الحساب والدخول الآن ⚡</span>
+                  </button>
+                `
+                : ''
+            }
             <button type="button" id="btn-download-ticket" class="waitlist-download-btn">
               ${icons.download(16)}
               <span>تحميل التذكرة (PNG)</span>
@@ -358,6 +436,15 @@ export function openWaitlistModal({ initialEmail = '' } = {}) {
 
       const closeActionBtn = modalRoot.querySelector('#btn-close-ticket');
       if (closeActionBtn) closeActionBtn.addEventListener('click', closeModal);
+
+      const instantActivateBtn = modalRoot.querySelector('#btn-instant-activate');
+      if (instantActivateBtn) {
+        instantActivateBtn.addEventListener('click', () => {
+          const emailVal = formData.email ? formData.email.trim() : '';
+          closeModal();
+          openActivationModal({ initialEmail: emailVal });
+        });
+      }
 
       modalRoot.addEventListener('click', (e) => {
         if (e.target === modalRoot) closeModal();

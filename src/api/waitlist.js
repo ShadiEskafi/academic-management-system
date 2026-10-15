@@ -9,13 +9,15 @@ import { supabase } from './supabaseClient.js';
  * @param {string} params.major - التخصص الجامعي
  * @param {string} params.university - اسم الجامعة
  * @param {string} params.email - البريد الإلكتروني
- * @returns {Promise<{success: boolean, is_existing: boolean, seat_number: number, name: string, major: string, university: string}>}
+ * @param {string} [params.inviteCode] - كود الدعوة والشراكة (اختياري)
+ * @returns {Promise<{success: boolean, is_existing: boolean, seat_number: number, name: string, major: string, university: string, status?: string, instant_approved?: boolean, community_name?: string}>}
  */
-export async function joinOrGetWaitlist({ name, major, university, email }) {
+export async function joinOrGetWaitlist({ name, major, university, email, inviteCode }) {
   const cleanName = String(name || '').trim();
   const cleanMajor = String(major || '').trim();
   const cleanUni = String(university || '').trim();
   const cleanEmail = String(email || '').trim().toLowerCase();
+  const cleanInviteCode = inviteCode ? String(inviteCode).trim().toUpperCase() : null;
 
   if (!cleanName || !cleanMajor || !cleanUni || !cleanEmail) {
     throw new Error('يرجى ملء جميع الحقول المطلوبة للمتابعة.');
@@ -26,6 +28,7 @@ export async function joinOrGetWaitlist({ name, major, university, email }) {
     p_major: cleanMajor,
     p_university: cleanUni,
     p_email: cleanEmail,
+    p_invite_code: cleanInviteCode || null,
   });
 
   if (error) {
