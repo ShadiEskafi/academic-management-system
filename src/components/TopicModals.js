@@ -210,3 +210,92 @@ export function renderDeleteTopicModal(
     }
   });
 }
+
+export function renderCompleteAllTopicsModal({
+  totalTopics,
+  onConfirm,
+  onClose = () => {},
+}) {
+  const overlay = document.createElement('div');
+  overlay.className = 'modal-overlay';
+  overlay.setAttribute('role', 'dialog');
+  overlay.setAttribute('aria-modal', 'true');
+  overlay.setAttribute('aria-labelledby', 'complete-all-topics-title');
+
+  overlay.innerHTML = `
+    <div class="modal-content">
+      <div style="display:flex;align-items:center;gap:var(--space-2);margin-bottom:var(--space-2);">
+        <div style="color:var(--color-success);display:flex;align-items:center;">
+          ${icons.check(22)}
+        </div>
+        <h3 id="complete-all-topics-title" style="margin:0;">تأكيد إكمال جميع المواضيع</h3>
+      </div>
+      
+      <p class="modal-description" style="margin-bottom:var(--space-4);">
+        هل أنت متأكد من رغبتك في تحديد جميع مواضيع هذا المساق (<strong class="font-en" style="font-variant-numeric:tabular-nums;">${totalTopics}</strong> موضوع) كـ "مكتمل"؟
+      </p>
+
+      <div style="display:flex;gap:var(--space-3);padding:var(--space-3);background:rgba(56, 189, 248, 0.08);border:1px solid rgba(56, 189, 248, 0.25);border-radius:var(--radius-sm);margin-bottom:var(--space-4);color:var(--color-text);">
+        <div style="flex-shrink:0;margin-top:2px;color:var(--color-accent);">${icons.alertTriangle(18)}</div>
+        <div style="font-size:13px;line-height:1.5;">
+          سيتم تحديث نسبة الإنجاز تلقائياً إلى <strong>100%</strong> وإزالة مؤشر الموضع الحالي من الشجرة، ويمكنك دائماً تغيير حالة أي موضوع لاحقاً بشكل يدوي.
+        </div>
+      </div>
+
+      <p id="complete-all-topics-error" class="field-error"></p>
+
+      <div class="modal-actions">
+        <button type="button" class="btn-secondary" id="cancel-complete-all-btn">إلغاء</button>
+        <button type="button" class="btn-primary" id="confirm-complete-all-btn" style="display:inline-flex;align-items:center;gap:6px;">
+          ${icons.check(16)}
+          <span>تأكيد الإكمال</span>
+        </button>
+      </div>
+    </div>
+  `;
+
+  document.body.appendChild(overlay);
+
+  const confirmBtn = overlay.querySelector('#confirm-complete-all-btn');
+  const cancelBtn = overlay.querySelector('#cancel-complete-all-btn');
+  const errorEl = overlay.querySelector('#complete-all-topics-error');
+
+  confirmBtn.focus();
+
+  function cleanup() {
+    window.removeEventListener('keydown', handleKeyDown);
+    if (overlay.parentElement) {
+      document.body.removeChild(overlay);
+    }
+    onClose();
+  }
+
+  function handleKeyDown(e) {
+    if (e.key === 'Escape') cleanup();
+  }
+
+  window.addEventListener('keydown', handleKeyDown);
+  cancelBtn.addEventListener('click', cleanup);
+
+  overlay.addEventListener('click', (e) => {
+    if (e.target === overlay) cleanup();
+  });
+
+  confirmBtn.addEventListener('click', async () => {
+    errorEl.textContent = '';
+    confirmBtn.disabled = true;
+    cancelBtn.disabled = true;
+    confirmBtn.innerHTML = `<span>جاري الحفظ...</span>`;
+
+    const result = await onConfirm();
+
+    if (result?.error) {
+      errorEl.textContent = result.error.message || 'فشل تحديث مواضيع المساق';
+      confirmBtn.disabled = false;
+      cancelBtn.disabled = false;
+      confirmBtn.innerHTML = `${icons.check(16)} <span>تأكيد الإكمال</span>`;
+    } else {
+      cleanup();
+    }
+  });
+}
