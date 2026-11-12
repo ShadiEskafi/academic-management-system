@@ -236,3 +236,23 @@ export async function fetchCourseById(courseId) {
     error,
   };
 }
+
+/**
+ * Update current position topic ID for a course.
+ */
+export async function updateCourseCurrentPosition(courseId, topicId) {
+  const { data, error } = await supabase
+    .from("courses")
+    .update({
+      current_position_topic_id: topicId,
+      updated_at: new Date().toISOString(),
+    })
+    .eq("id", courseId)
+    .select()
+    .maybeSingle();
+
+  return {
+    course: data ?? null,
+    error,
+  };
+}

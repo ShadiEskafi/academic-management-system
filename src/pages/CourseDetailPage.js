@@ -12,6 +12,7 @@ import {
 
 import { fetchCourseStudyStats } from '../api/studySessions.js';
 import { getUpcomingUrgentAssessment } from '../api/assessments.js';
+import { updateCourseCurrentPosition } from '../api/courses.js';
 
 import {
   startNewGlobalSession,
@@ -22,7 +23,11 @@ import {
 import { showToast } from '../utils/toast.js';
 import { renderAssessmentsView } from '../components/AssessmentsTable.js';
 import { renderStudySessionLog } from '../components/StudySessionLog.js';
-import { renderTopicNode } from '../components/TopicNode.js';
+import {
+  renderTopicNode,
+  getTopicStatusBadgeClass,
+  getTopicStatusLabel,
+} from '../components/TopicNode.js';
 import { renderTopicForm } from '../components/TopicForm.js';
 import {
   renderEditTopicModal,
@@ -70,6 +75,22 @@ function buildTopicTree(topics) {
   return rootTopics;
 }
 
+function getOrderedLeafTopics(topics) {
+  const tree = buildTopicTree(topics);
+  const leaves = [];
+
+  function traverse(node) {
+    if (!node.children || node.children.length === 0) {
+      leaves.push(node);
+    } else {
+      node.children.forEach(traverse);
+    }
+  }
+
+  tree.forEach(traverse);
+  return leaves;
+}
+
 export async function renderCourseDetailPage(
   container,
   { courseId, currentPositionTopicId = null, onBack }
@@ -77,6 +98,9 @@ export async function renderCourseDetailPage(
   let activePositionTopicId = currentPositionTopicId;
   let rawTopicsList = [];
   let currentCourseData = null;
+  let currentStudyStats = { totalSeconds: 0, completedSessionsCount: 0 };
+  let expandedTopicIds = new Set();
+  let hasInitialRendered = false;
   let assessmentsMounted = false;
   let logMounted = false;
 
@@ -211,7 +235,7 @@ export async function renderCourseDetailPage(
       if (nextTopicId) {
         activePositionTopicId = nextTopicId;
       }
-      loadAndRenderTree();
+      loadAndRenderTree({ showSkeleton: false, shouldScroll: false });
     }
   });
 
@@ -255,7 +279,8 @@ export async function renderCourseDetailPage(
         topics: rawTopicsList,
         onSessionsChange: async () => {
           const studyStats = await fetchCourseStudyStats(courseId);
-          renderMetrics(rawTopicsList, studyStats);
+          if (studyStats) currentStudyStats = studyStats;
+          renderMetrics(rawTopicsList, currentStudyStats);
         },
       });
       logMounted = true;
@@ -293,7 +318,7 @@ export async function renderCourseDetailPage(
           activePositionTopicId = topic.id;
         }
 
-        await loadAndRenderTree();
+        await loadAndRenderTree({ showSkeleton: false, shouldScroll: false });
         return { topic, error: null };
       },
     });
@@ -306,6 +331,311 @@ export async function renderCourseDetailPage(
     }
     openTopicForm();
   });
+
+  function updateCompleteAllTopicsBtnState() {
+    if (!completeAllTopicsBtn) return;
+    const allCompleted =
+      rawTopicsList.length > 0 &&
+      rawTopicsList.every((t) => t.status === 'completed');
+
+    if (rawTopicsList.length === 0) {
+      completeAllTopicsBtn.disabled = true;
+      completeAllTopicsBtn.classList.remove('btn-secondary');
+      completeAllTopicsBtn.classList.add('btn-tertiary');
+      completeAllTopicsBtn.innerHTML = `${icons.check(16)} <span>إكمال جميع المواضيع</span>`;
+      completeAllTopicsBtn.title = 'لا توجد مواضيع دراسية بعد';
+    } else if (allCompleted) {
+      completeAllTopicsBtn.disabled = true;
+      completeAllTopicsBtn.classList.remove('btn-tertiary');
+      completeAllTopicsBtn.classList.add('btn-secondary');
+      completeAllTopicsBtn.innerHTML = `${icons.check(16)} <span>جميع المواضيع مكتملة</span>`;
+      completeAllTopicsBtn.title = 'تم إنجاز كافة محتويات هذا المساق بالكامل';
+    } else {
+      completeAllTopicsBtn.disabled = false;
+      completeAllTopicsBtn.classList.remove('btn-secondary');
+      completeAllTopicsBtn.classList.add('btn-tertiary');
+      completeAllTopicsBtn.innerHTML = `${icons.check(16)} <span>إكمال جميع المواضيع</span>`;
+      completeAllTopicsBtn.removeAttribute('title');
+    }
+  }
+
+  function updateParentTopicStatusBadges() {
+    const parentMap = new Map();
+    rawTopicsList.forEach((t) => {
+      if (t.parent_id) {
+        if (!parentMap.has(t.parent_id)) parentMap.set(t.parent_id, []);
+        parentMap.get(t.parent_id).push(t);
+      }
+    });
+
+    parentMap.forEach((children, parentId) => {
+      const parentTopic = rawTopicsList.find((t) => t.id === parentId);
+      if (!parentTopic) return;
+      const allChildrenCompleted = children.every((c) => c.status === 'completed');
+      const anyChildInProgress = children.some(
+        (c) => c.status === 'in_progress' || c.status === 'completed'
+      );
+
+      const newParentStatus = allChildrenCompleted
+        ? 'completed'
+        : anyChildInProgress
+        ? 'in_progress'
+        : 'not_started';
+
+      if (parentTopic.status !== newParentStatus) {
+        parentTopic.status = newParentStatus;
+        const parentWrapper = treeContainer.querySelector(
+          `[data-topic-id="${CSS.escape(parentId)}"]`
+        );
+        if (parentWrapper) {
+          const badgeEl = parentWrapper.querySelector('.topic-parent-status-badge');
+          if (badgeEl) {
+            badgeEl.className = `${getTopicStatusBadgeClass(newParentStatus)} topic-parent-status-badge`;
+            badgeEl.textContent = getTopicStatusLabel(newParentStatus);
+          }
+        }
+      }
+    });
+  }
+
+  async function handleTopicStatusChange(topicId, newStatus, previousStatus) {
+    const topic = rawTopicsList.find((t) => t.id === topicId);
+    if (!topic) return { error: new Error('الموضوع غير موجود') };
+
+    // 1. تحديث الحالة المحلية فوراً (Optimistic UI)
+    topic.status = newStatus;
+
+    // 2. تحديث بطاقة المؤشرات والنسبة المئوية فوراً دون انتظار الشبكة
+    renderMetrics(rawTopicsList, currentStudyStats);
+
+    const changedWrapper = treeContainer.querySelector(
+      `[data-topic-id="${CSS.escape(topicId)}"]`
+    );
+
+    // 3. إذا كان هذا الموضوع هو "الموضع الحالي" وتم إكماله، إزالة الشارة والتنسيق منه
+    const wasActiveTopic = activePositionTopicId === topicId;
+    if (wasActiveTopic && newStatus === 'completed') {
+      if (changedWrapper) {
+        changedWrapper.removeAttribute('data-current-position');
+        changedWrapper.removeAttribute('aria-current');
+        const rowEl = changedWrapper.querySelector('.topic-node-row');
+        if (rowEl) {
+          rowEl.classList.remove('highlight-current-position');
+          rowEl.style.border = '1px solid var(--color-border)';
+          rowEl.style.background = 'var(--color-surface)';
+        }
+        const badgeEl = changedWrapper.querySelector('.current-position-badge');
+        if (badgeEl) badgeEl.remove();
+        const titleText = changedWrapper.querySelector('.topic-title-text');
+        if (titleText) {
+          titleText.style.color = 'var(--color-text)';
+          titleText.style.fontWeight = '400';
+        }
+      }
+    }
+
+    if (newStatus === 'completed') {
+      const { nextTopicId, error: completeErr } = await completeTopicAndAdvance(
+        courseId,
+        topicId
+      );
+
+      if (completeErr) {
+        console.error('Failed to advance topic:', completeErr);
+        // التراجع عند الخطأ
+        topic.status = previousStatus;
+        renderMetrics(rawTopicsList, currentStudyStats);
+        updateCompleteAllTopicsBtnState();
+        updateParentTopicStatusBadges();
+        showToast(completeErr.message || 'فشل تحديث حالة الموضوع', 'error');
+        return { error: completeErr };
+      }
+
+      activePositionTopicId = nextTopicId;
+
+      if (nextTopicId) {
+        const nextWrapper = treeContainer.querySelector(
+          `[data-topic-id="${CSS.escape(nextTopicId)}"]`
+        );
+
+        if (nextWrapper) {
+          // توسيع المجلدات الأب إذا كانت مطوية ليظهر الموضوع التالي للطالب
+          let parentEl = nextWrapper.parentElement;
+          while (parentEl && parentEl !== treeContainer) {
+            if (parentEl.hidden) {
+              parentEl.hidden = false;
+              const parentWrapper = parentEl.closest('[data-topic-id]');
+              if (parentWrapper) {
+                expandedTopicIds.add(parentWrapper.dataset.topicId);
+                const toggleBtn = parentWrapper.querySelector('button.btn-icon');
+                if (toggleBtn) {
+                  toggleBtn.innerHTML = icons.chevronDown(14);
+                  toggleBtn.setAttribute('aria-expanded', 'true');
+                  toggleBtn.setAttribute('aria-label', 'طي المواضيع الفرعية');
+                }
+              }
+            }
+            parentEl = parentEl.parentElement;
+          }
+
+          // تطبيق تنسيق الموضع الحالي ومؤثر الـ Glow/Pulse اللطيف دون تمرير الشاشة
+          nextWrapper.dataset.currentPosition = 'true';
+          nextWrapper.setAttribute('aria-current', 'location');
+          const nextRow = nextWrapper.querySelector('.topic-node-row');
+          if (nextRow) {
+            nextRow.style.border = '1px solid var(--color-accent-border)';
+            nextRow.style.background = 'var(--color-accent-soft)';
+            nextRow.classList.add('highlight-current-position');
+            setTimeout(() => {
+              nextRow.classList.remove('highlight-current-position');
+            }, 2000);
+          }
+
+          const nextTitleContainer = nextWrapper.querySelector(
+            '.topic-node-row > div:first-child'
+          );
+          const nextTitleText = nextWrapper.querySelector('.topic-title-text');
+          if (nextTitleText) {
+            nextTitleText.style.color = 'var(--color-accent)';
+            nextTitleText.style.fontWeight = '600';
+          }
+          if (
+            nextTitleContainer &&
+            !nextTitleContainer.querySelector('.current-position-badge')
+          ) {
+            const currentBadge = document.createElement('span');
+            currentBadge.className = 'badge badge-accent current-position-badge';
+            currentBadge.textContent = 'الموضع الحالي';
+            currentBadge.style.fontSize = '11px';
+            currentBadge.style.flexShrink = '0';
+            if (nextTitleText && nextTitleText.nextSibling) {
+              nextTitleContainer.insertBefore(currentBadge, nextTitleText.nextSibling);
+            } else {
+              nextTitleContainer.appendChild(currentBadge);
+            }
+          }
+        }
+      }
+    } else {
+      const { error: updateErr } = await updateTopicStatus(topicId, newStatus);
+      if (updateErr) {
+        console.error('Failed to update status:', updateErr);
+        topic.status = previousStatus;
+        renderMetrics(rawTopicsList, currentStudyStats);
+        updateCompleteAllTopicsBtnState();
+        updateParentTopicStatusBadges();
+        showToast(updateErr.message || 'فشل تحديث حالة الموضوع', 'error');
+        return { error: updateErr };
+      }
+
+      const orderedLeaves = getOrderedLeafTopics(rawTopicsList);
+      const changedIndex = orderedLeaves.findIndex((t) => t.id === topicId);
+      const currentIndex = activePositionTopicId
+        ? orderedLeaves.findIndex((t) => t.id === activePositionTopicId)
+        : -1;
+
+      // قاعدة الترتيب: إعادة التحديد للخلف إذا كان الموضوع المُعدل يسبق الموضع الحالي في الترتيب،
+      // أو إذا لم يكن هناك موضع حالي محدد (مثلاً كانت كل المواضيع مكتملة سابقاً)
+      const shouldMovePositionBack =
+        !activePositionTopicId ||
+        currentIndex === -1 ||
+        (changedIndex !== -1 && changedIndex < currentIndex);
+
+      if (shouldMovePositionBack) {
+        // إزالة التنسيق والشارة من الموضع الحالي السابق إذا كان مختلفاً
+        if (activePositionTopicId && activePositionTopicId !== topicId) {
+          const prevWrapper = treeContainer.querySelector(
+            `[data-topic-id="${CSS.escape(activePositionTopicId)}"]`
+          );
+          if (prevWrapper) {
+            prevWrapper.removeAttribute('data-current-position');
+            prevWrapper.removeAttribute('aria-current');
+            const prevRow = prevWrapper.querySelector('.topic-node-row');
+            if (prevRow) {
+              prevRow.classList.remove('highlight-current-position');
+              prevRow.style.border = '1px solid var(--color-border)';
+              prevRow.style.background = 'var(--color-surface)';
+            }
+            const prevBadge = prevWrapper.querySelector('.current-position-badge');
+            if (prevBadge) prevBadge.remove();
+            const prevTitle = prevWrapper.querySelector('.topic-title-text');
+            if (prevTitle) {
+              prevTitle.style.color = 'var(--color-text)';
+              prevTitle.style.fontWeight = '400';
+            }
+          }
+        }
+
+        activePositionTopicId = topicId;
+
+        // حفظ الموضع الجديد المتراجع عنه في قاعدة البيانات
+        updateCourseCurrentPosition(courseId, topicId).catch((cErr) => {
+          console.error('Failed to update course current position:', cErr);
+        });
+
+        if (changedWrapper) {
+          // توسيع المجلدات الأب إذا كانت مطوية ليظهر الموضوع السابق بوضوح
+          let parentEl = changedWrapper.parentElement;
+          while (parentEl && parentEl !== treeContainer) {
+            if (parentEl.hidden) {
+              parentEl.hidden = false;
+              const parentWrapper = parentEl.closest('[data-topic-id]');
+              if (parentWrapper) {
+                expandedTopicIds.add(parentWrapper.dataset.topicId);
+                const toggleBtn = parentWrapper.querySelector('button.btn-icon');
+                if (toggleBtn) {
+                  toggleBtn.innerHTML = icons.chevronDown(14);
+                  toggleBtn.setAttribute('aria-expanded', 'true');
+                  toggleBtn.setAttribute('aria-label', 'طي المواضيع الفرعية');
+                }
+              }
+            }
+            parentEl = parentEl.parentElement;
+          }
+
+          changedWrapper.dataset.currentPosition = 'true';
+          changedWrapper.setAttribute('aria-current', 'location');
+          const rowEl = changedWrapper.querySelector('.topic-node-row');
+          if (rowEl) {
+            rowEl.style.border = '1px solid var(--color-accent-border)';
+            rowEl.style.background = 'var(--color-accent-soft)';
+            rowEl.classList.add('highlight-current-position');
+            setTimeout(() => {
+              rowEl.classList.remove('highlight-current-position');
+            }, 2000);
+          }
+          const titleContainer = changedWrapper.querySelector(
+            '.topic-node-row > div:first-child'
+          );
+          const titleText = changedWrapper.querySelector('.topic-title-text');
+          if (titleText) {
+            titleText.style.color = 'var(--color-accent)';
+            titleText.style.fontWeight = '600';
+          }
+          if (
+            titleContainer &&
+            !titleContainer.querySelector('.current-position-badge')
+          ) {
+            const currentBadge = document.createElement('span');
+            currentBadge.className = 'badge badge-accent current-position-badge';
+            currentBadge.textContent = 'الموضع الحالي';
+            currentBadge.style.fontSize = '11px';
+            currentBadge.style.flexShrink = '0';
+            if (titleText && titleText.nextSibling) {
+              titleContainer.insertBefore(currentBadge, titleText.nextSibling);
+            } else {
+              titleContainer.appendChild(currentBadge);
+            }
+          }
+        }
+      }
+    }
+
+    updateCompleteAllTopicsBtnState();
+    updateParentTopicStatusBadges();
+
+    return { error: null };
+  }
 
   if (completeAllTopicsBtn) {
     completeAllTopicsBtn.addEventListener('click', () => {
@@ -322,7 +652,7 @@ export async function renderCourseDetailPage(
           }
           activePositionTopicId = null;
           showToast('تم تحديد كافة مواضيع المساق كمكتملة بنجاح', 'success');
-          await loadAndRenderTree();
+          await loadAndRenderTree({ showSkeleton: false, shouldScroll: false });
           return { error: null };
         },
       });
@@ -399,7 +729,7 @@ export async function renderCourseDetailPage(
       onSave: async (topicId, updates) => {
         const { error: updateErr } = await updateTopic(topicId, updates);
         if (updateErr) return { error: updateErr };
-        await loadAndRenderTree();
+        await loadAndRenderTree({ showSkeleton: false, shouldScroll: false });
         return { error: null };
       },
     });
@@ -415,7 +745,7 @@ export async function renderCourseDetailPage(
           activePositionTopicId = null;
         }
 
-        await loadAndRenderTree();
+        await loadAndRenderTree({ showSkeleton: false, shouldScroll: false });
         return { error: null };
       },
     });
@@ -540,8 +870,10 @@ export async function renderCourseDetailPage(
     `;
   }
 
-  async function loadAndRenderTree() {
-    treeContainer.innerHTML = skeletons.tree(4);
+  async function loadAndRenderTree({ showSkeleton = false, shouldScroll = false } = {}) {
+    if (showSkeleton) {
+      treeContainer.innerHTML = skeletons.tree(4);
+    }
 
     const [{ topics, error }, studyStats, courseRes, urgentItem] = await Promise.all([
       fetchTopicTree(courseId),
@@ -559,6 +891,10 @@ export async function renderCourseDetailPage(
         </div>
       `;
       return;
+    }
+
+    if (studyStats) {
+      currentStudyStats = studyStats;
     }
 
     if (courseRes?.data) {
@@ -585,33 +921,13 @@ export async function renderCourseDetailPage(
     renderUrgentAlert(urgentItem);
 
     rawTopicsList = topics ?? [];
-    renderMetrics(rawTopicsList, studyStats);
+    renderMetrics(rawTopicsList, currentStudyStats);
 
     const allCompleted =
       rawTopicsList.length > 0 &&
       rawTopicsList.every((t) => t.status === 'completed');
 
-    if (completeAllTopicsBtn) {
-      if (rawTopicsList.length === 0) {
-        completeAllTopicsBtn.disabled = true;
-        completeAllTopicsBtn.classList.remove('btn-secondary');
-        completeAllTopicsBtn.classList.add('btn-tertiary');
-        completeAllTopicsBtn.innerHTML = `${icons.check(16)} <span>إكمال جميع المواضيع</span>`;
-        completeAllTopicsBtn.title = 'لا توجد مواضيع دراسية بعد';
-      } else if (allCompleted) {
-        completeAllTopicsBtn.disabled = true;
-        completeAllTopicsBtn.classList.remove('btn-tertiary');
-        completeAllTopicsBtn.classList.add('btn-secondary');
-        completeAllTopicsBtn.innerHTML = `${icons.check(16)} <span>جميع المواضيع مكتملة</span>`;
-        completeAllTopicsBtn.title = 'تم إنجاز كافة محتويات هذا المساق بالكامل';
-      } else {
-        completeAllTopicsBtn.disabled = false;
-        completeAllTopicsBtn.classList.remove('btn-secondary');
-        completeAllTopicsBtn.classList.add('btn-tertiary');
-        completeAllTopicsBtn.innerHTML = `${icons.check(16)} <span>إكمال جميع المواضيع</span>`;
-        completeAllTopicsBtn.removeAttribute('title');
-      }
-    }
+    updateCompleteAllTopicsBtnState();
 
     if (!topics || topics.length === 0) {
       treeContainer.innerHTML = `
@@ -635,18 +951,36 @@ export async function renderCourseDetailPage(
       }
 
       if (!activePositionTopicId) {
-        const firstIncomplete =
-          topics.find(
-            (t) =>
-              t.status !== 'completed' &&
-              (!t.children || t.children.length === 0)
-          ) ||
-          topics.find((t) => t.status !== 'completed');
+        const orderedLeaves = getOrderedLeafTopics(topics);
+        const firstIncomplete = orderedLeaves.find((t) => t.status !== 'completed');
 
         if (firstIncomplete) {
           activePositionTopicId = firstIncomplete.id;
         }
       }
+    }
+
+    // Default initialization of expandedTopicIds on initial load
+    if (!hasInitialRendered) {
+      function markInitialExpanded(tList) {
+        tList.forEach((t) => {
+          if (t.children && t.children.length > 0) {
+            if (!activePositionTopicId || containsTargetTopic(t, activePositionTopicId)) {
+              expandedTopicIds.add(t.id);
+            }
+            markInitialExpanded(t.children);
+          }
+        });
+      }
+
+      function containsTargetTopic(node, targetId) {
+        if (node.id === targetId) return true;
+        return (node.children ?? []).some((c) => containsTargetTopic(c, targetId));
+      }
+
+      const tempTree = buildTopicTree(topics);
+      markInitialExpanded(tempTree);
+      hasInitialRendered = true;
     }
 
     const topicTree = buildTopicTree(topics);
@@ -655,31 +989,15 @@ export async function renderCourseDetailPage(
     topicTree.forEach((topic) => {
       const node = renderTopicNode(topic, topic.children, {
         currentTopicId: activePositionTopicId,
-        onStatusChange: async (topicId, newStatus) => {
-          if (newStatus === 'completed') {
-            const { nextTopicId, error: completeErr } =
-              await completeTopicAndAdvance(courseId, topicId);
-
-            if (completeErr) {
-              console.error('Failed to advance topic:', completeErr);
-              return;
-            }
-            activePositionTopicId = nextTopicId;
+        expandedTopicIds,
+        onToggleExpand: (tId, isExpanded) => {
+          if (isExpanded) {
+            expandedTopicIds.add(tId);
           } else {
-            const { error: updateErr } = await updateTopicStatus(
-              topicId,
-              newStatus
-            );
-            if (updateErr) {
-              console.error('Failed to update status:', updateErr);
-              return;
-            }
-            if (!activePositionTopicId) {
-              activePositionTopicId = topicId;
-            }
+            expandedTopicIds.delete(tId);
           }
-          await loadAndRenderTree();
         },
+        onStatusChange: handleTopicStatusChange,
         onAddChild: (parentTopic) => openTopicForm(parentTopic),
         onEdit: (topicToEdit) => handleOpenEditTopic(topicToEdit),
         onDelete: (topicToDelete, isParent, childCount) =>
@@ -689,12 +1007,15 @@ export async function renderCourseDetailPage(
       treeContainer.appendChild(node);
     });
 
-    if (activePositionTopicId) {
+    if (shouldScroll && activePositionTopicId) {
       requestAnimationFrame(scrollToCurrentPosition);
     }
   }
 
-  loadAndRenderTree();
+  loadAndRenderTree({
+    showSkeleton: true,
+    shouldScroll: Boolean(currentPositionTopicId),
+  });
 
   return () => {
     unsubscribeSession();
