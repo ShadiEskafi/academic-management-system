@@ -72,12 +72,14 @@ export async function fetchCoursesBySemester(semesterId) {
     let topicTitle = null;
 
     // إذا كان هناك Current Position محفوظ في قاعدة البيانات
-    // نحاول جلب عنوانه.
+    // نحاول جلب عنوانه والتأكد من أنه غير مكتمل.
     if (topicId) {
       const currentTopic = rawTopics.find((topic) => topic.id === topicId);
 
-      if (currentTopic) {
+      if (currentTopic && currentTopic.status !== "completed") {
         topicTitle = currentTopic.title;
+      } else {
+        topicId = null;
       }
     }
 

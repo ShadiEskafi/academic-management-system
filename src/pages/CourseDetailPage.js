@@ -5,6 +5,7 @@ import {
   updateTopic,
   updateTopicStatus,
   completeTopicAndAdvance,
+  markAllCourseTopicsCompleted,
   createTopic,
   deleteTopic,
 } from '../api/topics.js';
@@ -26,6 +27,7 @@ import { renderTopicForm } from '../components/TopicForm.js';
 import {
   renderEditTopicModal,
   renderDeleteTopicModal,
+  renderCompleteAllTopicsModal,
 } from '../components/TopicModals.js';
 import { renderSessionSetupModal } from '../components/ActiveSessionModal.js';
 import { icons } from '../utils/icons.js';
@@ -138,11 +140,21 @@ export async function renderCourseDetailPage(
       </div>
 
       <section id="tree-view-section">
-        <div style="display:flex;justify-content:flex-end;margin-bottom:var(--space-4);">
+        <div style="display:flex;justify-content:flex-end;align-items:center;gap:var(--space-2);margin-bottom:var(--space-4);flex-wrap:wrap;">
+          <button
+            type="button"
+            id="complete-all-topics-btn"
+            class="btn-tertiary"
+            style="min-height:36px;display:inline-flex;align-items:center;gap:6px;"
+          >
+            ${icons.check(16)}
+            <span>إكمال جميع المواضيع</span>
+          </button>
           <button
             type="button"
             id="add-root-topic-btn"
             class="btn-secondary"
+            style="min-height:36px;display:inline-flex;align-items:center;gap:6px;"
           >
             ${icons.plus(16)}
             <span>إضافة موضوع رئيسي</span>
@@ -175,6 +187,7 @@ export async function renderCourseDetailPage(
   const courseTitleEl = container.querySelector('#course-page-title');
   const courseCodeEl = container.querySelector('#course-code-badge');
 
+  const completeAllTopicsBtn = container.querySelector('#complete-all-topics-btn');
   const addRootBtn = container.querySelector('#add-root-topic-btn');
   const formContainer = container.querySelector('#topic-form-container');
   const treeContainer = container.querySelector('#tree-container');
@@ -293,6 +306,28 @@ export async function renderCourseDetailPage(
     }
     openTopicForm();
   });
+
+  if (completeAllTopicsBtn) {
+    completeAllTopicsBtn.addEventListener('click', () => {
+      if (!rawTopicsList || rawTopicsList.length === 0) return;
+      const allDone = rawTopicsList.every((t) => t.status === 'completed');
+      if (allDone) return;
+
+      renderCompleteAllTopicsModal({
+        totalTopics: rawTopicsList.length,
+        onConfirm: async () => {
+          const { error: completeAllErr } = await markAllCourseTopicsCompleted(courseId);
+          if (completeAllErr) {
+            return { error: completeAllErr };
+          }
+          activePositionTopicId = null;
+          showToast('تم تحديد كافة مواضيع المساق كمكتملة بنجاح', 'success');
+          await loadAndRenderTree();
+          return { error: null };
+        },
+      });
+    });
+  }
 
   startSessionBtn.addEventListener('click', () => {
     if (isSessionActive()) {
@@ -552,6 +587,32 @@ export async function renderCourseDetailPage(
     rawTopicsList = topics ?? [];
     renderMetrics(rawTopicsList, studyStats);
 
+    const allCompleted =
+      rawTopicsList.length > 0 &&
+      rawTopicsList.every((t) => t.status === 'completed');
+
+    if (completeAllTopicsBtn) {
+      if (rawTopicsList.length === 0) {
+        completeAllTopicsBtn.disabled = true;
+        completeAllTopicsBtn.classList.remove('btn-secondary');
+        completeAllTopicsBtn.classList.add('btn-tertiary');
+        completeAllTopicsBtn.innerHTML = `${icons.check(16)} <span>إكمال جميع المواضيع</span>`;
+        completeAllTopicsBtn.title = 'لا توجد مواضيع دراسية بعد';
+      } else if (allCompleted) {
+        completeAllTopicsBtn.disabled = true;
+        completeAllTopicsBtn.classList.remove('btn-tertiary');
+        completeAllTopicsBtn.classList.add('btn-secondary');
+        completeAllTopicsBtn.innerHTML = `${icons.check(16)} <span>جميع المواضيع مكتملة</span>`;
+        completeAllTopicsBtn.title = 'تم إنجاز كافة محتويات هذا المساق بالكامل';
+      } else {
+        completeAllTopicsBtn.disabled = false;
+        completeAllTopicsBtn.classList.remove('btn-secondary');
+        completeAllTopicsBtn.classList.add('btn-tertiary');
+        completeAllTopicsBtn.innerHTML = `${icons.check(16)} <span>إكمال جميع المواضيع</span>`;
+        completeAllTopicsBtn.removeAttribute('title');
+      }
+    }
+
     if (!topics || topics.length === 0) {
       treeContainer.innerHTML = `
         <div class="card empty-state">
@@ -563,18 +624,28 @@ export async function renderCourseDetailPage(
       return;
     }
 
-    if (!activePositionTopicId) {
-      const firstIncomplete =
-        topics.find(
-          (t) =>
-            t.status !== 'completed' &&
-            (!t.children || t.children.length === 0)
-        ) ||
-        topics.find((t) => t.status !== 'completed') ||
-        topics[0];
+    if (allCompleted) {
+      activePositionTopicId = null;
+    } else {
+      if (activePositionTopicId) {
+        const currentActiveTopic = topics.find((t) => t.id === activePositionTopicId);
+        if (!currentActiveTopic || currentActiveTopic.status === 'completed') {
+          activePositionTopicId = null;
+        }
+      }
 
-      if (firstIncomplete) {
-        activePositionTopicId = firstIncomplete.id;
+      if (!activePositionTopicId) {
+        const firstIncomplete =
+          topics.find(
+            (t) =>
+              t.status !== 'completed' &&
+              (!t.children || t.children.length === 0)
+          ) ||
+          topics.find((t) => t.status !== 'completed');
+
+        if (firstIncomplete) {
+          activePositionTopicId = firstIncomplete.id;
+        }
       }
     }
 
@@ -602,6 +673,9 @@ export async function renderCourseDetailPage(
             if (updateErr) {
               console.error('Failed to update status:', updateErr);
               return;
+            }
+            if (!activePositionTopicId) {
+              activePositionTopicId = topicId;
             }
           }
           await loadAndRenderTree();

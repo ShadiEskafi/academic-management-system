@@ -190,3 +190,40 @@ export async function completeTopicAndAdvance(courseId, topicId) {
 
   return { nextTopicId: data?.nextTopicId ?? null, error };
 }
+
+/**
+ * يحدد كافة مواضيع المساق كـ 'مكتمل' دفعة واحدة (O(1) query)،
+ * ويعيد ضبط نسبة الإنجاز إلى 100% ويفرغ الموضع الحالي في جدول courses.
+ */
+export async function markAllCourseTopicsCompleted(courseId) {
+  const { data: userData, error: userError } = await supabase.auth.getUser();
+  const userId = userData?.user?.id;
+
+  if (userError || !userId) {
+    return { error: userError ?? new Error("المستخدم غير مسجل الدخول.") };
+  }
+
+  // 1. تحديث جميع مواضيع المساق دفعة واحدة إلى completed
+  const { error: topicsError } = await supabase
+    .from("topics")
+    .update({ status: "completed" })
+    .eq("course_id", courseId)
+    .eq("user_id", userId);
+
+  if (topicsError) {
+    return { error: topicsError };
+  }
+
+  // 2. تحديث سجل المساق: نسبة التقدم 100% وتفريغ الموضع الحالي
+  const { error: courseError } = await supabase
+    .from("courses")
+    .update({
+      progress: 100,
+      current_position_topic_id: null,
+      updated_at: new Date().toISOString(),
+    })
+    .eq("id", courseId)
+    .eq("user_id", userId);
+
+  return { error: courseError };
+}
