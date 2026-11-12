@@ -11,6 +11,8 @@ export function renderTopicNode(
     onEdit,
     onDelete,
     currentTopicId = null,
+    expandedTopicIds = null,
+    onToggleExpand = null,
   }
 ) {
   const isParent = children.length > 0;
@@ -69,7 +71,9 @@ export function renderTopicNode(
   titleContainer.style.flex = '1';
 
   let toggleBtn = null;
-  const initiallyExpanded = !currentTopicId || containsCurrent;
+  const initiallyExpanded = expandedTopicIds instanceof Set
+    ? expandedTopicIds.has(topic.id)
+    : (!currentTopicId || containsCurrent);
 
   if (isParent) {
     toggleBtn = document.createElement('button');
@@ -93,6 +97,7 @@ export function renderTopicNode(
   }
 
   const titleEl = document.createElement('span');
+  titleEl.className = 'topic-title-text';
   titleEl.textContent = topic.title;
   titleEl.style.fontSize = '14px';
   titleEl.style.fontWeight = isParent || isCurrentTopic ? '600' : '400';
@@ -104,7 +109,7 @@ export function renderTopicNode(
 
   if (isCurrentTopic) {
     const currentBadge = document.createElement('span');
-    currentBadge.className = 'badge badge-accent';
+    currentBadge.className = 'badge badge-accent current-position-badge';
     currentBadge.textContent = 'الموضع الحالي';
     currentBadge.style.fontSize = '11px';
     currentBadge.style.flexShrink = '0';
@@ -133,12 +138,12 @@ export function renderTopicNode(
 
   if (isParent) {
     const badge = document.createElement('span');
-    badge.className = getTopicStatusBadgeClass(topic.status);
+    badge.className = `${getTopicStatusBadgeClass(topic.status)} topic-parent-status-badge`;
     badge.textContent = getTopicStatusLabel(topic.status);
     controlContainer.appendChild(badge);
   } else {
     const select = document.createElement('select');
-    select.className = 'input';
+    select.className = 'input topic-status-select';
     select.style.minHeight = '32px';
     select.style.padding = '0 var(--space-2)';
     select.style.fontSize = '12px';
@@ -161,9 +166,17 @@ export function renderTopicNode(
 
     select.addEventListener('change', async (e) => {
       const selectedValue = e.target.value;
+      const previousValue = topic.status;
       select.disabled = true;
       try {
-        await onStatusChange(topic.id, selectedValue);
+        const result = await onStatusChange(topic.id, selectedValue, previousValue);
+        if (result && result.error) {
+          select.value = previousValue;
+        } else {
+          topic.status = selectedValue;
+        }
+      } catch (err) {
+        select.value = previousValue;
       } finally {
         select.disabled = false;
       }
@@ -228,6 +241,8 @@ export function renderTopicNode(
         onEdit,
         onDelete,
         currentTopicId,
+        expandedTopicIds,
+        onToggleExpand,
       });
       childrenContainer.appendChild(childNode);
     });
@@ -241,13 +256,16 @@ export function renderTopicNode(
       toggleBtn.innerHTML = expanded ? icons.chevronDown(14) : icons.chevronLeft(14);
       toggleBtn.setAttribute('aria-expanded', String(expanded));
       toggleBtn.setAttribute('aria-label', expanded ? 'طي المواضيع الفرعية' : 'توسيع المواضيع الفرعية');
+      if (onToggleExpand) {
+        onToggleExpand(topic.id, expanded);
+      }
     });
   }
 
   return nodeWrapper;
 }
 
-function getTopicStatusBadgeClass(status) {
+export function getTopicStatusBadgeClass(status) {
   switch (status) {
     case 'completed':
       return 'badge badge-success';
@@ -260,7 +278,7 @@ function getTopicStatusBadgeClass(status) {
   }
 }
 
-function getTopicStatusLabel(status) {
+export function getTopicStatusLabel(status) {
   switch (status) {
     case 'completed':
       return 'مكتمل';
