@@ -168,8 +168,19 @@ function formatUpcomingDeadlines(assignments = [], exams = []) {
     });
   });
 
-  // إضافة الامتحانات والاختبارات
+  // إضافة الامتحانات والاختبارات (استبعاد المنتهية تلقائياً)
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+
   exams.forEach((item) => {
+    if (item.exam_date) {
+      const examDate = new Date(item.exam_date);
+      examDate.setHours(0, 0, 0, 0);
+      if (examDate < today) {
+        return; // الامتحان انقضى موعده ويعتبر مكتملاً/منتهياً
+      }
+    }
+
     list.push({
       id: item.id,
       title: item.title,

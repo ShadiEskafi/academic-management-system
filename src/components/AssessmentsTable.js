@@ -230,7 +230,10 @@ export function renderAssessmentsView(container, { courseId, onAssessmentsChange
       : '<span class="text-tertiary">غير محدد</span>';
 
     let countdownBadge = '';
-    if (item.diffDays !== null) {
+    if (item.status === 'completed') {
+      const completedLabel = item.category === 'exam' ? 'منتهي' : 'تم الإنجاز';
+      countdownBadge = `<span class="badge badge-success">${completedLabel}</span>`;
+    } else if (item.diffDays !== null) {
       if (item.diffDays < 0) {
         countdownBadge = `<span class="badge badge-danger">متأخر</span>`;
       } else if (item.diffDays === 0) {

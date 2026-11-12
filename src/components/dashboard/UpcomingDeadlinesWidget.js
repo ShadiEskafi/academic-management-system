@@ -28,10 +28,12 @@ export function renderUpcomingDeadlinesWidget(container, deadlines = []) {
   function getDaysRemaining(dateStr) {
     if (!dateStr) return null;
     const due = new Date(dateStr);
+    if (isNaN(due.getTime())) return null;
     const now = new Date();
+    now.setHours(0, 0, 0, 0);
+    due.setHours(0, 0, 0, 0);
     const diffTime = due.getTime() - now.getTime();
-    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-    return diffDays;
+    return Math.round(diffTime / (1000 * 60 * 60 * 24));
   }
 
   function formatDateDisplay(dateStr) {
