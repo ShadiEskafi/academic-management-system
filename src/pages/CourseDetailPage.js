@@ -12,6 +12,7 @@ import {
 
 import { fetchCourseStudyStats } from '../api/studySessions.js';
 import { getUpcomingUrgentAssessment } from '../api/assessments.js';
+import { updateCourseCurrentPosition } from '../api/courses.js';
 
 import {
   startNewGlobalSession,
@@ -72,6 +73,22 @@ function buildTopicTree(topics) {
 
   rootTopics.forEach((topic) => sortChildren(topic));
   return rootTopics;
+}
+
+function getOrderedLeafTopics(topics) {
+  const tree = buildTopicTree(topics);
+  const leaves = [];
+
+  function traverse(node) {
+    if (!node.children || node.children.length === 0) {
+      leaves.push(node);
+    } else {
+      node.children.forEach(traverse);
+    }
+  }
+
+  tree.forEach(traverse);
+  return leaves;
 }
 
 export async function renderCourseDetailPage(
@@ -511,9 +528,71 @@ export async function renderCourseDetailPage(
         return { error: updateErr };
       }
 
-      if (!activePositionTopicId) {
+      const orderedLeaves = getOrderedLeafTopics(rawTopicsList);
+      const changedIndex = orderedLeaves.findIndex((t) => t.id === topicId);
+      const currentIndex = activePositionTopicId
+        ? orderedLeaves.findIndex((t) => t.id === activePositionTopicId)
+        : -1;
+
+      // قاعدة الترتيب: إعادة التحديد للخلف إذا كان الموضوع المُعدل يسبق الموضع الحالي في الترتيب،
+      // أو إذا لم يكن هناك موضع حالي محدد (مثلاً كانت كل المواضيع مكتملة سابقاً)
+      const shouldMovePositionBack =
+        !activePositionTopicId ||
+        currentIndex === -1 ||
+        (changedIndex !== -1 && changedIndex < currentIndex);
+
+      if (shouldMovePositionBack) {
+        // إزالة التنسيق والشارة من الموضع الحالي السابق إذا كان مختلفاً
+        if (activePositionTopicId && activePositionTopicId !== topicId) {
+          const prevWrapper = treeContainer.querySelector(
+            `[data-topic-id="${CSS.escape(activePositionTopicId)}"]`
+          );
+          if (prevWrapper) {
+            prevWrapper.removeAttribute('data-current-position');
+            prevWrapper.removeAttribute('aria-current');
+            const prevRow = prevWrapper.querySelector('.topic-node-row');
+            if (prevRow) {
+              prevRow.classList.remove('highlight-current-position');
+              prevRow.style.border = '1px solid var(--color-border)';
+              prevRow.style.background = 'var(--color-surface)';
+            }
+            const prevBadge = prevWrapper.querySelector('.current-position-badge');
+            if (prevBadge) prevBadge.remove();
+            const prevTitle = prevWrapper.querySelector('.topic-title-text');
+            if (prevTitle) {
+              prevTitle.style.color = 'var(--color-text)';
+              prevTitle.style.fontWeight = '400';
+            }
+          }
+        }
+
         activePositionTopicId = topicId;
+
+        // حفظ الموضع الجديد المتراجع عنه في قاعدة البيانات
+        updateCourseCurrentPosition(courseId, topicId).catch((cErr) => {
+          console.error('Failed to update course current position:', cErr);
+        });
+
         if (changedWrapper) {
+          // توسيع المجلدات الأب إذا كانت مطوية ليظهر الموضوع السابق بوضوح
+          let parentEl = changedWrapper.parentElement;
+          while (parentEl && parentEl !== treeContainer) {
+            if (parentEl.hidden) {
+              parentEl.hidden = false;
+              const parentWrapper = parentEl.closest('[data-topic-id]');
+              if (parentWrapper) {
+                expandedTopicIds.add(parentWrapper.dataset.topicId);
+                const toggleBtn = parentWrapper.querySelector('button.btn-icon');
+                if (toggleBtn) {
+                  toggleBtn.innerHTML = icons.chevronDown(14);
+                  toggleBtn.setAttribute('aria-expanded', 'true');
+                  toggleBtn.setAttribute('aria-label', 'طي المواضيع الفرعية');
+                }
+              }
+            }
+            parentEl = parentEl.parentElement;
+          }
+
           changedWrapper.dataset.currentPosition = 'true';
           changedWrapper.setAttribute('aria-current', 'location');
           const rowEl = changedWrapper.querySelector('.topic-node-row');
@@ -872,13 +951,8 @@ export async function renderCourseDetailPage(
       }
 
       if (!activePositionTopicId) {
-        const firstIncomplete =
-          topics.find(
-            (t) =>
-              t.status !== 'completed' &&
-              (!t.children || t.children.length === 0)
-          ) ||
-          topics.find((t) => t.status !== 'completed');
+        const orderedLeaves = getOrderedLeafTopics(topics);
+        const firstIncomplete = orderedLeaves.find((t) => t.status !== 'completed');
 
         if (firstIncomplete) {
           activePositionTopicId = firstIncomplete.id;
